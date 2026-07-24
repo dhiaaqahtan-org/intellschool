@@ -28,6 +28,9 @@ class SetSystemConfig
         $userPreference = \Auth::user()?->preference ?? [];
 
         $userLocale = Arr::get($userPreference, 'system.locale', config('config.system.locale'));
+        if (in_array(request()->cookie('admin_locale'), ['en', 'ar'])) {
+            $userLocale = request()->cookie('admin_locale');
+        }
         app()->setLocale($userLocale);
         Carbon::setLocale($userLocale);
 

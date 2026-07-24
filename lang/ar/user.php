@@ -1,0 +1,73 @@
+<?php
+
+return [
+    'user' => 'المستخدم',
+    'module_title' => 'عرض جميع المستخدمين',
+    'module_description' => 'إنشاء وإدارة جميع حسابات المستخدمين.',
+    'create_tip' => 'يجب أن يرتبط حساب المستخدم بملف طالب أو موظف أو ولي أمر. يرجى أولًا إنشاء ملف طالب أو موظف أو ولي أمر قبل إنشاء حساب المستخدم.',
+    'with_direct_permission' => 'بصلاحية مباشرة',
+    'admin' => 'المدير',
+    'props' => [
+        'name' => 'الاسم',
+        'email' => 'البريد الإلكتروني',
+        'username' => 'اسم المستخدم',
+        'password' => 'كلمة المرور',
+        'password_confirmation' => 'تأكيد كلمة المرور',
+        'force_change_password' => 'فرض تغيير كلمة المرور',
+        'scope' => 'النطاق',
+    ],
+    'password_change_required' => 'مطلوب تغيير كلمة المرور',
+    'status' => 'الحالة',
+    'statuses' => [
+        'activated' => 'مفعّل',
+        'banned' => 'محظور',
+        'disapproved' => 'مرفوض',
+        'pending_verification' => 'بانتظار التحقق',
+        'pending_approval' => 'بانتظار الموافقة',
+    ],
+    'status_action' => [
+        'activate' => 'تفعيل',
+        'ban' => 'حظر',
+        'disapprove' => 'رفض',
+        'pending_verification' => 'بانتظار التحقق',
+        'pending_approval' => 'بانتظار الموافقة',
+    ],
+    'preference' => [
+        'preference' => 'تفضيلات المستخدم',
+        'props' => [
+            'date_format' => 'تنسيق التاريخ',
+            'time_format' => 'تنسيق الوقت',
+            'locale' => 'اللغة',
+            'timezone' => 'المنطقة الزمنية',
+        ],
+    ],
+    'profile' => [
+        'profile' => 'الملف الشخصي',
+        'account' => 'الحساب',
+        'props' => [
+            'name' => 'الاسم',
+            'username' => 'اسم المستخدم',
+            'email' => 'البريد الإلكتروني',
+            'existing_email_otp' => 'رمز التحقق',
+            'new_email_otp' => 'رمز التحقق',
+        ],
+        'verification_otp' => 'رمز التحقق المُرسل إلى :attribute',
+        'verify_otp_to_continue' => 'يرجى التحقق من الرمز المُرسل إلى بريدك الإلكتروني للمتابعة.',
+        'verification_otp_expired' => 'انتهت صلاحية الرمز المُدخل. يرجى المحاولة مرة أخرى.',
+    ],
+    'avatar' => 'الصورة الرمزية',
+    'errors' => [
+        'permission_denied' => 'تم رفض الإذن.',
+        'auth_user_permission_denied' => 'غير مخوّل للقيام بهذا الإجراء بحسابك.',
+        'default_user_permission_denied' => 'غير مخوّل للقيام بهذا الإجراء على هذا الحساب.',
+        'admin_user_permission_denied' => 'غير مخوّل للقيام بهذا الإجراء على حساب المدير.',
+    ],
+    'impersonate' => 'انتحال الهوية',
+    'unimpersonate' => 'إنهاء انتحال الهوية',
+    'scopes' => [
+        'all_teams' => 'جميع المدارس',
+        'organization_wise' => 'حسب المؤسسة',
+        'multiple_teams' => 'مدارس متعددة',
+        'current_team' => 'المدرسة الحالية',
+    ],
+];

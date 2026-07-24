@@ -38,7 +38,21 @@ ScriptMint offers the following license terms to use the script:
 
 ### Installation
 
-To check installation video, please visit https://www.youtube.com/watch?v=NkQHFDtbpC4
+The browser-based installer has been removed. Deploy the application through the
+standard Laravel workflow:
+
+1. Copy `.env.example` to `.env` and configure `APP_URL` and the database
+   connection (optionally set `DEFAULT_TEAM_NAME`).
+2. Run `composer install --no-dev --optimize-autoloader`.
+3. Run `php artisan key:generate` when `APP_KEY` is empty.
+4. Run `php artisan migrate --seed --force`.
+5. Run `php artisan storage:link` and `php artisan optimize`.
+
+The database seeder is idempotent. It provisions the default team, roles,
+permissions, templates, base system configuration, and the first administrator.
+The default super-admin login is `admin@gmail.com` / `12345678` — change the
+password from the profile after the first login. Point the web server document
+root to `public`; never expose the project root directly.
 
 ### Support
 

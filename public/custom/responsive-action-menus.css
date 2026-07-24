@@ -1,0 +1,11 @@
+/*
+ * PageHeaderAction places the compact actions at the physical left edge in RTL,
+ * while its Headless UI menu is compiled with right: 0. Align that menu to the
+ * trigger's left edge so it remains inside the viewport at every toolbar width.
+ */
+html[dir="rtl"] .mt-4.flex.shrink-0 [role="menu"].top-10.right-0 {
+    right: auto !important;
+    left: 0 !important;
+    max-width: calc(100vw - 2rem);
+    transform-origin: top left !important;
+}

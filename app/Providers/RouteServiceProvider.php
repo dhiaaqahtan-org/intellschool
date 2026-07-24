@@ -80,6 +80,11 @@ class RouteServiceProvider extends ServiceProvider
                     ->middleware(['api', 'auth:sanctum', 'two.factor.security', 'screen.lock', 'under.maintenance', 'user.config'])
                     // ->namespace($this->namespace)
                     ->group(base_path('routes/module.php'));
+
+                // Offline sync endpoints for Flutter client
+                Route::middleware(['api', 'user.config'])
+                    // ->namespace($this->namespace)
+                    ->group(base_path('routes/sync.php'));
             });
 
             $modules = glob(base_path('routes/exports/*.php'));

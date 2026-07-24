@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Command\SyncRolePermissionController;
-use App\Http\Controllers\Command\UpdateController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('clear-cache', function () {
@@ -47,12 +46,4 @@ Route::get('sync-permission', function () {
     return view('index', ['message' => 'Permission synced.']);
 })->name('sync.permission');
 
-Route::get('migrate', function () {
-    \Artisan::call('migrate', ['--force' => true]);
-
-    return view('index', ['message' => 'Migration complete.']);
-})->name('migrate');
-
 Route::get('sync-role-permission', SyncRolePermissionController::class)->name('sync.role.permission');
-
-Route::get('update', UpdateController::class)->name('update.app');

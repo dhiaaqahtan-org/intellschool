@@ -9,7 +9,6 @@ use App\Actions\Config\SetMailConfig;
 use App\Actions\Config\SetPusherConfig;
 use App\Actions\Config\SetSocialLoginConfig;
 use App\Actions\Config\SetSystemConfig;
-use App\Helpers\SysHelper;
 use App\Models\Config\Config;
 use Illuminate\Pipeline\Pipeline;
 
@@ -17,10 +16,6 @@ class SetConfig
 {
     public function set(array $config = [])
     {
-        if (! SysHelper::isInstalled()) {
-            return;
-        }
-
         if (empty($config)) {
             $config = Config::listAll();
         }

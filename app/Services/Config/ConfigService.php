@@ -6,6 +6,7 @@ use App\Concerns\LocalStorage;
 use App\Enums\Employee\Type as EmployeeType;
 use App\Enums\ServiceType;
 use App\Helpers\ListHelper;
+use App\Lists\RegionalSetting;
 use App\Models\Config\Config;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -29,11 +30,24 @@ class ConfigService
         }
 
         if (in_array('currencies', $types)) {
-            $data['currencies'] = ListHelper::getList('currencies', 'name');
+            $data['currencies'] = collect(ListHelper::getList('currencies', 'name'))
+                ->whereIn('value', RegionalSetting::CURRENCIES)
+                ->sortBy(fn (array $currency) => array_search($currency['value'], RegionalSetting::CURRENCIES, true))
+                ->values()
+                ->all();
         }
 
         if (in_array('timezones', $types)) {
-            $data['timezones'] = ListHelper::getList('timezones');
+            $data['timezones'] = collect(ListHelper::getList('timezones'))
+                ->whereIn('value', RegionalSetting::TIMEZONES)
+                ->sortBy(fn (array $timezone) => array_search($timezone['value'], RegionalSetting::TIMEZONES, true))
+                ->map(function (array $timezone): array {
+                    $timezone['label'] = RegionalSetting::TIMEZONE_LABELS[$timezone['value']];
+
+                    return $timezone;
+                })
+                ->values()
+                ->all();
         }
 
         if (in_array('locales', $types)) {

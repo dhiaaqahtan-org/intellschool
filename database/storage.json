@@ -1,1 +1,1 @@
-{"locales":[{"name":"English","code":"en","uuid":"en","is_default":true}]}
+{"locales":[{"uuid":"ar","code":"ar","name":"العربية","is_default":true},{"name":"English","code":"en","uuid":"en","is_default":false}]}

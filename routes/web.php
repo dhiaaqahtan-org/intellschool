@@ -25,6 +25,23 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('login-as-support/{token}', LoginAsSupportController::class);
 
+// Public site language switcher (English / Arabic)
+Route::get('/site-locale/{locale}', function (string $locale) {
+    if (in_array($locale, ['en', 'ar'])) {
+        session(['site_locale' => $locale]);
+    }
+
+    return redirect()->back(302, [], '/');
+})->name('site.locale');
+
+// Admin panel language switcher (English / Arabic) — sets a cookie honored in SetSystemConfig
+Route::get('/admin-locale/{locale}', function (string $locale) {
+    $locale = in_array($locale, ['en', 'ar']) ? $locale : 'en';
+
+    return redirect()->back(302, [], '/app/dashboard')
+        ->cookie('admin_locale', $locale, 60 * 24 * 365);
+})->name('admin.locale');
+
 Route::get('/app/config/mail-template/{mail_template}', [MailTemplateController::class, 'detail'])
     ->name('config.mail-template.detail')
     ->middleware('permission:config:store');

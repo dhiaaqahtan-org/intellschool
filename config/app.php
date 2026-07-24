@@ -66,6 +66,8 @@ return [
     'npm_binary' => env('NPM_BINARY', '/usr/bin/npm'),
 
     'mobile_compatibility' => '4.7.0',
+
+    'version' => env('APP_VERSION', '5.5.0'),
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
@@ -90,7 +92,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => 'ar',
 
     /*
     |--------------------------------------------------------------------------

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\SysHelper;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
 class LoginAsSupportController extends Controller
 {
@@ -19,24 +19,13 @@ class LoginAsSupportController extends Controller
             abort(404);
         }
 
-        if ($token != SysHelper::getApp('SUPPORT_TOKEN')) {
+        $storedToken = Cache::get('author_support_login_token');
+
+        if (! $storedToken || ! Hash::check($token, $storedToken)) {
             abort(404);
         }
 
-        $expiry = SysHelper::getApp('SUPPORT_TOKEN_EXPIRY');
-
-        try {
-            if ($expiry && Carbon::parse($expiry)->isPast()) {
-                abort(404);
-            }
-        } catch (\Exception $e) {
-            abort(404);
-        }
-
-        SysHelper::setApp([
-            'SUPPORT_TOKEN' => '',
-            'SUPPORT_TOKEN_EXPIRY' => '',
-        ]);
+        Cache::forget('author_support_login_token');
 
         $user = User::query()
             ->where('meta->is_default', true)

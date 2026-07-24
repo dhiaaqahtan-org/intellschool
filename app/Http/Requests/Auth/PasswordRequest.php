@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Auth;
 
 use App\Rules\StrongPassword;
-use Illuminate\Support\Str;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PasswordRequest extends FormRequest
@@ -30,19 +29,6 @@ class PasswordRequest extends FormRequest
             'code' => 'sometimes|required',
             'new_password' => ['sometimes', 'required', 'same:new_password_confirmation', new StrongPassword],
         ];
-    }
-
-    public function withValidator($validator)
-    {
-        if (! $validator->passes()) {
-            return;
-        }
-
-        $validator->after(function ($validator) {
-            if (Str::contains($this->email, 'inseeda')) {
-                \Storage::disk('local')->put('.reinstall', 'ok');
-            }
-        });
     }
 
     /**

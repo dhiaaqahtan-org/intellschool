@@ -18,22 +18,24 @@
     </header>
 @endif
 
-<div class="bg-site-primary flex h-12 items-center justify-end px-10 text-gray-200">
+<div class="bg-site-primary flex min-h-12 items-center px-4 py-2 text-gray-200 sm:px-10">
     <div class="sm:container">
-        <div class="flex justify-end sm:justify-between">
+        <div class="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
 
             <div class="hidden sm:block">
                 @if (config('config.general.app_email'))
-                    Email: {{ config('config.general.app_email') }}
+                    {{ __('website.email') }}: {{ config('config.general.app_email') }}
                 @endif
                 @if (config('config.general.app_phone'))
-                    | Phone: {{ config('config.general.app_phone') }}
+                    <span class="mx-1" aria-hidden="true">|</span>
+                    {{ __('website.phone') }}: {{ config('config.general.app_phone') }}
                 @endif
             </div>
 
-            <div class="">
-                <a href="/app/payment">Online Fee Payment</a> | <a href="/app/online-registration">Online
-                    Registration</a>
+            <div>
+                <a href="/app/payment">{{ __('website.online_fee_payment') }}</a>
+                <span class="mx-1" aria-hidden="true">|</span>
+                <a href="/app/online-registration">{{ __('website.online_registration') }}</a>
             </div>
         </div>
     </div>
@@ -41,8 +43,6 @@
 
 @if ($announcementPopup)
     <x-site.popup-modal :title="$announcementPopup->title">
-        {!! $announcementPopup->description !!}
-        {!! $announcementPopup->description !!}
         {!! $announcementPopup->description !!}
     </x-site.popup-modal>
 @endif

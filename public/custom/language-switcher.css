@@ -1,0 +1,42 @@
+/* Admin language-switcher pill (injected by language-switcher.js).
+   Fixed in the top bar; inset-inline-end keeps it correct in LTR and RTL. */
+#sch-lang-switch {
+    position: fixed;
+    bottom: 22px;
+    inset-inline-end: 22px;
+    z-index: 99999;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 38px;
+    padding: 0 15px;
+    border-radius: 999px;
+    background: #1E3A5F;
+    color: #fff;
+    font: 700 0.85rem/1 system-ui, "Segoe UI", Roboto, sans-serif;
+    text-decoration: none;
+    box-shadow: 0 8px 20px -8px rgba(30, 58, 95, 0.6);
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+#sch-lang-switch:hover {
+    background: #14263f;
+    transform: translateY(-1px);
+    color: #fff;
+}
+
+#sch-lang-switch i {
+    font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+    #sch-lang-switch {
+        bottom: 16px;
+        inset-inline-end: 16px;
+        height: 34px;
+        padding: 0 12px;
+    }
+    #sch-lang-switch span {
+        display: none;
+    }
+}

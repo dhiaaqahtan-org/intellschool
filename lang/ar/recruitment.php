@@ -1,0 +1,62 @@
+<?php
+
+return [
+    'recruitment' => 'التوظيف',
+    'config' => [
+        'config' => 'الإعدادات',
+        'props' => [
+            'vacancy_number_prefix' => 'بادئة رقم الوظيفة الشاغرة',
+            'vacancy_number_suffix' => 'لاحقة رقم الوظيفة الشاغرة',
+            'vacancy_number_digit' => 'عدد خانات رقم الوظيفة الشاغرة',
+        ],
+    ],
+    'apply_now' => 'قدّم الآن',
+    'application_submitted' => 'تم إرسال طلبك بنجاح.',
+    'vacancy' => [
+        'vacancy' => 'الوظيفة الشاغرة',
+        'vacancies' => 'الوظائف الشاغرة',
+        'module_title' => 'إدارة جميع الوظائف الشاغرة',
+        'module_description' => 'انشر الوظائف الشاغرة واجمع الطلبات من موظفيك.',
+        'application_instruction_alert' => 'يرجى قراءة التعليمات بعناية قبل المتابعة.',
+        'no_vacancy' => 'لا توجد وظائف شاغرة متاحة في الوقت الحالي.',
+        'props' => [
+            'code_number' => 'رقم الرمز',
+            'title' => 'العنوان',
+            'last_application_date' => 'آخر موعد للتقديم',
+            'published_at' => 'نُشر في',
+            'description' => 'الوصف',
+            'responsibility' => 'المسؤوليات',
+            'number_of_positions' => 'عدد الشواغر',
+        ],
+        'wizard' => [
+            'first_step' => 'المعلومات الأساسية',
+            'second_step' => 'معلومات التواصل',
+            'third_step' => 'خطاب التقديم',
+            'fourth_step' => 'رفع الملفات',
+            'final_step' => 'الإقرار',
+            'resume' => 'السيرة الذاتية',
+            'marksheet' => 'كشف الدرجات',
+            'declaration' => 'الإقرار',
+            'review' => 'المراجعة',
+            'review_content' => 'يرجى مراجعة المعلومات المقدّمة أدناه.',
+            'declaration_content' => 'أقرّ بأن المعلومات المقدّمة صحيحة ودقيقة.',
+        ],
+    ],
+    'application' => [
+        'application' => 'طلب التوظيف',
+        'applications' => 'طلبات التوظيف',
+        'module_title' => 'إدارة جميع طلبات التوظيف',
+        'module_description' => 'عرض جميع طلبات التوظيف',
+        'could_not_perform_if_existing_employee' => 'لا يمكن تنفيذ هذا الإجراء إذا كنت موظفًا حاليًا.',
+        'duplicate_application' => 'لقد قدّمت بالفعل لهذه الوظيفة.',
+        'applicant' => 'المتقدّم',
+        'props' => [
+            'application_date' => 'تاريخ التقديم',
+            'availability_date' => 'تاريخ التوفّر',
+            'cover_letter' => 'خطاب التقديم',
+            'qualification_summary' => 'ملخص المؤهلات',
+            'references' => 'المُعرّفون',
+        ],
+        'manual' => 'يدوي',
+    ],
+];

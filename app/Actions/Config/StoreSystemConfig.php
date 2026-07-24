@@ -4,6 +4,7 @@ namespace App\Actions\Config;
 
 use App\Concerns\LocalStorage;
 use App\Helpers\ListHelper;
+use App\Lists\RegionalSetting;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 
@@ -76,7 +77,7 @@ class StoreSystemConfig
     private function validate(array $input = []): void
     {
         $timezone = Arr::get($input, 'timezone');
-        if ($timezone && ! ListHelper::getListByKey('timezones', 'value', $timezone)) {
+        if ($timezone && ! in_array($timezone, RegionalSetting::TIMEZONES, true)) {
             throw ValidationException::withMessages(['timezone' => trans('validation.exists', ['attribute' => trans('config.system.props.timezone')])]);
         }
 
@@ -98,13 +99,13 @@ class StoreSystemConfig
 
         $currencies = Arr::get($input, 'currencies', []);
         foreach ($currencies as $currency) {
-            if ($currency && ! ListHelper::getListByKey('currencies', 'name', $currency)) {
+            if ($currency && ! in_array($currency, RegionalSetting::CURRENCIES, true)) {
                 throw ValidationException::withMessages(['currencies' => trans('validation.exists', ['attribute' => trans('config.system.props.currency')])]);
             }
         }
 
         $currency = Arr::get($input, 'currency');
-        if ($currency && ! ListHelper::getListByKey('currencies', 'name', $currency)) {
+        if ($currency && ! in_array($currency, RegionalSetting::CURRENCIES, true)) {
             throw ValidationException::withMessages(['currency' => trans('validation.exists', ['attribute' => trans('config.system.props.currency')])]);
         }
 

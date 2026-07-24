@@ -1,0 +1,182 @@
+<?php
+
+return [
+    'helpdesk' => 'مكتب المساعدة',
+    'helpdesks' => 'مكاتب المساعدة',
+    'module_title' => 'إدارة مكاتب المساعدة',
+    'module_description' => 'مكتب المساعدة طريقة رائعة لتقديم الدعم لموظفيك.',
+    'props' => [
+
+    ],
+    'article' => [
+        'article' => 'المقال',
+        'articles' => 'المقالات',
+        'module_title' => 'إدارة المقالات',
+        'module_description' => 'يمكنك كتابة مقالات عن منتجاتك وخدماتك ونشرها لموظفيك.',
+        'related_articles' => 'مقالات ذات صلة',
+        'empty_title' => 'عذرًا، يبدو أنه لا توجد مقالات متاحة.',
+        'empty_description' => 'سننشر مقالات جديدة قريبًا. يرجى العودة لاحقًا.',
+        'props' => [
+            'title' => 'العنوان',
+            'slug' => 'الرابط اللطيف',
+            'slug_placeholder' => 'الرابط',
+            'content' => 'المحتوى',
+            'seo' => [
+                'seo' => 'تحسين محركات البحث',
+                'meta_title' => 'عنوان الميتا',
+                'meta_description' => 'وصف الميتا',
+                'meta_keywords' => 'كلمات الميتا المفتاحية',
+                'robots' => 'السماح باكتشافها بواسطة محركات البحث',
+            ],
+            'published_at' => 'نُشر في',
+            'published' => 'منشور',
+            'draft' => 'مسودة',
+        ],
+        'folder' => [
+            'folder' => 'المجلد',
+            'folders' => 'المجلدات',
+            'module_title' => 'إدارة المجلدات',
+            'module_description' => 'تُستخدم المجلدات لتنظيم المقالات بشكل أفضل.',
+            'props' => [
+                'name' => 'الاسم',
+                'slug' => 'الرابط اللطيف',
+                'description' => 'الوصف',
+            ],
+        ],
+        'category' => [
+            'category' => 'الفئة',
+            'categories' => 'الفئات',
+            'module_title' => 'إدارة الفئات',
+            'module_description' => 'تُستخدم الفئات لتصنيف المقالات بشكل أفضل.',
+            'props' => [
+                'name' => 'الاسم',
+                'slug' => 'الرابط اللطيف',
+                'description' => 'الوصف',
+            ],
+        ],
+        'config' => [
+            'config' => 'الإعدادات',
+            'general_config' => 'إعدادات المقالات',
+            'general_info' => 'كيف تريد إعداد وحدة المقالات؟',
+            'props' => [
+                'title' => 'العنوان',
+                'description' => 'الوصف',
+            ],
+        ],
+    ],
+    'faq' => [
+        'faq' => 'الأسئلة الشائعة',
+        'faqs' => 'الأسئلة الشائعة',
+        'module_title' => 'إدارة الأسئلة الشائعة',
+        'module_description' => 'الأسئلة الشائعة هي الأسئلة والأجوبة التي يطرحها موظفوك بشكل متكرر.',
+        'empty_title' => 'عذرًا، يبدو أنه لا توجد أسئلة شائعة متاحة.',
+        'empty_description' => 'سننشر أسئلة شائعة جديدة قريبًا. يرجى العودة لاحقًا.',
+        'props' => [
+            'question' => 'السؤال',
+            'answer' => 'الإجابة',
+            'publish' => 'نشر',
+        ],
+        'visibilities' => [
+            'public' => 'عام',
+            'authenticated' => 'المستخدمون المسجّلون',
+        ],
+        'category' => [
+            'category' => 'فئة الأسئلة الشائعة',
+            'categories' => 'فئات الأسئلة الشائعة',
+            'module_title' => 'تُستخدم الفئات لتصنيف الأسئلة الشائعة بشكل أفضل.',
+            'module_description' => 'إدارة الفئات',
+            'props' => [
+                'name' => 'الاسم',
+                'slug' => 'الرابط اللطيف',
+                'description' => 'الوصف',
+            ],
+            'visibilities' => [
+                'public' => 'عام',
+                'authenticated' => 'المستخدمون المسجّلون',
+            ],
+        ],
+        'statuses' => [
+            'draft' => 'مسودة',
+            'published' => 'منشور',
+        ],
+        'config' => [
+            'config' => 'الإعدادات',
+            'general_config' => 'إعدادات الأسئلة الشائعة',
+            'general_info' => 'كيف تريد إعداد وحدة الأسئلة الشائعة؟',
+            'props' => [
+                'title' => 'العنوان',
+                'description' => 'الوصف',
+            ],
+        ],
+    ],
+    'ticket' => [
+        'ticket' => 'التذكرة',
+        'tickets' => 'التذاكر',
+        'module_title' => 'إدارة التذاكر',
+        'module_description' => 'تُستخدم التذاكر لتتبّع طلبات الدعم من موظفيك.',
+        'could_not_modify_if_not_last_message' => 'لا يمكنك تعديل الرسالة إذا لم تكن آخر رسالة.',
+        'could_not_update_if_not_open' => 'لا يمكنك التحديث لأن الحالة محدّثة بالفعل.',
+        'assign' => 'تعيين',
+        'props' => [
+            'code_number' => 'رقم التذكرة',
+            'title' => 'العنوان',
+            'description' => 'الوصف',
+            'status' => 'الحالة',
+            'message' => 'الرسالة',
+            'resolved_at' => 'حُلّت في',
+            'cancelled_at' => 'أُلغيت في',
+            'assigned_to' => 'مُسندة إلى',
+            'archived_at' => 'أُرشفت في',
+            'due_date' => 'تاريخ الاستحقاق',
+            'due_time' => 'وقت الاستحقاق',
+            'due_date_time' => 'تاريخ ووقت الاستحقاق',
+        ],
+        'statuses' => [
+            'open' => 'مفتوحة',
+            'in_progress' => 'قيد المعالجة',
+            'on_hold' => 'معلّقة',
+            'resolved' => 'محلولة',
+            'closed' => 'مغلقة',
+        ],
+        'category' => [
+            'category' => 'فئة التذكرة',
+            'categories' => 'فئات التذاكر',
+            'module_title' => 'إدارة فئات التذاكر',
+            'module_description' => 'تُستخدم الفئات لتصنيف التذاكر بشكل أفضل.',
+            'props' => [
+                'name' => 'الاسم',
+                'description' => 'الوصف',
+            ],
+        ],
+        'priority' => [
+            'priority' => 'أولوية التذكرة',
+            'priorities' => 'أولويات التذاكر',
+            'module_title' => 'إدارة أولويات التذاكر',
+            'module_description' => 'تُستخدم الأولويات لترتيب التذاكر حسب الأهمية.',
+            'props' => [
+                'name' => 'الاسم',
+                'description' => 'الوصف',
+            ],
+        ],
+        'list' => [
+            'list' => 'قائمة التذاكر',
+            'lists' => 'قوائم التذاكر',
+            'module_title' => 'إدارة قوائم التذاكر',
+            'module_description' => 'تُستخدم القوائم لعرض التذاكر بشكل أفضل.',
+            'props' => [
+                'name' => 'الاسم',
+                'description' => 'الوصف',
+            ],
+        ],
+        'config' => [
+            'config' => 'الإعدادات',
+            'general_config' => 'إعدادات التذاكر',
+            'general_info' => 'كيف تريد إعداد وحدة التذاكر؟',
+            'props' => [
+                'number_prefix' => 'بادئة رقم التذكرة',
+                'number_suffix' => 'لاحقة رقم التذكرة',
+                'number_digit' => 'عدد خانات رقم التذكرة',
+            ],
+        ],
+    ],
+];

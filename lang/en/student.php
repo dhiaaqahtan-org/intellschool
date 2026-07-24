@@ -377,6 +377,7 @@ return [
     'registration' => [
         'registration' => 'Registration',
         'registrations' => 'Registrations',
+        'create_title' => 'Register New Student',
         'fee' => 'Registration Fee',
         'receipt' => 'Fee Receipt',
         'online' => 'Online',

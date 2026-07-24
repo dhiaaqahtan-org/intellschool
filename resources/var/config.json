@@ -6,17 +6,17 @@
         },
         {
             "name": "direction",
-            "value": "ltr",
+            "value": "rtl",
             "is_public": true
         },
         {
             "name": "locale",
-            "value": "en",
+            "value": "ar",
             "is_public": true
         },
         {
             "name": "timezone",
-            "value": "Asia/Kolkata",
+            "value": "Asia/Aden",
             "is_public": true
         },
         {
@@ -46,7 +46,7 @@
         },
         {
             "name": "currencies",
-            "value": "USD",
+            "value": "USD,SAR,YER",
             "is_public": true
         },
         {
@@ -689,6 +689,11 @@
         {
             "name": "theme",
             "value": "default",
+            "is_public": true
+        },
+        {
+            "name": "locale",
+            "value": "ar",
             "is_public": true
         },
         {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ in_array(app()->getLocale(), ['ar', 'fa', 'he', 'ur', 'ps', 'sd']) ? 'rtl' : 'ltr' }}">
 
 <head>
     <meta charset="utf-8">
@@ -13,15 +13,27 @@
     <link rel="icon" href="{{ config('config.assets.favicon') }}" type="image/png">
 
     @vite(['resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('custom/finance-report-catalog.css') }}">
+    <link rel="stylesheet" href="{{ asset('custom/sidebar-shell.css') }}">
+    <link rel="stylesheet" href="{{ asset('custom/responsive-action-menus.css') }}">
+    <link rel="stylesheet" href="{{ asset('custom/language-switcher.css') }}">
 
     @include('gateways.assets.index')
 </head>
 
 <body class="{{ config('config.layout.display') }}">
-    <div id="root" class="theme-{{ config('config.system.color_scheme', 'default') }}">
+    <div
+        id="root"
+        class="theme-{{ config('config.system.color_scheme', 'default') }}"
+        data-student-registration-create-title="{{ __('student.registration.create_title') }}"
+    >
         <router-view></router-view>
     </div>
     <script src="/js/lang"></script>
+    <script src="{{ asset('custom/finance-report-catalog.js') }}" defer></script>
+    <script src="{{ asset('custom/sidebar-shell.js') }}" defer></script>
+    <script src="{{ asset('custom/language-switcher.js') }}" defer></script>
+    <script src="{{ asset('custom/student-registration-labels.js') }}" defer></script>
 </body>
 
 </html>

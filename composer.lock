@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9eba14a4c35ff64b4d17f9101bec06c7",
+    "content-hash": "20794ff32fecb3d32833b28836930c18",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -3914,51 +3914,6 @@
                 }
             ],
             "time": "2026-02-07T00:42:12+00:00"
-        },
-        {
-            "name": "mint/service",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/scriptmint/service.git",
-                "reference": "7292753bce02409bf67eb1bdf5342f5b49e02141"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/scriptmint/service/zipball/7292753bce02409bf67eb1bdf5342f5b49e02141",
-                "reference": "7292753bce02409bf67eb1bdf5342f5b49e02141",
-                "shasum": ""
-            },
-            "default-branch": true,
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Mint\\Service\\MintServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Mint\\Service\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "ScriptMint",
-                    "email": "hello@scriptmint.com"
-                }
-            ],
-            "description": "Basic Service Provider for ScriptMint application",
-            "support": {
-                "issues": "https://github.com/scriptmint/service/issues",
-                "source": "https://github.com/scriptmint/service/tree/master"
-            },
-            "time": "2018-05-15T10:38:49+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -14202,9 +14157,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "mint/service": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

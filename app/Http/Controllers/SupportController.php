@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\SysHelper;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -19,10 +20,11 @@ class SupportController extends Controller
 
         $supportToken = Str::random(32);
 
-        SysHelper::setApp([
-            'SUPPORT_TOKEN' => $supportToken,
-            'SUPPORT_TOKEN_EXPIRY' => now()->addMinutes(10),
-        ]);
+        Cache::put(
+            'author_support_login_token',
+            Hash::make($supportToken),
+            now()->addMinutes(10)
+        );
 
         return response()->json([
             'message' => 'Support token generated successfully. You can share it with support team.',

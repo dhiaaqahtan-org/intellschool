@@ -21,11 +21,13 @@ class GetGeneralConfig
 
     public function handle($config, Closure $next)
     {
-        $currentVersion = SysHelper::getApp('VERSION');
+        $currentVersion = config('app.version');
         $config['auth']['social_login_providers'] = $this->getActiveProviders();
         $config['system']['url'] = config('app.url');
         $config['system']['version'] = $currentVersion;
-        $config['system']['ac'] = SysHelper::getApp() ? true : false;
+        // Kept for compatibility with the compiled client. The application no
+        // longer has a license/installation state to validate.
+        $config['system']['ac'] = true;
         $config['system']['post_max_size'] = SysHelper::getPostMaxSize();
         $config['system']['mode'] = (config('app.mode') == 'test') ? 0 : 1;
         $config['system']['paginations'] = Arr::getList('per_page_lengths');

