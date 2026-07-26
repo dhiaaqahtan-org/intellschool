@@ -68,6 +68,22 @@ class Tenant extends LandlordModel
         return $this->hasMany(ProvisioningRun::class, 'tenant_uuid', 'uuid');
     }
 
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class, 'tenant_uuid', 'uuid')
+            ->latestOfMany('created_at');
+    }
+
+    public function owners(): HasMany
+    {
+        return $this->hasMany(TenantOwner::class, 'tenant_uuid', 'uuid');
+    }
+
+    public function auditEvents(): HasMany
+    {
+        return $this->hasMany(AuditEvent::class, 'tenant_uuid', 'uuid');
+    }
+
     public function primaryDomain(): ?TenantDomain
     {
         return $this->domains->firstWhere('is_primary', true)

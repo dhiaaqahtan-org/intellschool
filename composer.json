@@ -64,7 +64,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
-            "Io\\Billdesk\\Client\\": "billdesk/"
+            "Io\\Billdesk\\Client\\": "billdesk/",
+            "Modules\\Saas\\": "Modules/Saas/app/",
+            "Modules\\Saas\\Database\\Factories\\": "Modules/Saas/database/factories/",
+            "Modules\\Saas\\Database\\Seeders\\": "Modules/Saas/database/seeders/"
         },
         "files": [
             "app/Helpers/helper.php"
@@ -103,7 +106,7 @@
         }
     },
     "config": {
-        "optimize-autoloader": true,
+        "optimize-autoloader": false,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {

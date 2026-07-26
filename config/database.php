@@ -92,6 +92,34 @@ return [
             'prefix_indexes' => true,
         ],
 
+        /*
+        |----------------------------------------------------------------------
+        | SaaS Landlord (Control Plane)
+        |----------------------------------------------------------------------
+        | The landlord database stores ONLY platform/control-plane data:
+        | tenants, domains, plans, subscriptions, provisioning runs, audit.
+        | It must NEVER contain student, academic, finance, or school data.
+        | All Modules/Saas landlord models declare this connection explicitly.
+        */
+        'landlord' => [
+            'driver' => 'mysql',
+            'host' => env('SAAS_LANDLORD_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('SAAS_LANDLORD_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('SAAS_LANDLORD_DB_DATABASE', env('DB_DATABASE', 'forge')),
+            'username' => env('SAAS_LANDLORD_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('SAAS_LANDLORD_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => 'InnoDB',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
     ],
 
     /*

@@ -151,4 +151,128 @@ return [
         'notify'     => env('SAAS_LEAD_NOTIFY_EMAIL'),
         'rate_limit' => '5,60', // attempts, minutes
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Billing
+    |--------------------------------------------------------------------------
+    | SaaS subscription billing is a SEPARATE domain from school fee payments.
+    | The ERP's Stripe/Razorpay integration for student fees must never be the
+    | source of truth for platform subscriptions (plan §9).
+    |
+    | The NullBillingGateway is bound by default. Switch to a real provider
+    | adapter in SaasServiceProvider once a billing provider is approved.
+    */
+    'billing' => [
+        // Provider identifier: 'null', 'stripe', 'razorpay', 'paddle', etc.
+        'provider' => env('SAAS_BILLING_PROVIDER', 'null'),
+
+        // Webhook signature verification secret. MUST be set before enabling
+        // a real billing provider. Never commit the real value.
+        'webhook_secret' => env('SAAS_BILLING_WEBHOOK_SECRET'),
+
+        // Provider API keys. Kept separate from the ERP's payment gateway keys.
+        'api_key' => env('SAAS_BILLING_API_KEY'),
+        'api_secret' => env('SAAS_BILLING_API_SECRET'),
+
+        // Grace period (days) after a failed payment before access is restricted.
+        // School data is NEVER deleted due to billing failure (plan §12).
+        'grace_days' => (int) env('SAAS_BILLING_GRACE_DAYS', 7),
+
+        // Trial configuration.
+        'trial_days' => (int) env('SAAS_BILLING_TRIAL_DAYS', 14),
+        'trial_requires_card' => (bool) env('SAAS_BILLING_TRIAL_CARD', false),
+
+        // Reconciliation schedule (cron expression).
+        'reconcile_schedule' => env('SAAS_BILLING_RECONCILE_CRON', '0 */6 * * *'),
+
+        // Maximum webhook processing retries before manual review.
+        'max_webhook_retries' => (int) env('SAAS_BILLING_MAX_RETRIES', 5),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Entitlements
+    |--------------------------------------------------------------------------
+    | Feature codes and plan enforcement configuration (plan §8).
+    */
+    'entitlements' => [
+        // Cache TTL for the effective entitlement snapshot per tenant.
+        'cache_ttl' => (int) env('SAAS_ENTITLEMENT_CACHE_TTL', 300),
+
+        // In development, grant all features regardless of plan.
+        // MUST be false in production.
+        'development_mode' => (bool) env('SAAS_ENTITLEMENT_DEV_MODE', env('APP_ENV') === 'local'),
+
+        // Stable feature codes. These are referenced by RequireEntitlement
+        // middleware and EntitlementChecker. Adding a code here does NOT
+        // automatically grant it — that is controlled by plan features.
+        'feature_codes' => [
+            'students.core',
+            'students.admissions',
+            'students.attendance',
+            'students.promotion',
+            'academics.core',
+            'academics.exams',
+            'academics.timetable',
+            'finance.fees',
+            'finance.payroll',
+            'finance.accounting',
+            'hr.core',
+            'hr.leave',
+            'transport.routes',
+            'library.core',
+            'inventory.core',
+            'communication.sms',
+            'communication.email',
+            'communication.push',
+            'website.cms',
+            'mobile.offline',
+            'api.access',
+            'reports.advanced',
+            'storage.gb',
+            'campuses.max',
+            'users.max',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Provisioning
+    |--------------------------------------------------------------------------
+    */
+    'provisioning' => [
+        // Maximum concurrent provisioning runs.
+        'max_concurrent' => (int) env('SAAS_PROVISION_MAX_CONCURRENT', 3),
+
+        // Delay (seconds) between batch provisioning steps.
+        'step_delay' => (int) env('SAAS_PROVISION_STEP_DELAY', 2),
+
+        // Whether to run health checks after provisioning.
+        'verify_after_provision' => (bool) env('SAAS_PROVISION_VERIFY', true),
+
+        // Seeder class used for tenant database initialization.
+        'tenant_seeder' => env('SAAS_TENANT_SEEDER', 'Database\\Seeders\\TenantSeeder'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Support access
+    |--------------------------------------------------------------------------
+    | Platform operators may access a tenant only through an approved,
+    | time-limited, fully audited support session (plan §7, §12).
+    */
+    'support' => [
+        // Maximum session duration in minutes.
+        'max_duration' => (int) env('SAAS_SUPPORT_MAX_DURATION', 60),
+
+        // Default access scope: 'read' or 'write'.
+        'default_scope' => env('SAAS_SUPPORT_DEFAULT_SCOPE', 'read'),
+
+        // Whether tenant owner approval is required before access.
+        'requires_approval' => (bool) env('SAAS_SUPPORT_REQUIRES_APPROVAL', true),
+
+        // Show a visible banner to tenant users during support access.
+        'show_banner' => (bool) env('SAAS_SUPPORT_SHOW_BANNER', true),
+    ],
 ];

@@ -16,6 +16,10 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
+        // SaaS tenant resolution disabled for single-tenant development.
+        // The nwidart/laravel-modules package is not installed in vendor,
+        // so SaasServiceProvider cannot register the CurrentTenant binding.
+        // \Modules\Saas\Http\Middleware\ResolveTenant::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
