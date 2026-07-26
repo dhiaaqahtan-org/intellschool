@@ -391,6 +391,14 @@ p  { text-wrap: pretty; }
 }
 [dir="rtl"] .panel--float-a { inset-inline-start: auto; inset-inline-end: -7%; transform: rotateY(13deg) rotateX(7deg) translateZ(90px); }
 
+/* The leading bleed only reads as intentional while the hero is two columns and
+   this panel overlaps the copy. Once the stage is full width it would just be
+   clipped by the viewport, so pull it back in. */
+@media (max-width: 1099px) {
+  .panel--float-a { inset-inline-start: 0; }
+  [dir="rtl"] .panel--float-a { inset-inline-start: auto; inset-inline-end: 0; }
+}
+
 /* Outward bleed is kept small: the panels must read as layered depth, not as
    content clipped by the viewport edge on mid-size desktops. */
 /* translateZ pushes these toward the viewer, which magnifies them AND shifts

@@ -34,6 +34,77 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tenancy
+    |--------------------------------------------------------------------------
+    */
+    'database' => [
+        // Control plane. Must be a DIFFERENT database from any tenant.
+        'landlord_connection' => env('SAAS_LANDLORD_CONNECTION', 'landlord'),
+
+        // Name of the dynamically reconfigured connection that tenant requests
+        // run through. It is made the DEFAULT connection during a request so
+        // unmodified ERP models land on it without edits.
+        'tenant_connection' => env('SAAS_TENANT_CONNECTION', 'tenant'),
+
+        // Connection whose host/port/driver settings are used as the template
+        // for tenant connections. Credentials are always overridden.
+        'tenant_template' => env('SAAS_TENANT_TEMPLATE', 'mysql'),
+
+        // Prefix for generated tenant database names. Names are DERIVED from
+        // the tenant UUID and never accepted from input.
+        'tenant_prefix' => env('SAAS_TENANT_DB_PREFIX', 'tnt_'),
+    ],
+
+    /*
+     * Tenant database clusters.
+     *
+     * Development only — these are read by EnvTenantCredentialResolver, which
+     * refuses to run in production. In production, `secret_ref` on
+     * saas_tenant_databases points at a secret manager entry and a different
+     * resolver implementation fetches it.
+     */
+    'clusters' => [
+        'default' => [
+            'host' => env('SAAS_CLUSTER_DEFAULT_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('SAAS_CLUSTER_DEFAULT_PORT', env('DB_PORT', 3306)),
+            'username' => env('SAAS_CLUSTER_DEFAULT_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('SAAS_CLUSTER_DEFAULT_PASSWORD', env('DB_PASSWORD', '')),
+        ],
+    ],
+
+    'storage' => [
+        // Disks that get re-rooted under tenants/{uuid}/ for the duration of a
+        // tenant request or job. Add every disk that holds school content.
+        // Do NOT add a disk used for control-plane or shared assets.
+        'tenant_disks' => ['local', 'public'],
+    ],
+
+    'tenancy' => [
+        // How long a resolved host→tenant mapping is cached. Kept short: a
+        // suspended or deleted tenant must stop serving quickly. The cache is
+        // flushed explicitly on tenant and domain lifecycle events.
+        'resolution_cache_ttl' => (int) env('SAAS_RESOLUTION_TTL', 60),
+
+        // Hosts that are always treated as control-plane, never as a tenant.
+        // The marketing and platform hosts are added automatically.
+        'reserved_hosts' => array_filter(explode(',', (string) env('SAAS_RESERVED_HOSTS', ''))),
+
+        // Slugs that may never be issued as a tenant subdomain, because they
+        // would shadow a platform host or be mistaken for one.
+        'reserved_slugs' => [
+            'www', 'app', 'api', 'admin', 'platform', 'status', 'help', 'docs',
+            'mail', 'smtp', 'ftp', 'cdn', 'assets', 'static', 'blog', 'support',
+            'billing', 'account', 'accounts', 'login', 'signup', 'register',
+            'test', 'staging', 'dev', 'demo', 'localhost', 'internal',
+        ],
+
+        // In local/testing, allow resolving a tenant even when no marketing
+        // host is configured. MUST stay false in production.
+        'allow_unresolved_in_local' => (bool) env('SAAS_ALLOW_UNRESOLVED_LOCAL', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Verified product facts
     |--------------------------------------------------------------------------
     | Every number rendered on the marketing site comes from here so that a

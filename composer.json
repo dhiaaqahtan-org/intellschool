@@ -30,6 +30,7 @@
         "milon/barcode": "^12.0",
         "monolog/monolog": "^3.0",
         "mpdf/mpdf": "^8.1.4",
+        "nwidart/laravel-modules": "^12.0",
         "opcodesio/log-viewer": "^3.6.0",
         "predis/predis": "^2.1.2",
         "pusher/pusher-php-server": "^7.2.2",
@@ -91,6 +92,14 @@
             "dont-discover": [
                 "laravel/telescope"
             ]
+        },
+        "merge-plugin": {
+            "include": [
+                "Modules/*/composer.json"
+            ],
+            "recurse": true,
+            "replace": false,
+            "merge-dev": false
         }
     },
     "config": {
@@ -99,7 +108,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "phpstan/extension-installer": true,
-            "pestphp/pest-plugin": true
+            "pestphp/pest-plugin": true,
+            "wikimedia/composer-merge-plugin": true
         },
         "audit": {
             "block-insecure": false

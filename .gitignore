@@ -32,3 +32,4 @@ yarn-error.log
 .DS_Store
 /storage/pail
 Thumbs.db
+/modules/saas/node_modules 
