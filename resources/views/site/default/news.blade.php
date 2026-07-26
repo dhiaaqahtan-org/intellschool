@@ -75,7 +75,7 @@
                     {{ trans('news.related_news') }}
                 </x-ui.heading>
                 <div class="grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-1">
-                    <x-site.default.news-card :news="$relatedTagsNews" :menu="$menu" />
+                    <x-site.default.news-card :news="$relatedTagsNews" :slug="$slug" />
                 </div>
             </x-ui.container>
         </section>
@@ -89,7 +89,7 @@
                 </x-ui.heading>
                 <div class="grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-3">
                     @foreach ($relatedCategoryNews as $news)
-                        <x-site.default.news-card :news="$news" :menu="$menu" />
+                        <x-site.default.news-card :news="$news" :slug="$slug" />
                     @endforeach
                 </div>
             </x-ui.container>

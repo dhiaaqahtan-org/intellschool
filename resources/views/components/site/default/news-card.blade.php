@@ -1,9 +1,9 @@
-@props(['news', 'menu'])
+@props(['news', 'slug'])
 
 <div class="flex flex-col overflow-hidden rounded-lg border border-gray-200 shadow-lg dark:border-gray-700">
     <div class="flex-shrink-0">
         <div class="relative">
-            <a href="{{ '/pages/n/' . $menu->slug . '/' . $news->slug }}">
+            <a href="{{ '/pages/n/' . $slug . '/' . $news->slug }}">
                 <img class="lozad h-48 w-full object-cover" data-src="{{ $news->cover_image }}"
                     alt="{{ $news->title }}" />
             </a>
@@ -26,13 +26,13 @@
                 @if ($news->category)
                     <p class="text-site-primary text-sm font-medium">
                         <a
-                            href="{{ route('site.page.news-list-category', ['slug' => $menu->slug, 'category' => $news->category->slug]) }}">
+                            href="{{ route('site.page.news-list-category', ['slug' => $slug, 'category' => $news->category->slug]) }}">
                             <x-ui.badge color="custom" :color-value="$news->category->color">{{ $news->category->name }}</x-ui.badge>
                         </a>
                     </p>
                 @endif
             </div>
-            <a href="{{ '/pages/n/' . $menu->slug . '/' . $news->slug }}" class="mt-2 block">
+            <a href="{{ '/pages/n/' . $slug . '/' . $news->slug }}" class="mt-2 block">
                 <p class="text-xl font-semibold text-gray-900 dark:text-gray-300">{{ $news->title }}</p>
                 <p class="mt-3 text-base text-gray-500 dark:text-gray-400">{{ Str::summary($news->sub_title) }}</p>
             </a>
@@ -42,7 +42,7 @@
             <div class="mt-2 flex flex-wrap gap-2">
                 @foreach ($news->tags as $tag)
                     <a class="truncate rounded-lg bg-gray-200 px-2 py-1 text-sm text-gray-800 dark:bg-gray-500 dark:text-gray-300"
-                        href="{{ route('site.page.news-list-tag', ['slug' => $menu->slug, 'tag' => strtolower($tag->name)]) }}">#{{ $tag->name }}</a>
+                        href="{{ route('site.page.news-list-tag', ['slug' => $slug, 'tag' => strtolower($tag->name)]) }}">#{{ $tag->name }}</a>
                 @endforeach
             </div>
         @endif

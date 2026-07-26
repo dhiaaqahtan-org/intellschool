@@ -528,14 +528,6 @@
             {
                 "name": "site.page",
                 "label": "site.page.page"
-            },
-            {
-                "name": "site.menu",
-                "label": "site.menu.menu"
-            },
-            {
-                "name": "site.block",
-                "label": "site.block.block"
             }
         ]
     },

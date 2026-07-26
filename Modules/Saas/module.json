@@ -1,0 +1,11 @@
+{
+    "name": "Saas",
+    "alias": "saas",
+    "description": "Multi-tenant control plane: tenant lifecycle, provisioning, plans, entitlements, platform administration and the public SaaS marketing website.",
+    "keywords": ["saas", "multi-tenant", "marketing"],
+    "priority": 100,
+    "providers": [
+        "Modules\\Saas\\Providers\\SaasServiceProvider"
+    ],
+    "files": []
+}

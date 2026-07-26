@@ -19,14 +19,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap">
     <link rel="stylesheet" href="{{ asset('school-theme.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('school-home.css') }}?v=1">
     @livewireStyles
 
-    <style>
-        html[dir="rtl"] body {
-            font-family: Tahoma, Arial, sans-serif;
-            text-align: right;
-        }
-    </style>
 </head>
 
 <body class="theme-{{ config('config.site.color_scheme', 'default') }} antialiased">

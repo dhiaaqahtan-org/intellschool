@@ -75,7 +75,7 @@
                     {{ trans('blog.related_blog') }}
                 </x-ui.heading>
                 <div class="grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-1">
-                    <x-site.default.blog-card :blog="$relatedTagsBlog" :menu="$menu" />
+                    <x-site.default.blog-card :blog="$relatedTagsBlog" :slug="$slug" />
                 </div>
             </x-ui.container>
         </section>
@@ -89,7 +89,7 @@
                 </x-ui.heading>
                 <div class="grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-3">
                     @foreach ($relatedCategoryBlogs as $blog)
-                        <x-site.default.blog-card :blog="$blog" :menu="$menu" />
+                        <x-site.default.blog-card :blog="$blog" :slug="$slug" />
                     @endforeach
                 </div>
             </x-ui.container>

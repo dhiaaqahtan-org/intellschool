@@ -2,6 +2,10 @@
     "use strict";
 
     const collapsedStorageKey = "instikit.sidebar.collapsed";
+    const retiredSitePaths = new Set([
+        "/app/site/menus",
+        "/app/site/blocks",
+    ]);
     const svgNamespace = "http://www.w3.org/2000/svg";
     let currentShell = null;
     let autoExpandedPath = null;
@@ -104,8 +108,27 @@
         }
     };
 
+    const removeRetiredSiteLinks = () => {
+        document.querySelectorAll('a[href^="/app/site/"]').forEach((link) => {
+            let path;
+
+            try {
+                path = new URL(link.href, window.location.origin).pathname.replace(/\/+$/, "");
+            } catch {
+                return;
+            }
+
+            if (!retiredSitePaths.has(path)) {
+                return;
+            }
+
+            (link.closest("li") || link).remove();
+        });
+    };
+
     const enhance = () => {
         scheduled = false;
+        removeRetiredSiteLinks();
 
         const shell = document.querySelector(".hidden.lg\\:flex.lg\\:shrink-0");
         const panel = shell?.firstElementChild;

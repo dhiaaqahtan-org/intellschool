@@ -2,8 +2,7 @@
 
 namespace App\View\Components\Site;
 
-use App\Enums\Site\MenuPlacement;
-use App\Models\Site\Menu;
+use App\Support\SiteNavigation;
 use Illuminate\View\Component;
 
 class Footer extends Component
@@ -25,12 +24,8 @@ class Footer extends Component
      */
     public function render()
     {
-        $footerMenus = Menu::query()
-            ->wherePlacement(MenuPlacement::FOOTER)
-            ->whereNull('parent_id')
-            ->orderBy('position', 'asc')
-            ->get();
+        $footerPages = SiteNavigation::primary();
 
-        return view()->first(['components.site.custom.footer', 'components.site.default.footer'], compact('footerMenus'));
+        return view()->first(['components.site.custom.footer', 'components.site.default.footer'], compact('footerPages'));
     }
 }

@@ -8,9 +8,7 @@ class SiteController extends Controller
 {
     public function home(SiteService $service)
     {
-        // Designed marketing home. Inner pages stay CMS-driven via getPage().
-        // To restore the CMS-controlled home: return $service->getPage('Home');
-        return view('site.default.index');
+        return $service->getPage('home');
     }
 
     public function page(string $slug, SiteService $service)

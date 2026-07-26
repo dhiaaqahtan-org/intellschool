@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{{ asset('custom/sidebar-shell.css') }}">
     <link rel="stylesheet" href="{{ asset('custom/responsive-action-menus.css') }}">
     <link rel="stylesheet" href="{{ asset('custom/language-switcher.css') }}">
+    <link rel="stylesheet" href="{{ asset('custom/site-page-editor.css') }}">
 
     @include('gateways.assets.index')
 </head>
@@ -34,6 +35,7 @@
     <script src="{{ asset('custom/sidebar-shell.js') }}" defer></script>
     <script src="{{ asset('custom/language-switcher.js') }}" defer></script>
     <script src="{{ asset('custom/student-registration-labels.js') }}" defer></script>
+    <script src="{{ asset('custom/site-page-editor.js') }}" defer></script>
 </body>
 
 </html>

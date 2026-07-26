@@ -13,7 +13,6 @@ START TRANSACTION;
 SET FOREIGN_KEY_CHECKS = 0;
 
 ALTER TABLE `galleries` ADD `audience` JSON NULL DEFAULT NULL AFTER `date`;
-ALTER TABLE `site_blocks` ADD `type` VARCHAR(50) NULL DEFAULT NULL AFTER `menu_id`;
 
 UPDATE migrations SET migration = '2023_07_31_130312_create_stock_item_copies_table' WHERE migration = '2025_07_03_100052_create_stock_item_copies_table';
 

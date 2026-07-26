@@ -16,20 +16,6 @@ class PageActionController extends Controller
         return response()->success(['message' => trans('global.updated', ['attribute' => trans('site.page.page')])]);
     }
 
-    public function updateBlocks(Request $request, PageActionService $service, Page $page)
-    {
-        $service->updateBlocks($request, $page);
-
-        return response()->success(['message' => trans('global.updated', ['attribute' => trans('site.page.page')])]);
-    }
-
-    public function updateSlider(Request $request, PageActionService $service, Page $page)
-    {
-        $service->updateSlider($request, $page);
-
-        return response()->success(['message' => trans('global.updated', ['attribute' => trans('site.page.page')])]);
-    }
-
     public function updateCTA(Request $request, PageActionService $service, Page $page)
     {
         $service->updateCTA($request, $page);

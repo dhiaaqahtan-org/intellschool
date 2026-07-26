@@ -2,107 +2,66 @@
 
 namespace Database\Seeders;
 
-use App\Enums\Site\MenuPlacement;
 use App\Models\Config\Config;
-use App\Models\Site\Menu;
 use App\Models\Site\Page;
 use Illuminate\Database\Seeder;
 
 class DefaultPageSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $this->enableArabicWebsite();
 
         $pages = [
             [
-                'name' => 'Home',
+                'names' => ['Home', 'الرئيسية', 'الرئيسية || Home'],
+                'name' => 'الرئيسية || Home',
                 'title' => 'مرحباً بكم في '.config('app.name'),
                 'sub_title' => 'بوابتكم الإلكترونية لخدمات المدرسة ومعلوماتها',
                 'content' => 'يوفر الموقع نافذة موحدة للتعريف بالمدرسة والوصول إلى خدمات التسجيل والدفع الإلكتروني وتسجيل الدخول إلى نظام الإدارة.',
                 'seo' => [
+                    'robots' => true,
                     'is_public' => true,
                     'slug' => 'home',
                     'meta_title' => config('app.name'),
                     'meta_description' => 'الموقع الإلكتروني الرسمي لـ '.config('app.name'),
                     'meta_keywords' => 'مدرسة، تعليم، تسجيل، خدمات إلكترونية',
                 ],
-                'menu' => [
-                    'name' => 'الرئيسية',
-                    'slug' => 'Home',
-                    'position' => 1,
-                    'is_default' => true,
-                ],
             ],
             [
-                'name' => 'Contact',
-                'title' => 'تواصل معنا',
-                'sub_title' => 'قنوات التواصل الرسمية',
-                'content' => 'يمكنكم التواصل معنا عبر بيانات الاتصال الرسمية الظاهرة في الموقع.',
+                'names' => ['Contact', 'تواصل معنا', 'تواصل معنا || Contact'],
+                'name' => 'تواصل معنا || Contact',
+                'title' => 'تواصل معنا || Contact us',
+                'sub_title' => 'قنوات التواصل الرسمية || Official contact channels',
+                'content' => '##CONTACT##',
                 'seo' => [
+                    'robots' => true,
                     'is_public' => true,
                     'slug' => 'contact',
-                    'meta_title' => 'تواصل معنا - '.config('app.name'),
-                    'meta_description' => 'بيانات التواصل مع '.config('app.name'),
-                    'meta_keywords' => 'تواصل، مدرسة، بريد إلكتروني، هاتف',
-                ],
-                'menu' => [
-                    'name' => 'تواصل معنا',
-                    'slug' => 'contact',
-                    'position' => 2,
-                    'is_default' => false,
+                    'meta_title' => 'تواصل معنا || Contact us',
+                    'meta_description' => 'بيانات التواصل الرسمية مع المدرسة || Official school contact information',
+                    'meta_keywords' => 'تواصل، مدرسة، بريد إلكتروني، هاتف || contact, school, email, phone',
                 ],
             ],
         ];
 
         foreach ($pages as $pageData) {
-            $menuData = $pageData['menu'];
-            unset($pageData['menu']);
+            $knownNames = $pageData['names'];
+            unset($pageData['names']);
 
-            $page = Page::query()->firstOrNew(['name' => $pageData['name']]);
+            $page = Page::query()
+                ->where('seo->slug', $pageData['seo']['slug'])
+                ->first()
+                ?? Page::query()->whereIn('name', $knownNames)->first()
+                ?? new Page;
 
             if (! $page->exists) {
                 $page->forceFill($pageData)->save();
-            } else {
-                $this->translatePlaceholderPage($page, $pageData);
-            }
-
-            $menu = Menu::query()->where('slug', $menuData['slug'])->first();
-
-            if (! $menu) {
-                Menu::query()->forceCreate([
-                    ...$menuData,
-                    'placement' => MenuPlacement::HEADER,
-                    'page_id' => $page->id,
-                ]);
 
                 continue;
             }
 
-            $updates = [];
-
-            if (! $menu->page_id) {
-                $updates['page_id'] = $page->id;
-            }
-
-            if (! $menu->placement) {
-                $updates['placement'] = MenuPlacement::HEADER;
-            }
-
-            if (in_array($menu->name, [null, '', 'Home', 'Contact'], true)) {
-                $updates['name'] = $menuData['name'];
-            }
-
-            if ($menuData['is_default'] && ! $menu->is_default) {
-                $updates['is_default'] = true;
-            }
-
-            if ($updates) {
-                $menu->forceFill($updates)->save();
-            }
+            $this->updatePlaceholderPage($page, $pageData, $knownNames);
         }
     }
 
@@ -123,9 +82,13 @@ class DefaultPageSeeder extends Seeder
         $siteConfig->save();
     }
 
-    private function translatePlaceholderPage(Page $page, array $pageData): void
+    private function updatePlaceholderPage(Page $page, array $pageData, array $knownNames): void
     {
         $updates = [];
+
+        if (in_array($page->name, $knownNames, true)) {
+            $updates['name'] = $pageData['name'];
+        }
 
         if (! $page->title || str_starts_with($page->title, 'Welcome to ')) {
             $updates['title'] = $pageData['title'];

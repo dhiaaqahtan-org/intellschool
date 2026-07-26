@@ -13,7 +13,7 @@ class NewsList extends Component
      *
      * @return void
      */
-    public function __construct(public $menu, public string $type = 'list') {}
+    public function __construct(public string $slug, public string $type = 'list') {}
 
     /**
      * Get the view / contents that represent the component.

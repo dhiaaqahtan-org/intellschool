@@ -51,6 +51,18 @@ class Page extends Model
         return $this->getImageFile(visibility: 'public', path: $og, default: '/images/site/og.webp');
     }
 
+    public function getSlugAttribute(): string
+    {
+        return (string) Arr::get($this->seo, 'slug');
+    }
+
+    public function getUrlAttribute(): string
+    {
+        return $this->slug === 'home'
+            ? route('site.home')
+            : route('site.page', ['slug' => $this->slug]);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SchoolOS — Multi-tenant school management platform</title>
+<meta name="description" content="SchoolOS runs admissions, academics, fees, HR, transport and communication for schools, colleges and academies — with a separate database per school.">
+<meta name="theme-color" content="#070b18">
+<link rel="stylesheet" href="../resources/assets/css/marketing.css">
+<!--
+  STANDALONE PREVIEW — open this file directly in a browser.
+  It renders the same markup the Blade views produce, using the same
+  stylesheet and enhancement script. See ../README.md before publishing:
+  the brand name, domains, pricing and contact details are placeholders.
+-->
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<!-- ============================ ICON SPRITE ============================ -->
+<svg style="display:none" aria-hidden="true" focusable="false">
+  <symbol id="i-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 8.5 12 4l9 4.5-9 4.5-9-4.5Z"/><path d="M6.5 11v5.2c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8V11"/>
+  </symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5L20 6.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.5 3v5.6c0 4.6-3.1 8.5-7.5 9.9-4.4-1.4-7.5-5.3-7.5-9.9V6L12 3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6"/><path d="M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0"/><path d="M16.5 5.4a3.2 3.2 0 0 1 0 5.2M18 14.4a6.2 6.2 0 0 1 3.2 5.6"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9v6M18 9v6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4.5h6a3 3 0 0 1 3 3V20a2.4 2.4 0 0 0-2.4-2.4H4Z"/><path d="M20 4.5h-6a3 3 0 0 0-3 3V20a2.4 2.4 0 0 1 2.4-2.4H20Z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.4"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-bus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="12.5" rx="2.4"/><path d="M3.5 10.5h17M7.5 20v-3.5M16.5 20v-3.5"/><circle cx="7.8" cy="13.6" r=".9" fill="currentColor"/><circle cx="16.2" cy="13.6" r=".9" fill="currentColor"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.2c0 4.1-3.8 7.4-8.5 7.4a10 10 0 0 1-2.7-.4L4 21l1.3-3.7A7 7 0 0 1 3.5 12.2c0-4.1 3.8-7.4 8.5-7.4s8.5 3.3 8.5 7.4Z"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.6"/><path d="M10.5 18.5h3"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 4.6-9 4.6-9-4.6L12 3Z"/><path d="m3 12.4 9 4.6 9-4.6M3 17l9 4.6 9-4.6"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4M4 20h16"/><path d="M8 16V11M12.5 16V7M17 16v-3"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 21.5 20H2.5L12 3.5Z"/><path d="M12 10v4.2M12 17.3h.01"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.8"/><path d="M3.2 12h17.6M12 3.2c2.4 2.5 3.6 5.5 3.6 8.8s-1.2 6.3-3.6 8.8c-2.4-2.5-3.6-5.5-3.6-8.8S9.6 5.7 12 3.2Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10.5" rx="2.4"/><path d="M8 10.5V7.6a4 4 0 0 1 8 0v2.9"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4.5" width="14" height="16.5" rx="2.4"/><path d="M9 4.5V3.4A1.4 1.4 0 0 1 10.4 2h3.2A1.4 1.4 0 0 1 15 3.4v1.1Z"/><path d="M9 11h6M9 15h4"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.8 8.5 4.4v9.6L12 21.2 3.5 16.8V7.2L12 2.8Z"/><path d="M3.5 7.2 12 11.6l8.5-4.4M12 11.6v9.6"/></symbol>
+</svg>
+
+<!-- ================================ HEADER ================================ -->
+<header class="site-header">
+  <div class="wrap--wide site-header__inner">
+    <a class="brand" href="#" aria-label="SchoolOS home">
+      <span class="brand__mark" aria-hidden="true"><svg><use href="#i-logo"></use></svg></span>
+      SchoolOS
+    </a>
+
+    <nav class="nav" aria-label="Primary">
+      <ul>
+        <li><a href="#platform">Platform</a></li>
+        <li><a href="#modules">Modules</a></li>
+        <li><a href="#roles">Roles</a></li>
+        <li><a href="#isolation">Security</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+    </nav>
+
+    <div class="header-actions">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <a href="#" aria-current="true" lang="en">EN</a>
+        <a href="#" lang="ar">ع</a>
+      </div>
+      <a class="btn btn--on-ink" href="#demo">Sign in</a>
+      <a class="btn btn--accent" href="#demo">
+        Book a demo <svg class="i-arrow" aria-hidden="true"><use href="#i-arrow"></use></svg>
+      </a>
+      <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-controls="mnav" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="wrap--wide">
+    <div class="mobile-nav" id="mnav" data-nav-panel hidden>
+      <a href="#platform">Platform</a>
+      <a href="#modules">Modules</a>
+      <a href="#roles">Roles</a>
+      <a href="#isolation">Security</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#demo">Book a demo</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ================================= HERO ================================= -->
+<section class="hero">
+  <canvas class="hero__canvas" aria-hidden="true"></canvas>
+  <div class="hero__aurora" aria-hidden="true"></div>
+
+  <div class="wrap--wide hero__grid">
+    <div>
+      <span class="badge badge--ink"><span class="dot"></span> Multi-tenant · one database per school</span>
+
+      <h1 style="margin-block-start:var(--sp-4)">
+        Run the whole school<br>
+        <span class="grad">on one platform.</span>
+      </h1>
+
+      <p class="hero__lede">
+        Admissions, academics, attendance, exams, fees, payroll, transport, library
+        and parent communication — in a single system, with every school's records
+        held in its own isolated database.
+      </p>
+
+      <div class="cluster hero__cta">
+        <a class="btn btn--accent btn--lg" href="#demo">
+          Book a demo <svg class="i-arrow" aria-hidden="true"><use href="#i-arrow"></use></svg>
+        </a>
+        <a class="btn btn--on-ink btn--lg" href="#platform">See the platform</a>
+      </div>
+
+      <p class="hero__note">
+        <svg aria-hidden="true"><use href="#i-globe"></use></svg>
+        Arabic and English interface, right-to-left ready from day one.
+      </p>
+
+      <div class="factbar">
+        <div class="fact"><div class="fact__n" data-count>34</div><div class="fact__l">Modules</div></div>
+        <div class="fact"><div class="fact__n" data-count>1701</div><div class="fact__l">API endpoints</div></div>
+        <div class="fact"><div class="fact__n" data-count>17</div><div class="fact__l">Built-in roles</div></div>
+        <div class="fact"><div class="fact__n" data-count>644</div><div class="fact__l">Permissions</div></div>
+      </div>
+    </div>
+
+    <!-- ---------- 3D product stage: live UI panels, not flat images ---------- -->
+    <div class="stage" aria-label="Product interface preview">
+      <div class="stage__scene">
+
+        <!-- Floating micro-cards -->
+        <div class="chip3d chip3d--a" aria-hidden="true">
+          <span class="chip3d__ico" style="background:rgba(5,150,105,.18);color:#6ee7b7"><svg><use href="#i-check"></use></svg></span>
+          <span><strong>Fee receipt #4821</strong><span>Posted to ledger · 09:14</span></span>
+        </div>
+        <div class="chip3d chip3d--b" aria-hidden="true">
+          <span class="chip3d__ico" style="background:rgba(234,88,12,.2);color:#fdba74"><svg><use href="#i-alert"></use></svg></span>
+          <span><strong>12 absentees</strong><span>Guardians notified by SMS</span></span>
+        </div>
+
+        <!-- Main panel: dashboard -->
+        <div class="panel panel--main">
+          <div class="app">
+            <div class="app__bar">
+              <span class="app__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="app__url">alnoor.schoolos.example</span>
+            </div>
+            <div class="app__body">
+              <aside class="app__side">
+                <h6>Main campus</h6>
+                <ul class="app__nav">
+                  <li class="is-active"><i></i> Dashboard</li>
+                  <li><i></i> Students</li>
+                  <li><i></i> Academics</li>
+                  <li><i></i> Finance</li>
+                  <li><i></i> Employees</li>
+                  <li><i></i> Examinations</li>
+                  <li><i></i> Transport</li>
+                  <li><i></i> Library</li>
+                </ul>
+              </aside>
+
+              <div class="app__main" data-inview>
+                <div class="app__head">
+                  <h5>Overview</h5>
+                  <span>Term 2 · 2025–26</span>
+                </div>
+
+                <div class="kpis">
+                  <div class="kpi"><b>1,284</b><small>Students</small></div>
+                  <div class="kpi"><b>96.2%</b><small>Attendance</small> <em>+1.4</em></div>
+                  <div class="kpi"><b>142</b><small>Staff</small></div>
+                  <div class="kpi"><b>87%</b><small>Fees collected</small></div>
+                </div>
+
+                <div class="card-lite">
+                  <header><h6>Fee collection by month</h6><span>Current session</span></header>
+                  <div class="chart">
+                    <span class="bar" style="--h:38%"></span>
+                    <span class="bar" style="--h:52%"></span>
+                    <span class="bar" style="--h:46%"></span>
+                    <span class="bar" style="--h:71%"></span>
+                    <span class="bar" style="--h:64%"></span>
+                    <span class="bar is-peak" style="--h:92%"></span>
+                    <span class="bar" style="--h:58%"></span>
+                    <span class="bar" style="--h:74%"></span>
+                  </div>
+                  <div class="chart-x"><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span></div>
+                </div>
+
+                <div class="card-lite">
+                  <header><h6>Attendance · Grade 9-B</h6><span>Last 14 sessions</span></header>
+                  <div class="heat">
+                    <i data-v="3"></i><i data-v="3"></i><i data-v="2"></i><i data-v="3"></i><i data-v="3"></i>
+                    <i data-v="x"></i><i data-v="3"></i><i data-v="2"></i><i data-v="3"></i><i data-v="3"></i>
+                    <i data-v="1"></i><i data-v="3"></i><i data-v="3"></i><i data-v="2"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating panel A: fee ledger -->
+        <div class="panel panel--float-a">
+          <div class="app">
+            <div class="app__main" style="min-block-size:auto" data-inview>
+              <div class="app__head"><h5>Fee ledger</h5><span>Grade 9-B</span></div>
+              <table class="tbl">
+                <thead><tr><th>Student</th><th>Head</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Layla H.</td><td>Tuition · Q3</td><td><span class="pill pill--ok">Paid</span></td></tr>
+                  <tr><td>Omar S.</td><td>Transport</td><td><span class="pill pill--part">Partial</span></td></tr>
+                  <tr><td>Yusuf A.</td><td>Tuition · Q3</td><td><span class="pill pill--due">Due</span></td></tr>
+                  <tr><td>Maryam K.</td><td>Lab fee</td><td><span class="pill pill--ok">Paid</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating panel B: timetable -->
+        <div class="panel panel--float-b">
+          <div class="app">
+            <div class="app__main" style="min-block-size:auto">
+              <div class="app__head"><h5>Timetable</h5><span>9-B</span></div>
+              <div class="tt">
+                <b></b><b>M</b><b>T</b><b>W</b><b>T</b><b>F</b>
+                <b>1</b><span class="a">Math</span><span>Ar</span><span class="c">Sci</span><span>Eng</span><span class="a">Math</span>
+                <b>2</b><span>Eng</span><span class="b">PE</span><span class="a">Math</span><span class="c">Sci</span><span>Ar</span>
+                <b>3</b><span class="c">Sci</span><span class="a">Math</span><span>Ar</span><span class="b">Art</span><span>Eng</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== PLATFORM =============================== -->
+<section class="section" id="platform">
+  <div class="wrap">
+    <div class="section-head is-center reveal">
+      <span class="eyebrow">The platform</span>
+      <h2>One system instead of six disconnected tools</h2>
+      <p>
+        Most schools run admissions in one place, fees in another, timetables in a
+        spreadsheet and parent messages in a chat group. SchoolOS keeps them in the
+        same record so a change in one place is visible everywhere it matters.
+      </p>
+    </div>
+
+    <div class="grid grid-3">
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-users"></use></svg></div>
+        <h3>Enrolment to alumni</h3>
+        <p>Online registration, document checklists, verification, roll numbers, batch allocation, promotion, transfer and alumni records — one continuous student file.</p>
+      </article>
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-cash"></use></svg></div>
+        <h3>Fees that reconcile</h3>
+        <p>Fee heads, groups, structures, concessions, late fees, instalments, partial and head-wise payments, receipts, cancellations and a day-closure ledger.</p>
+      </article>
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-book"></use></svg></div>
+        <h3>Academics and exams</h3>
+        <p>Courses, batches, divisions, subjects, timetables, lesson plans, assignments, online classes, exam schedules, grades, marksheets and certificates.</p>
+      </article>
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-clipboard"></use></svg></div>
+        <h3>Staff and payroll</h3>
+        <p>Employee records, designations, work shifts, timesheets, leave allocation and requests, salary templates and structures, and payroll processing.</p>
+      </article>
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-bus"></use></svg></div>
+        <h3>Daily operations</h3>
+        <p>Transport routes and vehicle records, hostel allocation, mess menus, inventory and stock, library circulation, gate passes, visitors and enquiries.</p>
+      </article>
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-chat"></use></svg></div>
+        <h3>Reaching parents</h3>
+        <p>Announcements, email, SMS, WhatsApp and push messaging with delivery logs, plus a guardian portal, helpdesk tickets and complaint tracking.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== WORKFLOW 1 ============================== -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="iso">
+      <div class="reveal">
+        <span class="eyebrow">Admissions</span>
+        <h2>From enquiry to enrolled, without re-typing anything</h2>
+        <p style="color:var(--c-muted);font-size:var(--fs-lg);margin-block:var(--sp-4) var(--sp-5)">
+          A reception enquiry becomes an online registration, then a verified student
+          record with a fee structure already allocated. Each stage is a permissioned
+          action with its own audit trail.
+        </p>
+        <ul class="list-check">
+          <li><svg><use href="#i-check"></use></svg><span><strong>Public registration form</strong> with document upload, qualification history and guardian details.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Staged review</strong> — verify, assign fee, request edits, reject with reason, or undo a rejection.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Registration payment</strong> through a configured gateway, or skipped and recorded manually.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Automatic roll numbers</strong> and batch/division allocation on approval.</span></li>
+        </ul>
+      </div>
+
+      <div class="stage reveal" style="min-block-size:auto">
+        <div class="stage__scene">
+          <div class="panel panel--main" style="transform:rotateY(9deg) rotateX(5deg)">
+            <div class="app">
+              <div class="app__bar"><span class="app__dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="app__url">Registrations</span></div>
+              <div class="app__main" data-inview>
+                <div class="app__head"><h5>Registration pipeline</h5><span>48 this week</span></div>
+                <div class="kpis">
+                  <div class="kpi"><b>48</b><small>Submitted</small></div>
+                  <div class="kpi"><b>31</b><small>Verified</small></div>
+                  <div class="kpi"><b>22</b><small>Fee assigned</small></div>
+                  <div class="kpi"><b>19</b><small>Enrolled</small></div>
+                </div>
+                <table class="tbl">
+                  <thead><tr><th>Applicant</th><th>Course</th><th>Stage</th></tr></thead>
+                  <tbody>
+                    <tr><td>Nour A.</td><td>Grade 7</td><td><span class="pill pill--ok">Enrolled</span></td></tr>
+                    <tr><td>Zayd M.</td><td>Grade 10</td><td><span class="pill pill--part">Fee assigned</span></td></tr>
+                    <tr><td>Salma R.</td><td>Grade 1</td><td><span class="pill pill--part">Verified</span></td></tr>
+                    <tr><td>Hamza T.</td><td>Grade 7</td><td><span class="pill pill--due">Docs missing</span></td></tr>
+                    <tr><td>Aisha B.</td><td>Grade 4</td><td><span class="pill pill--ok">Enrolled</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== MODULES =============================== -->
+<section class="section" id="modules">
+  <div class="wrap">
+    <div class="section-head is-center reveal">
+      <span class="eyebrow">Coverage</span>
+      <h2>34 modules, grouped by the job they do</h2>
+      <p>
+        The number beside each module is how many API endpoints it exposes — a
+        reasonable proxy for how deep the module actually goes. Nothing here is a
+        roadmap item; these ship in the product today.
+      </p>
+    </div>
+
+    <div class="bento reveal">
+      <span class="mod"><svg><use href="#i-users"></use></svg> Student <span class="mod__n">265</span></span>
+      <span class="mod"><svg><use href="#i-clipboard"></use></svg> Employee <span class="mod__n">200</span></span>
+      <span class="mod"><svg><use href="#i-book"></use></svg> Academic <span class="mod__n">167</span></span>
+      <span class="mod"><svg><use href="#i-layers"></use></svg> Core <span class="mod__n">132</span></span>
+      <span class="mod"><svg><use href="#i-chart"></use></svg> Exam <span class="mod__n">116</span></span>
+      <span class="mod"><svg><use href="#i-cash"></use></svg> Finance <span class="mod__n">115</span></span>
+      <span class="mod"><svg><use href="#i-bus"></use></svg> Transport <span class="mod__n">95</span></span>
+      <span class="mod"><svg><use href="#i-box"></use></svg> Inventory <span class="mod__n">76</span></span>
+      <span class="mod"><svg><use href="#i-phone"></use></svg> Reception <span class="mod__n">73</span></span>
+      <span class="mod"><svg><use href="#i-book"></use></svg> Resource <span class="mod__n">53</span></span>
+      <span class="mod"><svg><use href="#i-book"></use></svg> Library <span class="mod__n">39</span></span>
+      <span class="mod"><svg><use href="#i-layers"></use></svg> Hostel <span class="mod__n">30</span></span>
+      <span class="mod"><svg><use href="#i-clipboard"></use></svg> Tasks <span class="mod__n">30</span></span>
+      <span class="mod"><svg><use href="#i-chat"></use></svg> Communication <span class="mod__n">26</span></span>
+      <span class="mod"><svg><use href="#i-chat"></use></svg> Helpdesk <span class="mod__n">21</span></span>
+      <span class="mod"><svg><use href="#i-check"></use></svg> Approvals <span class="mod__n">19</span></span>
+      <span class="mod"><svg><use href="#i-box"></use></svg> Assets <span class="mod__n">18</span></span>
+      <span class="mod"><svg><use href="#i-calendar"></use></svg> Calendar <span class="mod__n">18</span></span>
+      <span class="mod"><svg><use href="#i-box"></use></svg> Mess <span class="mod__n">18</span></span>
+      <span class="mod"><svg><use href="#i-phone"></use></svg> Contacts <span class="mod__n">17</span></span>
+      <span class="mod"><svg><use href="#i-globe"></use></svg> Blog <span class="mod__n">16</span></span>
+      <span class="mod"><svg><use href="#i-globe"></use></svg> News <span class="mod__n">16</span></span>
+      <span class="mod"><svg><use href="#i-lock"></use></svg> Auth <span class="mod__n">16</span></span>
+      <span class="mod"><svg><use href="#i-calendar"></use></svg> Activities <span class="mod__n">15</span></span>
+      <span class="mod"><svg><use href="#i-users"></use></svg> Guardian <span class="mod__n">13</span></span>
+      <span class="mod"><svg><use href="#i-clipboard"></use></svg> Forms <span class="mod__n">12</span></span>
+      <span class="mod"><svg><use href="#i-users"></use></svg> Recruitment <span class="mod__n">12</span></span>
+      <span class="mod"><svg><use href="#i-globe"></use></svg> School site <span class="mod__n">10</span></span>
+      <span class="mod"><svg><use href="#i-chat"></use></svg> Posts <span class="mod__n">10</span></span>
+      <span class="mod"><svg><use href="#i-globe"></use></svg> Gallery <span class="mod__n">9</span></span>
+      <span class="mod"><svg><use href="#i-chat"></use></svg> Chat <span class="mod__n">8</span></span>
+      <span class="mod"><svg><use href="#i-alert"></use></svg> Discipline <span class="mod__n">6</span></span>
+      <span class="mod"><svg><use href="#i-phone"></use></svg> Devices <span class="mod__n">5</span></span>
+      <span class="mod"><svg><use href="#i-layers"></use></svg> Misc <span class="mod__n">4</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ================================ ROLES ================================ -->
+<section class="section section--alt" id="roles">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Permissions</span>
+      <h2>Everyone sees their own school, not everyone else's data</h2>
+      <p>
+        17 roles ship configured out of the box, each holding a specific permission
+        set that is enforced on the server — not by hiding menu items. Roles are
+        scoped to a campus, so a branch accountant never sees another branch's ledger.
+      </p>
+    </div>
+
+    <!-- Enhanced by RoleExplorer.vue in the Laravel build; this markup is the
+         server-rendered baseline and stays fully usable without JavaScript. -->
+    <div class="roles reveal" data-vue-component="role-explorer">
+      <div class="roles__tabs" role="tablist" aria-label="Roles">
+        <button class="roles__tab" role="tab" id="t-admin" aria-controls="p-admin" aria-selected="true" type="button">School admin <span class="n">644</span></button>
+        <button class="roles__tab" role="tab" id="t-principal" aria-controls="p-principal" aria-selected="false" type="button">Principal <span class="n">468</span></button>
+        <button class="roles__tab" role="tab" id="t-accountant" aria-controls="p-accountant" aria-selected="false" type="button">Accountant <span class="n">73</span></button>
+        <button class="roles__tab" role="tab" id="t-teacher" aria-controls="p-teacher" aria-selected="false" type="button">Teacher / staff <span class="n">80</span></button>
+        <button class="roles__tab" role="tab" id="t-guardian" aria-controls="p-guardian" aria-selected="false" type="button">Guardian <span class="n">29</span></button>
+        <button class="roles__tab" role="tab" id="t-student" aria-controls="p-student" aria-selected="false" type="button">Student <span class="n">29</span></button>
+      </div>
+
+      <div>
+        <div class="roles__panel" role="tabpanel" id="p-admin" aria-labelledby="t-admin" tabindex="0">
+          <h3>School admin — 644 permissions</h3>
+          <p>Full control of the school's own tenant: configuration, users, roles, academic setup, finance, payroll, backups and the public school website. No visibility into any other school.</p>
+          <div class="tags"><span class="tag">config:store</span><span class="tag">user:change-role</span><span class="tag">backup:manage</span><span class="tag">payroll:process</span><span class="tag">finance:report</span><span class="tag">site:manage</span><span class="tag">period:config</span></div>
+        </div>
+        <div class="roles__panel" role="tabpanel" id="p-principal" aria-labelledby="t-principal" tabindex="0" hidden>
+          <h3>Principal — 468 permissions</h3>
+          <p>Academic and staff oversight across the campus: timetables, exams, attendance, discipline, approvals and reporting, without the finance and system-configuration surface an admin holds.</p>
+          <div class="tags"><span class="tag">exam:report</span><span class="tag">timetable:allocate</span><span class="tag">leave-request:action</span><span class="tag">incident:manage</span><span class="tag">student:promotion</span><span class="tag">approval-request:action</span></div>
+        </div>
+        <div class="roles__panel" role="tabpanel" id="p-accountant" aria-labelledby="t-accountant" tabindex="0" hidden>
+          <h3>Accountant — 73 permissions</h3>
+          <p>Fee collection, receipts, concessions, ledgers, transactions and day closure. Sensitive academic and HR records stay out of reach unless explicitly granted.</p>
+          <div class="tags"><span class="tag">fee:payment</span><span class="tag">receipt:create</span><span class="tag">receipt:cancel</span><span class="tag">ledger:read</span><span class="tag">day-closure:manage</span><span class="tag">transaction:create</span></div>
+        </div>
+        <div class="roles__panel" role="tabpanel" id="p-teacher" aria-labelledby="t-teacher" tabindex="0" hidden>
+          <h3>Teacher / staff — 80 permissions</h3>
+          <p>Attendance marking, marks entry for assigned subjects, lesson plans, assignments, student diary and learning material — limited to the batches and subjects they are in charge of.</p>
+          <div class="tags"><span class="tag">attendance:mark</span><span class="tag">exam:marks-record</span><span class="tag">lesson-plan:create</span><span class="tag">assignment:create</span><span class="tag">student:incharge-access</span></div>
+        </div>
+        <div class="roles__panel" role="tabpanel" id="p-guardian" aria-labelledby="t-guardian" tabindex="0" hidden>
+          <h3>Guardian — 29 permissions</h3>
+          <p>Their own children only: attendance, results, fee dues and payment, timetable, announcements, diary, leave requests and helpdesk tickets.</p>
+          <div class="tags"><span class="tag">student:self-access</span><span class="tag">fee:payment</span><span class="tag">ticket:create</span><span class="tag">announcement:read</span><span class="tag">post:read</span></div>
+        </div>
+        <div class="roles__panel" role="tabpanel" id="p-student" aria-labelledby="t-student" tabindex="0" hidden>
+          <h3>Student — 29 permissions</h3>
+          <p>Timetable, assignments, learning material, online classes, exam schedule and results, library issues, leave and service requests.</p>
+          <div class="tags"><span class="tag">assignment:read</span><span class="tag">online-class:read</span><span class="tag">student:leave-request</span><span class="tag">learning-material:read</span><span class="tag">chat:access</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== ISOLATION ============================== -->
+<section class="section section--ink" id="isolation">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Tenant isolation</span>
+      <h2>Every school gets its own database. Not a shared table with a filter.</h2>
+      <p>
+        Most school platforms put every customer's students in one set of tables and
+        rely on the application remembering to filter by school on every query. One
+        forgotten condition exposes another school's records. SchoolOS resolves the
+        school from the hostname and switches the database connection before
+        authentication runs, so a missed filter has nothing to leak into.
+      </p>
+    </div>
+
+    <div class="iso">
+      <div class="iso-vis reveal" data-inview aria-hidden="true">
+        <div class="iso-vis__stack">
+          <div class="iso-layer"><span><b>Request</b><span>alnoor.schoolos.example</span></span><span class="iso-layer__tag">Host</span></div>
+          <div class="iso-layer"><span><b>Resolve tenant</b><span>Verified host → tenant UUID</span></span><span class="iso-layer__tag">Landlord DB</span></div>
+          <div class="iso-layer iso-layer--tenant"><span><b>Switch connection</b><span>db_tenant_alnoor</span></span><span class="iso-layer__tag">Isolated</span></div>
+          <div class="iso-layer"><span><b>Authenticate</b><span>User looked up inside the tenant</span></span><span class="iso-layer__tag">Guard</span></div>
+          <div class="iso-layer iso-layer--blocked"><span><b>Cross-tenant read</b><span>Guessed ID from another school</span></span><span class="iso-layer__tag">Denied</span></div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <ul class="list-check">
+          <li><svg><use href="#i-check"></use></svg><span><strong>Database per tenant.</strong> The physical database is the boundary. Application bugs cannot cross it.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Resolution before authentication.</strong> Unknown, unverified or suspended hosts fail closed rather than falling back to a default.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Tenant-scoped everything.</strong> Cache keys, locks, rate limits, queued jobs, file paths, broadcasts and exports all carry the tenant UUID.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>No universal super-user.</strong> Platform operators use a separate guard; support access is time-limited, scoped, approved and fully audited.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Custom domains verified by DNS</strong> before they route, with exact normalized host matching.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Per-school backup and deletion.</strong> Offboarding removes one database and one storage prefix, not rows scattered across shared tables.</span></li>
+        </ul>
+
+        <div class="notice" style="margin-block-start:var(--sp-6)">
+          <svg><use href="#i-alert"></use></svg>
+          <span>Availability, recovery-time and certification claims are deliberately absent from this page until monitoring, restore drills and an external security review produce evidence to support them.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================= MULTI-CAMPUS ============================= -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head is-center reveal">
+      <span class="eyebrow">Groups and branches</span>
+      <h2>One account, many campuses</h2>
+      <p>A school group signs up once. Inside that account it can run several campuses, each with its own staff, students, timetable and ledger — while group leadership sees the consolidated picture.</p>
+    </div>
+
+    <div class="grid grid-3">
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-shield"></use></svg></div>
+        <h3>Account</h3>
+        <p>The billing, legal and security boundary. One isolated database, one subscription, one set of custom domains. This is what a competitor can never see into.</p>
+      </article>
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-layers"></use></svg></div>
+        <h3>Organisation</h3>
+        <p>The education-domain grouping inside the account — a trust, a group, or simply the single school. Holds shared configuration and reporting.</p>
+      </article>
+      <article class="card reveal">
+        <div class="card__ico"><svg><use href="#i-globe"></use></svg></div>
+        <h3>Campus</h3>
+        <p>A school, college, institute or branch. Users are assigned per campus and switch between the ones they are entitled to; permissions are evaluated per campus.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ MOBILE / HONEST ============================ -->
+<section class="section section--alt">
+  <div class="wrap">
+    <div class="iso">
+      <div class="reveal">
+        <span class="eyebrow">Mobile</span>
+        <h2>A companion app for parents, students and staff</h2>
+        <p style="color:var(--c-muted);font-size:var(--fs-lg);margin-block:var(--sp-4) var(--sp-5)">
+          The mobile client is built on the same permissioned API as the web app,
+          with local storage for reading attendance, timetables and announcements
+          when the network drops.
+        </p>
+        <ul class="list-check">
+          <li><svg><use href="#i-check"></use></svg><span><strong>Arabic and English</strong> with full right-to-left layout.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Local cache and an outbox</strong> so actions taken offline are queued and replayed.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span><strong>Per-school storage partitioning</strong> — one device can hold two schools without their data mixing.</span></li>
+        </ul>
+        <p style="margin-block-start:var(--sp-5)">
+          <span class="badge badge--warn"><span class="dot"></span> In development — not yet released</span>
+        </p>
+        <p style="font-size:var(--fs-sm);color:var(--c-muted);margin-block-start:var(--sp-3);max-inline-size:36rem">
+          We are not publishing store links, screenshots or offline guarantees until the
+          client builds cleanly, passes its two-school isolation tests and completes a
+          field trial. This section will state a release date once it exists.
+        </p>
+      </div>
+
+      <div class="stage reveal" style="min-block-size:auto">
+        <div class="stage__scene">
+          <div class="panel panel--main" style="transform:rotateY(-9deg) rotateX(5deg)">
+            <div class="app">
+              <div class="app__bar"><span class="app__dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="app__url">Guardian portal</span></div>
+              <div class="app__main" data-inview>
+                <div class="app__head"><h5>Layla Hassan · Grade 9-B</h5><span>Guardian view</span></div>
+                <div class="card-lite" style="display:flex;align-items:center;gap:14px">
+                  <span class="donut" data-p="96" data-label="96%"></span>
+                  <div>
+                    <h6 style="font-size:11px;margin:0 0 3px">Attendance this term</h6>
+                    <p style="font-size:10px;color:var(--c-muted);margin:0">62 of 65 sessions present · 1 approved leave</p>
+                  </div>
+                </div>
+                <div class="card-lite">
+                  <header><h6>Outstanding fees</h6><span>Due 15 Mar</span></header>
+                  <table class="tbl">
+                    <tbody>
+                      <tr><td>Tuition · Q3</td><td class="num">1,200.00</td><td><span class="pill pill--due">Due</span></td></tr>
+                      <tr><td>Transport · Q3</td><td class="num">300.00</td><td><span class="pill pill--part">Partial</span></td></tr>
+                      <tr><td>Lab fee</td><td class="num">150.00</td><td><span class="pill pill--ok">Paid</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="card-lite">
+                  <header><h6>Latest announcement</h6><span>2 h ago</span></header>
+                  <p style="font-size:10.5px;color:var(--c-muted);margin:0">Parent–teacher meeting moved to Thursday 14:00 in the main hall.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== PRICING =============================== -->
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section-head is-center reveal">
+      <span class="eyebrow">Pricing</span>
+      <h2>Priced per school, by size</h2>
+      <p>Every plan includes all 34 modules, the guardian and student portals, Arabic and English, and an isolated database. Plans differ on capacity and operational commitments, not on withholding core features.</p>
+    </div>
+
+    <div class="notice reveal" style="max-inline-size:52rem;margin:0 auto var(--sp-7)">
+      <svg><use href="#i-alert"></use></svg>
+      <span><strong>Placeholder figures.</strong> These tiers illustrate the structure only. Replace every price, limit and currency with commercially approved values before this page goes live — publishing unapproved pricing creates a contractual exposure.</span>
+    </div>
+
+    <div class="price-grid">
+      <div class="plan reveal">
+        <div>
+          <h3>Starter</h3>
+          <p class="plan__desc">A single campus getting off spreadsheets.</p>
+        </div>
+        <div class="plan__price"><b>$—</b><span>/ month</span></div>
+        <ul class="list-check">
+          <li><svg><use href="#i-check"></use></svg><span>1 campus · up to <strong>300 students</strong></span></li>
+          <li><svg><use href="#i-check"></use></svg><span>All 34 modules</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Guardian &amp; student portals</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Isolated database &amp; daily backup</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Email support</span></li>
+        </ul>
+        <a class="btn btn--ghost btn--block" href="#demo">Talk to us</a>
+      </div>
+
+      <div class="plan plan--featured reveal">
+        <div>
+          <span class="badge badge--ink"><span class="dot"></span> Most schools</span>
+          <h3 style="margin-block-start:var(--sp-3)">Growth</h3>
+          <p class="plan__desc">Multi-campus groups with finance and HR depth.</p>
+        </div>
+        <div class="plan__price"><b>$—</b><span>/ month</span></div>
+        <ul class="list-check">
+          <li><svg><use href="#i-check"></use></svg><span>Up to <strong>5 campuses</strong> · 2,000 students</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Payroll, inventory, transport &amp; hostel</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Custom domain for the school website</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>SMS / WhatsApp gateway integration</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Data import assistance</span></li>
+        </ul>
+        <a class="btn btn--accent btn--block" href="#demo">Book a demo</a>
+      </div>
+
+      <div class="plan reveal">
+        <div>
+          <h3>Enterprise</h3>
+          <p class="plan__desc">Large groups with procurement and compliance requirements.</p>
+        </div>
+        <div class="plan__price"><b>Custom</b></div>
+        <ul class="list-check">
+          <li><svg><use href="#i-check"></use></svg><span>Unlimited campuses &amp; students</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Single sign-on</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Dedicated database host or region</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Negotiated retention &amp; support terms</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Named implementation contact</span></li>
+        </ul>
+        <a class="btn btn--ghost btn--block" href="#demo">Contact sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ IMPLEMENTATION ============================ -->
+<section class="section section--ink">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Getting started</span>
+      <h2>What the first term actually looks like</h2>
+      <p>No school switches systems mid-year on a whim. This is the sequence we work through, and roughly where the effort sits.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step reveal"><h3>Scoping call</h3><p>Campuses, student and staff counts, academic calendar, fee structure complexity, and which existing systems have to be imported.</p></div>
+      <div class="step reveal"><h3>Provisioning</h3><p>Your account, database, subdomain and first campus are created automatically. You get an owner login and a setup checklist.</p></div>
+      <div class="step reveal"><h3>Import &amp; configure</h3><p>Students, guardians, staff and fee structures are imported with a dry run and a validation report before anything is written.</p></div>
+      <div class="step reveal"><h3>Pilot then go live</h3><p>One grade or one campus runs live first. Once attendance, fees and reports reconcile against your old system, the rest follows.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================= FAQ ================================= -->
+<section class="section" id="faq">
+  <div class="wrap">
+    <div class="section-head is-center reveal">
+      <span class="eyebrow">Questions</span>
+      <h2>Frequently asked</h2>
+    </div>
+
+    <div class="faq reveal">
+      <details>
+        <summary>Where is our data stored, and who can see it?</summary>
+        <div class="faq__a">Your school gets a dedicated database. Other schools on the platform run against different databases and have no route to yours. Platform staff authenticate against a separate system and have no standing access to school data; support access requires an approved, time-limited, audited session.</div>
+      </details>
+      <details>
+        <summary>Can we use our own domain?</summary>
+        <div class="faq__a">Yes. You start on a subdomain such as <code>yourschool.schoolos.example</code>. A custom domain can be added once DNS ownership is verified; until verification completes, the domain does not route.</div>
+      </details>
+      <details>
+        <summary>Does it work in Arabic?</summary>
+        <div class="faq__a">Arabic and English are both first-class, including right-to-left layout throughout the interface, printed documents and the parent-facing portal. Users choose their own language independently of the school default.</div>
+      </details>
+      <details>
+        <summary>Can we run several campuses under one account?</summary>
+        <div class="faq__a">Yes. One account can contain an organisation with multiple campuses. Staff are assigned per campus and switch between the ones they are entitled to; group leadership can report across all of them.</div>
+      </details>
+      <details>
+        <summary>What happens if we stop paying?</summary>
+        <div class="faq__a">Access moves to a defined grace period, then to a read-only state that still allows export and billing. School records are not deleted because an invoice failed. Deletion only happens through an explicit, confirmed offboarding process after the retention window.</div>
+      </details>
+      <details>
+        <summary>Can we get our data out?</summary>
+        <div class="faq__a">Yes — structured exports by domain, with a manifest, schema version and checksums, so the export can be verified and re-imported rather than just downloaded.</div>
+      </details>
+      <details>
+        <summary>How does it integrate with what we already run?</summary>
+        <div class="faq__a">The platform exposes a permissioned REST API covering every module. Payment, SMS, WhatsApp and email providers are configured per school rather than shared across the platform.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ================================ DEMO ================================ -->
+<section class="section section--alt" id="demo">
+  <div class="wrap">
+    <div class="iso">
+      <div class="reveal">
+        <span class="eyebrow">Talk to us</span>
+        <h2>Book a demo</h2>
+        <p style="color:var(--c-muted);font-size:var(--fs-lg);margin-block:var(--sp-4) var(--sp-5)">
+          A 30-minute walkthrough against your actual situation — number of campuses,
+          how your fee structure works, and what has to come across from your current
+          system. No production student data is used in demos.
+        </p>
+        <ul class="list-check">
+          <li><svg><use href="#i-check"></use></svg><span>We reply within one business day.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Your details are used to arrange the demo only.</span></li>
+          <li><svg><use href="#i-check"></use></svg><span>Available in Arabic or English.</span></li>
+        </ul>
+      </div>
+
+      <!-- Enhanced by DemoForm.vue; posts to the same route with or without JS. -->
+      <form class="form card reveal" method="post" action="#" data-vue-component="demo-form" novalidate>
+        <div class="form__row">
+          <div class="field">
+            <label for="f-name">Your name <span class="req" aria-hidden="true">*</span></label>
+            <input id="f-name" name="name" type="text" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="f-school">School or group <span class="req" aria-hidden="true">*</span></label>
+            <input id="f-school" name="school" type="text" autocomplete="organization" required>
+          </div>
+        </div>
+        <div class="form__row">
+          <div class="field">
+            <label for="f-email">Work email <span class="req" aria-hidden="true">*</span></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required>
+            <span class="hint">We will send the meeting invite here.</span>
+          </div>
+          <div class="field">
+            <label for="f-size">Students</label>
+            <select id="f-size" name="size">
+              <option value="">Select a range</option>
+              <option>Up to 300</option>
+              <option>300 – 800</option>
+              <option>800 – 2,000</option>
+              <option>Over 2,000</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-msg">What would you like to see?</label>
+          <textarea id="f-msg" name="message" rows="4"></textarea>
+        </div>
+        <label class="consent">
+          <input type="checkbox" name="consent" required>
+          <span>I agree that my details may be used to contact me about this request, as described in the privacy notice.</span>
+        </label>
+        <button class="btn btn--accent btn--lg btn--block" type="submit">
+          Request a demo <svg class="i-arrow" aria-hidden="true"><use href="#i-arrow"></use></svg>
+        </button>
+        <p style="font-size:var(--fs-xs);color:var(--c-muted);text-align:center">
+          In this preview the form does not submit anywhere.
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== CTA BAND ============================== -->
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <h2>See it running against your own numbers</h2>
+      <p>Bring a fee structure, a timetable and a class list. We will show you what they look like in the system.</p>
+      <div class="cluster">
+        <a class="btn btn--accent btn--lg" href="#demo">Book a demo <svg class="i-arrow" aria-hidden="true"><use href="#i-arrow"></use></svg></a>
+        <a class="btn btn--on-ink btn--lg" href="#pricing">See pricing</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- =============================== FOOTER =============================== -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="#" style="margin-block-end:var(--sp-4)">
+          <span class="brand__mark" aria-hidden="true"><svg><use href="#i-logo"></use></svg></span>
+          SchoolOS
+        </a>
+        <p>School management for schools, colleges, institutes and academies. Built on Laravel, delivered as a multi-tenant service.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#platform">Platform</a></li>
+          <li><a href="#modules">Modules</a></li>
+          <li><a href="#roles">Roles &amp; permissions</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Trust</h4>
+        <ul>
+          <li><a href="#isolation">Security &amp; isolation</a></li>
+          <li><a href="#">Privacy notice</a></li>
+          <li><a href="#">Terms of service</a></li>
+          <li><a href="#">Data processing addendum</a></li>
+          <li><a href="#">Subprocessors</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#demo">Book a demo</a></li>
+          <li><a href="#">Contact</a></li>
+          <li><a href="#">Help centre</a></li>
+          <li><a href="#">Status</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 SchoolOS. Company name, registration number and registered address go here.</span>
+      <span class="cluster">
+        <span class="badge badge--soon">Preview build — placeholder brand &amp; content</span>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script src="../resources/assets/js/marketing/enhance.js"></script>
+</body>
+</html>

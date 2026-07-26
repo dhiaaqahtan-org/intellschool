@@ -6,7 +6,6 @@ use App\Enums\Blog\Status;
 use App\Enums\Blog\Visibility;
 use App\Http\Controllers\Controller;
 use App\Models\Blog\Blog;
-use App\Models\Site\Menu;
 use App\Support\MarkdownParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -57,10 +56,6 @@ class BlogController extends Controller
             ->orderBy('published_at', 'desc')
             ->first();
 
-        $menu = Menu::query()
-            ->whereSlug($slug)
-            ->first();
-
-        return view(config('config.site.view').'blog', compact('blog', 'relatedCategoryBlogs', 'relatedTagsBlog', 'slug', 'menu'));
+        return view(config('config.site.view').'blog', compact('blog', 'relatedCategoryBlogs', 'relatedTagsBlog', 'slug'));
     }
 }

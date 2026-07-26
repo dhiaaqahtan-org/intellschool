@@ -14,7 +14,7 @@ class BlogList extends Component
      *
      * @return void
      */
-    public function __construct(public $menu, public string $type = 'list')
+    public function __construct(public string $slug, public string $type = 'list')
     {
         //
     }

@@ -2,9 +2,7 @@
 
 namespace App\Http\Resources\Site;
 
-use App\Enums\Site\BlockType;
 use App\Http\Resources\MediaResource;
-use App\Models\Site\Block;
 use App\Support\MarkdownParser;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
@@ -43,10 +41,6 @@ class PageResource extends JsonResource
                 'meta_keywords' => Arr::get($this->seo, 'meta_keywords'),
             ],
             $this->mergeWhen($request->with_details, [
-                // 'has_block' => (bool) $this->getMeta('has_block'),
-                // 'blocks' => $this->getBlocks(),
-                'has_slider' => (bool) $this->getMeta('has_slider'),
-                'slider' => $this->getSlider(),
                 'has_cta' => (bool) $this->getMeta('has_cta'),
                 $this->mergeWhen($this->getMeta('has_cta'), [
                     'cta_title' => $this->getMeta('cta_title'),
@@ -60,29 +54,5 @@ class PageResource extends JsonResource
             'created_at' => \Cal::dateTime($this->created_at),
             'updated_at' => \Cal::dateTime($this->updated_at),
         ];
-    }
-
-    private function getSlider()
-    {
-        if (! $this->getMeta('has_slider')) {
-            return null;
-        }
-
-        return BlockResource::make(Block::query()
-            ->where('uuid', $this->getMeta('slider'))
-            ->where('type', BlockType::SLIDER)
-            ->first());
-    }
-
-    private function getBlocks()
-    {
-        if (! $this->getMeta('has_block')) {
-            return [];
-        }
-
-        return BlockResource::collection(Block::query()
-            ->whereIn('uuid', $this->getMeta('blocks', []))
-            ->orderBy('position', 'asc')
-            ->get());
     }
 }

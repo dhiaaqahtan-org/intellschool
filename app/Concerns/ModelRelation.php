@@ -157,8 +157,6 @@ trait ModelRelation
             'Form' => 'App\Models\Form\Form',
             'FormSubmission' => 'App\Models\Form\Submission',
             'SitePage' => 'App\Models\Site\Page',
-            'SiteMenu' => 'App\Models\Site\Menu',
-            'SiteBlock' => 'App\Models\Site\Block',
             'Blog' => 'App\Models\Blog\Blog',
             'News' => 'App\Models\News\News',
             'Trip' => 'App\Models\Activity\Trip',

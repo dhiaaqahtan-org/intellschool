@@ -3,8 +3,6 @@
 namespace App\Services\Site;
 
 use App\Concerns\HasStorage;
-use App\Enums\Site\BlockType;
-use App\Models\Site\Block;
 use App\Models\Site\Page;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -44,67 +42,6 @@ class PageActionService
         $page->updateMedia($request);
     }
 
-    public function updateBlocks(Request $request, Page $page)
-    {
-        $request->validate([
-            'has_block' => 'boolean',
-            'blocks' => 'array|required_if:has_block,true',
-        ], [], [
-            'has_block' => trans('site.block.block'),
-            'blocks' => trans('site.block.block'),
-        ]);
-
-        if (! $request->boolean('has_block')) {
-            $page->setMeta([
-                'has_block' => false,
-            ]);
-            $page->save();
-
-            return;
-        }
-
-        $blocks = Block::query()
-            ->whereIn('uuid', $request->blocks)
-            ->get();
-
-        $page->setMeta([
-            'has_block' => true,
-            'blocks' => $blocks->pluck('uuid'),
-        ]);
-        $page->save();
-    }
-
-    public function updateSlider(Request $request, Page $page)
-    {
-        $request->validate([
-            'has_slider' => 'boolean',
-            'slider' => 'required_if:has_slider,true',
-        ], [], [
-            'has_slider' => trans('site.block.props.slider'),
-            'slider' => trans('site.block.props.slider'),
-        ]);
-
-        if (! $request->boolean('has_slider')) {
-            $page->setMeta([
-                'has_slider' => false,
-            ]);
-            $page->save();
-
-            return;
-        }
-
-        $slider = Block::query()
-            ->where('uuid', $request->slider)
-            ->where('type', BlockType::SLIDER)
-            ->firstOrFail();
-
-        $page->setMeta([
-            'has_slider' => true,
-            'slider' => $slider->uuid,
-        ]);
-        $page->save();
-    }
-
     public function updateCTA(Request $request, Page $page)
     {
         $request->validate([
@@ -114,11 +51,11 @@ class PageActionService
             'cta_button_text' => 'required_if:has_cta,true|min:3|max:255',
             'cta_button_link' => 'required_if:has_cta,true|url',
         ], [], [
-            'has_cta' => trans('site.block.props.cta'),
-            'cta_title' => trans('site.block.props.cta_title'),
-            'cta_description' => trans('site.block.props.cta_description'),
-            'cta_button_text' => trans('site.block.props.cta_button_text'),
-            'cta_button_link' => trans('site.block.props.cta_button_link'),
+            'has_cta' => trans('site.page.props.cta'),
+            'cta_title' => trans('site.page.props.cta_title'),
+            'cta_description' => trans('site.page.props.cta_description'),
+            'cta_button_text' => trans('site.page.props.cta_button_text'),
+            'cta_button_link' => trans('site.page.props.cta_button_link'),
         ]);
 
         if (! $request->boolean('has_cta')) {

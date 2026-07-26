@@ -1389,15 +1389,13 @@ Total endpoints: **1701** across **34** route groups. URIs are shown under the `
 | GET | `/api/v1/app/library/reports/top-borrowed-book/pre-requisite` | library:report |
 | GET | `/api/v1/app/library/reports/top-borrowed-book` | library:report |
 
-## site  (31 endpoints)
+## site  (10 endpoints)
 
 | Method | URI | Permission |
 |---|---|---|
 | GET | `/api/v1/app/site/pages/pre-requisite` |  |
 | POST | `/api/v1/app/site/pages/{page}/assets/{type}` |  |
 | DELETE | `/api/v1/app/site/pages/{page}/assets/{type}` |  |
-| POST | `/api/v1/app/site/pages/{page}/blocks` |  |
-| POST | `/api/v1/app/site/pages/{page}/slider` |  |
 | POST | `/api/v1/app/site/pages/{page}/cta` |  |
 | POST | `/api/v1/app/site/pages/{page}/meta` |  |
 | GET | `/api/v1/app/site/pages` |  |
@@ -1405,25 +1403,6 @@ Total endpoints: **1701** across **34** route groups. URIs are shown under the `
 | GET | `/api/v1/app/site/pages/{id}` |  |
 | PUT|PATCH | `/api/v1/app/site/pages/{id}` |  |
 | DELETE | `/api/v1/app/site/pages/{id}` |  |
-| GET | `/api/v1/app/site/menus/pre-requisite` |  |
-| POST | `/api/v1/app/site/menus/reorder` |  |
-| POST | `/api/v1/app/site/menus/reorder-sub-menu` |  |
-| GET | `/api/v1/app/site/menus` |  |
-| POST | `/api/v1/app/site/menus` |  |
-| GET | `/api/v1/app/site/menus/{id}` |  |
-| PUT|PATCH | `/api/v1/app/site/menus/{id}` |  |
-| DELETE | `/api/v1/app/site/menus/{id}` |  |
-| GET | `/api/v1/app/site/blocks/pre-requisite` |  |
-| POST | `/api/v1/app/site/blocks/reorder` |  |
-| POST | `/api/v1/app/site/blocks/{block}/assets/{type}` |  |
-| DELETE | `/api/v1/app/site/blocks/{block}/assets/{type}` |  |
-| POST | `/api/v1/app/site/blocks/{block}/slider-images` |  |
-| DELETE | `/api/v1/app/site/blocks/{block}/slider-images/{image}` |  |
-| GET | `/api/v1/app/site/blocks` |  |
-| POST | `/api/v1/app/site/blocks` |  |
-| GET | `/api/v1/app/site/blocks/{id}` |  |
-| PUT|PATCH | `/api/v1/app/site/blocks/{id}` |  |
-| DELETE | `/api/v1/app/site/blocks/{id}` |  |
 
 ## hostel  (30 endpoints)
 

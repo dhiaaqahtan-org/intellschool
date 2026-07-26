@@ -2,8 +2,7 @@
 
 namespace App\View\Components\Site;
 
-use App\Enums\Site\MenuPlacement;
-use App\Models\Site\Menu;
+use App\Support\SiteNavigation;
 use Illuminate\View\Component;
 
 class Header extends Component
@@ -25,16 +24,8 @@ class Header extends Component
      */
     public function render()
     {
-        $headerMenus = Menu::query()
-            ->wherePlacement(MenuPlacement::HEADER)
-            ->with(['children' => function ($query) {
-                $query->whereNotNull('page_id')
-                    ->orderBy('position', 'asc');
-            }])
-            ->whereNull('parent_id')
-            ->orderBy('position', 'asc')
-            ->get();
+        $headerPages = SiteNavigation::primary();
 
-        return view()->first(['components.site.custom.header', 'components.site.default.header'], compact('headerMenus'));
+        return view()->first(['components.site.custom.header', 'components.site.default.header'], compact('headerPages'));
     }
 }

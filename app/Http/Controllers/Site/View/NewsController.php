@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Site\View;
 use App\Enums\News\Status;
 use App\Http\Controllers\Controller;
 use App\Models\News\News;
-use App\Models\Site\Menu;
 use App\Support\MarkdownParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -55,10 +54,6 @@ class NewsController extends Controller
             ->orderBy('published_at', 'desc')
             ->first();
 
-        $menu = Menu::query()
-            ->whereSlug($slug)
-            ->first();
-
-        return view(config('config.site.view').'news', compact('news', 'relatedCategoryNews', 'relatedTagsNews', 'slug', 'menu'));
+        return view(config('config.site.view').'news', compact('news', 'relatedCategoryNews', 'relatedTagsNews', 'slug'));
     }
 }

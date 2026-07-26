@@ -88,6 +88,12 @@ Route::get('/app/login', function () {
     return view('app');
 })->where('vue', '[\/\w\.-]*')->name('app');
 
+Route::get('/app/site/{removedModule}/{vue?}', function () {
+    abort(404);
+})
+    ->whereIn('removedModule', ['menus', 'blocks'])
+    ->where('vue', '[\/\w\.-]*');
+
 Route::get('/app/{vue?}', function () {
     return view('app');
 })->where('vue', '[\/\w\.-]*')->name('app.dashboard');

@@ -141,8 +141,6 @@ return [
     'gallery' => 'Gallery',
     'form' => 'Form',
     'site_page' => 'Page',
-    'site_menu' => 'Menu',
-    'site_block' => 'Block',
     'site' => 'Site',
     'blog' => 'Blog',
     'news' => 'News',

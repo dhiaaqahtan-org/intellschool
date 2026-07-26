@@ -64,6 +64,7 @@ class ApplicationSeeder extends Seeder
         // 7. Public Arabic CMS pages and their required navigation.
         //    The seeder preserves content that has already been customised.
         $this->call(DefaultPageSeeder::class);
+        $this->call(SchoolWebsiteSeeder::class);
 
         // 8. The super-admin account, created here in the seeder as requested.
         $admin = $this->ensureAdmin($team);

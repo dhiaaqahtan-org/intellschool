@@ -1,9 +1,7 @@
 <x-site.default.layout :meta-title="$metaTitle" :meta-description="$metaDescription" :meta-keywords="$metaKeywords">
 
     <section>
-        @if ($page->has_slider)
-            <x-site.default.carousel :slider-images="$sliderImages" />
-        @elseif (Arr::get($page->assets, 'cover'))
+        @if (Arr::get($page->assets, 'cover'))
             <img src="{{ $page->cover_image }}" alt="{{ $page->title }}" class="h-auto w-full">
         @endif
     </section>
@@ -14,9 +12,9 @@
 
     <section class="mb-4 mt-10">
         <div class="container">
-            <h1 class="text-2xl font-bold text-gray-800">{{ $page->title }}</h1>
+            <h1 class="text-2xl font-bold text-gray-800">{{ \App\Support\LocalizedContent::get($page->title) }}</h1>
             @if ($page->sub_title)
-                <h2 class="mt-2 text-xl text-gray-700">{{ $page->sub_title }}</h2>
+                <h2 class="mt-2 text-xl text-gray-700">{{ \App\Support\LocalizedContent::get($page->sub_title) }}</h2>
             @endif
         </div>
     </section>
@@ -51,49 +49,33 @@
                         </div>
                     @endif
 
-                    @if ($part['type'] == 'array')
+                    @if ($part['type'] == 'widgets')
                         <div class="grid-cols-{{ count($part['content']) }} grid gap-4">
-                            @foreach ($part['content'] as $blockName)
-                                @if ($blockName == 'CONTACT')
+                            @foreach ($part['content'] as $widgetName)
+                                @if ($widgetName == 'CONTACT')
                                     <x-site.contact />
-                                @elseif ($blockName == 'PROGRAM_DETAIL')
-                                    <x-site.program-detail :menu="$menu" />
-                                @elseif ($blockName == 'BLOG_LIST')
-                                    <x-site.blog-list :menu="$menu" />
-                                @elseif ($blockName == 'BLOG_SUMMARY')
-                                    <x-site.blog-list :menu="$menu" type="summary" />
-                                @elseif ($blockName == 'NEWS_LIST')
-                                    <x-site.news-list :menu="$menu" />
-                                @elseif ($blockName == 'NEWS_SUMMARY')
-                                    <x-site.news-list :menu="$menu" type="summary" />
-                                @elseif ($blockName == 'EVENT_LIST')
+                                @elseif ($widgetName == 'PROGRAM_DETAIL')
+                                    <x-site.program-detail />
+                                @elseif ($widgetName == 'BLOG_LIST')
+                                    <x-site.blog-list :slug="$pageSlug" />
+                                @elseif ($widgetName == 'BLOG_SUMMARY')
+                                    <x-site.blog-list :slug="$pageSlug" type="summary" />
+                                @elseif ($widgetName == 'NEWS_LIST')
+                                    <x-site.news-list :slug="$pageSlug" />
+                                @elseif ($widgetName == 'NEWS_SUMMARY')
+                                    <x-site.news-list :slug="$pageSlug" type="summary" />
+                                @elseif ($widgetName == 'EVENT_LIST')
                                     <x-site.event-list />
-                                @elseif ($blockName == 'EVENT_SUMMARY')
+                                @elseif ($widgetName == 'EVENT_SUMMARY')
                                     <x-site.event-list type="summary" />
-                                @elseif ($blockName == 'ANNOUNCEMENT_LIST')
+                                @elseif ($widgetName == 'ANNOUNCEMENT_LIST')
                                     <x-site.announcement-list />
-                                @elseif ($blockName == 'ANNOUNCEMENT_SUMMARY')
+                                @elseif ($widgetName == 'ANNOUNCEMENT_SUMMARY')
                                     <x-site.announcement-list type="summary" />
-                                @elseif ($blockName == 'GALLERY_LIST')
+                                @elseif ($widgetName == 'GALLERY_LIST')
                                     <x-site.gallery-list />
-                                @elseif ($blockName == 'GALLERY_SUMMARY')
+                                @elseif ($widgetName == 'GALLERY_SUMMARY')
                                     <x-site.gallery-list type="summary" />
-                                @else
-                                    @php
-                                        $block = $blocks->firstWhere('name', $blockName);
-                                    @endphp
-
-                                    @if ($block)
-                                        <div
-                                            class="col-span-{{ count($part['content']) }} md-content h-full sm:col-span-1">
-                                            @if ($block->has_flipped_animation)
-                                                <x-site.block :block="$block" :item-count="count($part['content'])" />
-                                            @else
-                                                <x-site.block-content :block="$block" :full-height="true"
-                                                    :item-count="count($part['content'])" />
-                                            @endif
-                                        </div>
-                                    @endif
                                 @endif
                             @endforeach
                         </div>

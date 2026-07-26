@@ -1,0 +1,27 @@
+{
+    "name": "modules/saas",
+    "description": "SaaS control plane and marketing website for the school ERP.",
+    "type": "laravel-module",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Saas\\": "app/",
+            "Modules\\Saas\\Database\\Factories\\": "database/factories/",
+            "Modules\\Saas\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Saas\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    }
+}
