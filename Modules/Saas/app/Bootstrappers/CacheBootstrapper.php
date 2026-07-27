@@ -24,6 +24,9 @@ class CacheBootstrapper implements TenantBootstrapper
 {
     private ?string $originalPrefix = null;
 
+    /** @var array<string, string> store name => original path, for file stores. */
+    private array $originalPaths = [];
+
     private bool $active = false;
 
     public function __construct(
@@ -36,11 +39,44 @@ class CacheBootstrapper implements TenantBootstrapper
     {
         $this->originalPrefix ??= $this->config->get('cache.prefix');
 
+        // Covers redis, memcached, database and dynamodb, which all apply the
+        // configured prefix to every key they write.
         $this->config->set('cache.prefix', $this->originalPrefix.$context->cachePrefix());
+
+        $this->isolateFileStores($context);
 
         $this->refreshStores();
 
         $this->active = true;
+    }
+
+    /**
+     * Laravel's file cache store IGNORES cache.prefix — it hashes the key
+     * straight into a directory path. So on a file store the prefix provides
+     * no isolation at all, and every school shares one cache namespace.
+     *
+     * That is not a theoretical concern here: .env.example ships with the file
+     * cache as the default, so this is the configuration a first deployment
+     * actually runs. Redis is the production target (plan §14), but the module
+     * must not silently depend on that being done.
+     *
+     * Re-rooting the store's path gives file stores the same separation the
+     * prefix gives everyone else.
+     */
+    private function isolateFileStores(TenantContext $context): void
+    {
+        foreach ((array) $this->config->get('cache.stores', []) as $name => $settings) {
+            if (($settings['driver'] ?? null) !== 'file' || ! isset($settings['path'])) {
+                continue;
+            }
+
+            $this->originalPaths[$name] ??= $settings['path'];
+
+            $this->config->set(
+                "cache.stores.{$name}.path",
+                rtrim($this->originalPaths[$name], '/\\').DIRECTORY_SEPARATOR.$context->uuid
+            );
+        }
     }
 
     public function revert(): void
@@ -50,9 +86,15 @@ class CacheBootstrapper implements TenantBootstrapper
         }
 
         $this->config->set('cache.prefix', $this->originalPrefix);
+
+        foreach ($this->originalPaths as $name => $path) {
+            $this->config->set("cache.stores.{$name}.path", $path);
+        }
+
         $this->refreshStores();
 
         $this->originalPrefix = null;
+        $this->originalPaths = [];
         $this->active = false;
     }
 

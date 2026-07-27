@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Saas\Http\Controllers\Marketing\DemoRequestController;
 use Modules\Saas\Http\Controllers\Marketing\PageController;
+use Modules\Saas\Http\Controllers\Marketing\SignupController;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,4 +38,11 @@ Route::name('saas.marketing.')->group(function () {
     Route::view('/legal/terms', 'saas::marketing.legal.stub', ['doc' => 'terms'])->name('legal.terms');
     Route::view('/legal/privacy', 'saas::marketing.legal.stub', ['doc' => 'privacy'])->name('legal.privacy');
     Route::view('/legal/dpa', 'saas::marketing.legal.stub', ['doc' => 'dpa'])->name('legal.dpa');
+
+    // Self-service signup (plan §7, §11).
+    Route::get('/signup', [SignupController::class, 'showForm'])->name('signup');
+    Route::post('/signup', [SignupController::class, 'register'])
+        ->middleware('throttle:saas-leads')
+        ->name('signup.register');
+    Route::get('/signup/success', [SignupController::class, 'showSuccess'])->name('signup.success');
 });

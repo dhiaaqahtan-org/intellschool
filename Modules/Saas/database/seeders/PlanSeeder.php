@@ -224,8 +224,12 @@ class PlanSeeder extends Seeder
                 ],
                 [
                     'enabled' => $feature['enabled'],
-                    'limit_value' => $feature['limit_value'],
-                    'limit_type' => $feature['limit_type'],
+                    'limit_value' => $feature['limit_value'] ?? null,
+                    // limit_type is NOT NULL with a 'hard' default, but passing
+                    // an explicit null overrides the default rather than
+                    // falling back to it. Unlimited features carry no limit, so
+                    // the type is meaningless for them — default it.
+                    'limit_type' => $feature['limit_type'] ?? 'hard',
                 ]
             );
         }

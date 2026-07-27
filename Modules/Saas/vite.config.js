@@ -14,7 +14,11 @@ export default defineConfig({
     build: {
         outDir: '../../public/build-saas',
         emptyOutDir: true,
-        manifest: true,
+        // Explicit filename, not `true`. With `manifest: true` Vite 5+ writes
+        // to <outDir>/.vite/manifest.json, but Laravel's @vite() helper looks
+        // for <buildDirectory>/manifest.json — so the app throws
+        // ViteManifestNotFoundException even though the build succeeded.
+        manifest: 'manifest.json',
     },
     plugins: [
         laravel({

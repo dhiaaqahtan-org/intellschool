@@ -28,6 +28,15 @@ class RequireTenantHost
 
     public function handle(Request $request, Closure $next): Response
     {
+        // While the application is still single-tenant no tenant is ever
+        // resolved, so this must pass through or every ERP route 404s. It is
+        // wired into the ERP route groups now, ahead of the switch being
+        // flipped, so that enabling tenancy does not also require touching
+        // fifteen middleware arrays in the core RouteServiceProvider.
+        if (! config('saas.tenancy.enabled', false)) {
+            return $next($request);
+        }
+
         if (! $this->tenant->has()) {
             throw new NotFoundHttpException('This resource is only available on a school address.');
         }

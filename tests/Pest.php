@@ -17,6 +17,11 @@ use Illuminate\Support\Arr;
 
 uses(Tests\TestCase::class)->in('Feature');
 
+// Module tests bind their own base case with uses() per file, because the
+// tenancy suite needs real per-tenant databases rather than the shared
+// in-memory one that Tests\TestCase refreshes.
+uses()->in(__DIR__.'/../Modules/Saas/tests');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

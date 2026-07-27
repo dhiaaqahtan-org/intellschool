@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Tenant ownership records (plan §5.1, §5.4).
+ * Tenant ownership records (plan آ§5.1, آ§5.4).
  *
  * Links a tenant to its owner(s). The owner is a user in the TENANT database,
  * not the landlord database. We store the tenant-local user UUID and normalized
@@ -14,11 +14,13 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
-    protected $connection = 'landlord';
-
+    public function getConnection(): string
+    {
+        return config('saas.database.landlord_connection', 'landlord');
+    }
     public function up(): void
     {
-        Schema::connection('landlord')->create('saas_tenant_owners', function (Blueprint $table) {
+        Schema::connection($this->getConnection())->create('saas_tenant_owners', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
 
@@ -50,6 +52,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('landlord')->dropIfExists('saas_tenant_owners');
+        Schema::connection($this->getConnection())->dropIfExists('saas_tenant_owners');
     }
 };

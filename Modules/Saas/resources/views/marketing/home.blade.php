@@ -176,15 +176,21 @@
         <div class="reveal" data-vue-component="role-explorer">
             {{-- Island props. A JSON script tag rather than interpolated
                  attributes, so escaping is the parser's job. Nothing sensitive
-                 goes in here — it ships to every visitor. --}}
-            <script type="application/json" data-props>@json([
-                'roles'  => $roleData,
-                'dir'    => app()->getLocale() === 'ar' ? 'rtl' : 'ltr',
-                'labels' => [
-                    'tablist'     => __('saas::marketing.roles.tablist'),
-                    'permissions' => __('saas::marketing.roles.permissions'),
-                ],
-            ])</script>
+                 goes in here — it ships to every visitor.
+
+                 Encoded in PHP, not via @json(...), whose single-line argument
+                 regex cannot handle a multi-line array literal. --}}
+            @php
+                $roleProps = [
+                    'roles' => $roleData,
+                    'dir' => app()->getLocale() === 'ar' ? 'rtl' : 'ltr',
+                    'labels' => [
+                        'tablist' => __('saas::marketing.roles.tablist'),
+                        'permissions' => __('saas::marketing.roles.permissions'),
+                    ],
+                ];
+            @endphp
+            <script type="application/json" data-props>{!! json_encode($roleProps, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) !!}</script>
 
             <div class="roles">
                 <div class="roles__tabs" role="tablist" aria-label="{{ __('saas::marketing.roles.tablist') }}">

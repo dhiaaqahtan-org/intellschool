@@ -75,7 +75,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Modules\\Saas\\Tests\\": "Modules/Saas/tests/"
         }
     },
     "scripts": {

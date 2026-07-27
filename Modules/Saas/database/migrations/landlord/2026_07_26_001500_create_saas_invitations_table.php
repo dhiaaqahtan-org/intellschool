@@ -5,18 +5,20 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Tenant user invitations (plan §5.1).
+ * Tenant user invitations (plan آ§5.1).
  *
  * Invitations are hashed tokens that allow a user to join a tenant.
  * The token is hashed so a database leak does not expose valid invitations.
  */
 return new class extends Migration
 {
-    protected $connection = 'landlord';
-
+    public function getConnection(): string
+    {
+        return config('saas.database.landlord_connection', 'landlord');
+    }
     public function up(): void
     {
-        Schema::connection('landlord')->create('saas_invitations', function (Blueprint $table) {
+        Schema::connection($this->getConnection())->create('saas_invitations', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
 
@@ -54,6 +56,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('landlord')->dropIfExists('saas_invitations');
+        Schema::connection($this->getConnection())->dropIfExists('saas_invitations');
     }
 };

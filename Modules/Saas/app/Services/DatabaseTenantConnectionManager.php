@@ -26,6 +26,22 @@ class DatabaseTenantConnectionManager implements TenantConnectionManager
 
     private ?string $connectedUuid = null;
 
+    /**
+     * Snapshot of the template connection, captured once on first use.
+     *
+     * Captured rather than re-read because release() overwrites the tenant
+     * connection's config entry. When the template and the tenant connection
+     * are the same entry — which is a legitimate configuration, and the one
+     * the test suite uses — re-reading would return the released (null) value
+     * and the next connect() would build a connection with no driver.
+     */
+    private ?array $template = null;
+
+    /** Original config of the tenant connection key, restored on release. */
+    private ?array $originalTenantConfig = null;
+
+    private bool $captured = false;
+
     public function __construct(
         private readonly DatabaseManager $db,
         private readonly Config $config,
@@ -55,12 +71,22 @@ class DatabaseTenantConnectionManager implements TenantConnectionManager
         // Template supplies driver, charset, collation, options; credentials
         // and database name are always overridden. Nothing here comes from
         // the request.
-        $template = $this->config->get(
-            'database.connections.'.$this->config->get('saas.database.tenant_template', 'mysql'),
-            []
-        );
+        if (! $this->captured) {
+            $templateName = $this->config->get('saas.database.tenant_template', 'mysql');
 
-        $this->config->set("database.connections.{$name}", array_merge($template, [
+            $this->template = $this->config->get("database.connections.{$templateName}") ?? [];
+            $this->originalTenantConfig = $this->config->get("database.connections.{$name}");
+            $this->captured = true;
+        }
+
+        if ($this->template === []) {
+            throw new \RuntimeException(
+                'Tenant connection template ['.$this->config->get('saas.database.tenant_template')
+                .'] is not configured; refusing to build a tenant connection from nothing.'
+            );
+        }
+
+        $this->config->set("database.connections.{$name}", array_merge($this->template, [
             'database' => $context->databaseName,
             'host' => $credentials['host'],
             'port' => $credentials['port'],
@@ -96,7 +122,11 @@ class DatabaseTenantConnectionManager implements TenantConnectionManager
         // Drop the PDO handle. A pooled worker must not carry an open
         // connection to tenant A into a job for tenant B.
         $this->db->purge($name);
-        $this->config->set("database.connections.{$name}", null);
+
+        // Restore the entry rather than nulling it, so the connection is left
+        // exactly as it was found. Nulling it would also destroy the template
+        // when template and tenant connection are the same key.
+        $this->config->set("database.connections.{$name}", $this->originalTenantConfig);
 
         if ($this->originalDefault !== null) {
             $this->config->set('database.default', $this->originalDefault);

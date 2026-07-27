@@ -100,14 +100,54 @@ return [
         | tenants, domains, plans, subscriptions, provisioning runs, audit.
         | It must NEVER contain student, academic, finance, or school data.
         | All Modules/Saas landlord models declare this connection explicitly.
+        |
+        | `database` has NO fallback on purpose. If it fell back to DB_DATABASE
+        | the control plane would silently share one database with the school
+        | data it is supposed to be isolated from, and every landlord query
+        | would appear to work. Better that the connection fails to open.
         */
         'landlord' => [
             'driver' => 'mysql',
             'host' => env('SAAS_LANDLORD_DB_HOST', env('DB_HOST', '127.0.0.1')),
             'port' => env('SAAS_LANDLORD_DB_PORT', env('DB_PORT', '3306')),
-            'database' => env('SAAS_LANDLORD_DB_DATABASE', env('DB_DATABASE', 'forge')),
+            'database' => env('SAAS_LANDLORD_DB_DATABASE'),
             'username' => env('SAAS_LANDLORD_DB_USERNAME', env('DB_USERNAME', 'forge')),
             'password' => env('SAAS_LANDLORD_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => 'InnoDB',
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        /*
+        |----------------------------------------------------------------------
+        | SaaS Tenant (Dynamic)
+        |----------------------------------------------------------------------
+        | This connection is a TEMPLATE. At runtime, the TenantConnectionManager
+        | overrides the 'database' key with the resolved tenant's database name.
+        | The default connection (above) serves the first tenant in single-tenant
+        | mode; this connection is used when multi-tenant mode is active.
+        | Credentials come from the cluster secret (env or secret manager).
+        |
+        | `database` is deliberately null rather than DB_DATABASE. If the
+        | connection manager ever fails to override it, a null database throws
+        | when the connection opens; DB_DATABASE would instead have quietly
+        | served the main application database to whichever tenant asked. An
+        | isolation boundary must fail closed, never fall back.
+        */
+        'tenant' => [
+            'driver' => 'mysql',
+            'host' => env('SAAS_CLUSTER_DEFAULT_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('SAAS_CLUSTER_DEFAULT_PORT', env('DB_PORT', '3306')),
+            'database' => null, // ALWAYS overridden by DatabaseTenantConnectionManager
+            'username' => env('SAAS_CLUSTER_DEFAULT_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('SAAS_CLUSTER_DEFAULT_PASSWORD', env('DB_PASSWORD', '')),
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',

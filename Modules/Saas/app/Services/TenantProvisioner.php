@@ -288,13 +288,17 @@ class TenantProvisioner
             return;
         }
 
-        $suffix = config('saas.hosts.tenant_suffix', '.localhost');
-        $hostname = $tenant->slug.ltrim($suffix, '.');
+        // Note the explicit '.' separator. ltrim($suffix, '.') strips the
+        // leading dot from the conventional ".product.example" form, so
+        // concatenating directly produced "alphaproduct.example" — a valid
+        // string, a registerable-looking hostname, and completely wrong.
+        $suffix = ltrim((string) config('saas.hosts.tenant_suffix', ''), '.');
 
-        // If no suffix configured, use slug.localhost for development.
-        if (empty(config('saas.hosts.tenant_suffix'))) {
-            $hostname = $tenant->slug.'.localhost';
+        if ($suffix === '') {
+            $suffix = 'localhost'; // development default
         }
+
+        $hostname = $tenant->slug.'.'.$suffix;
 
         TenantDomain::create([
             'tenant_uuid' => $tenant->uuid,

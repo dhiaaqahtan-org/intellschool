@@ -5,19 +5,21 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Platform operator identities (plan §5.1, §5.4).
+ * Platform operator identities (plan آ§5.1, آ§5.4).
  *
  * SaaS operators use a SEPARATE guard and database from tenant users.
- * They must never have implicit access to tenant data — only through
+ * They must never have implicit access to tenant data â€” only through
  * approved support sessions.
  */
 return new class extends Migration
 {
-    protected $connection = 'landlord';
-
+    public function getConnection(): string
+    {
+        return config('saas.database.landlord_connection', 'landlord');
+    }
     public function up(): void
     {
-        Schema::connection('landlord')->create('saas_platform_users', function (Blueprint $table) {
+        Schema::connection($this->getConnection())->create('saas_platform_users', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
 
@@ -50,6 +52,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('landlord')->dropIfExists('saas_platform_users');
+        Schema::connection($this->getConnection())->dropIfExists('saas_platform_users');
     }
 };

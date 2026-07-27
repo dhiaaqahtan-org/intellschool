@@ -8,7 +8,7 @@ use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Models\Landlord\Tenant;
 
 /**
- * Verify that tenant databases are correctly isolated (plan §17.1).
+ * Verify that tenant databases are correctly isolated (plan آ§17.1).
  *
  * Checks:
  *  - Each tenant database contains its own UUID in tenant_installations.
@@ -106,21 +106,21 @@ class VerifyTenantIsolation extends Command
                 $installation = DB::table('tenant_installations')->first();
 
                 if ($installation === null) {
-                    $this->fail("  {$tenant->slug}: No tenant_installations record found");
+                    $this->recordFailure("  {$tenant->slug}: No tenant_installations record found");
 
                     return;
                 }
 
                 if ($installation->tenant_uuid !== $tenant->uuid) {
-                    $this->fail("  {$tenant->slug}: UUID mismatch! Expected {$tenant->uuid}, found {$installation->tenant_uuid}");
+                    $this->recordFailure("  {$tenant->slug}: UUID mismatch! Expected {$tenant->uuid}, found {$installation->tenant_uuid}");
 
                     return;
                 }
 
-                $this->pass("  {$tenant->slug}: UUID matches");
+                $this->recordPass("  {$tenant->slug}: UUID matches");
             });
         } catch (\Throwable $e) {
-            $this->fail("  {$tenant->slug}: Connection failed - {$e->getMessage()}");
+            $this->recordFailure("  {$tenant->slug}: Connection failed - {$e->getMessage()}");
         }
     }
 
@@ -131,7 +131,7 @@ class VerifyTenantIsolation extends Command
             ->pluck('uuid');
 
         if ($otherUuids->isEmpty()) {
-            $this->pass("  {$tenant->slug}: No other tenants to check against");
+            $this->recordPass("  {$tenant->slug}: No other tenants to check against");
 
             return;
         }
@@ -145,13 +145,13 @@ class VerifyTenantIsolation extends Command
                     ->exists();
 
                 if ($contaminated) {
-                    $this->fail("  {$tenant->slug}: CONTAINS another tenant's installation record!");
+                    $this->recordFailure("  {$tenant->slug}: CONTAINS another tenant's installation record!");
                 } else {
-                    $this->pass("  {$tenant->slug}: No cross-tenant records");
+                    $this->recordPass("  {$tenant->slug}: No cross-tenant records");
                 }
             });
         } catch (\Throwable $e) {
-            $this->fail("  {$tenant->slug}: Check failed - {$e->getMessage()}");
+            $this->recordFailure("  {$tenant->slug}: Check failed - {$e->getMessage()}");
         }
     }
 
@@ -171,19 +171,19 @@ class VerifyTenantIsolation extends Command
             $leaked = array_intersect($tenantOnlyTables, $tableNames);
 
             if (! empty($leaked)) {
-                $this->fail('  Landlord contains tenant tables: ' . implode(', ', $leaked));
+                $this->recordFailure('  Landlord contains tenant tables: ' . implode(', ', $leaked));
             } else {
-                $this->pass('  Landlord database is clean (no tenant tables)');
+                $this->recordPass('  Landlord database is clean (no tenant tables)');
             }
         } catch (\Throwable $e) {
-            $this->fail("  Could not inspect landlord database: {$e->getMessage()}");
+            $this->recordFailure("  Could not inspect landlord database: {$e->getMessage()}");
         }
     }
 
     private function verifyConnectionCleanup(Tenant $tenant, CurrentTenant $currentTenant): void
     {
         if ($tenant === null) {
-            $this->pass('  Skipped (no tenants)');
+            $this->recordPass('  Skipped (no tenants)');
 
             return;
         }
@@ -199,24 +199,30 @@ class VerifyTenantIsolation extends Command
 
             // After runFor, no tenant should be active.
             if ($currentTenant->has()) {
-                $this->fail('  Tenant context leaked after runFor() completed!');
+                $this->recordFailure('  Tenant context leaked after runFor() completed!');
             } else {
-                $this->pass('  Context properly cleaned up after runFor()');
+                $this->recordPass('  Context properly cleaned up after runFor()');
             }
         } catch (\Throwable $e) {
-            $this->fail("  Cleanup check failed: {$e->getMessage()}");
+            $this->recordFailure("  Cleanup check failed: {$e->getMessage()}");
         }
     }
 
-    private function pass(string $message): void
+    private function recordPass(string $message): void
     {
-        $this->line("  ✓ {$message}");
+        $this->line("  âœ“ {$message}");
         $this->passed++;
     }
 
-    private function fail(string $message): void
+    /**
+     * NOTE: deliberately not named fail()/pass(). Illuminate\Console\Command
+     * declares a public fail() (Laravel 11+), so a private fail() here is a
+     * fatal access-level conflict that takes down the whole application the
+     * moment this class is autoloaded.
+     */
+    private function recordFailure(string $message): void
     {
-        $this->error("  ✗ {$message}");
+        $this->error("  âœ— {$message}");
         $this->failed++;
     }
 }

@@ -42,6 +42,8 @@
             background: var(--color-gray-900);
             color: white;
             padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-brand {
@@ -207,6 +209,18 @@
                 <a href="#">Support Sessions</a>
                 <a href="#">Audit Log</a>
             </nav>
+
+            <div style="padding: 1.5rem; border-top: 1px solid var(--color-gray-700); margin-top: auto;">
+                <div style="font-size: 0.75rem; color: var(--color-gray-500); margin-bottom: 0.5rem;">
+                    {{ auth('platform')->user()?->name ?? 'Operator' }}
+                </div>
+                <form method="POST" action="{{ route('saas.platform.logout') }}">
+                    @csrf
+                    <button type="submit" style="background: none; border: none; color: var(--color-gray-300); cursor: pointer; font-size: 0.875rem; padding: 0;">
+                        Sign Out
+                    </button>
+                </form>
+            </div>
         </aside>
 
         <main class="main">

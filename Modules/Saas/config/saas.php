@@ -80,6 +80,20 @@ return [
     ],
 
     'tenancy' => [
+        /*
+         * Master switch for multi-tenant request handling.
+         *
+         * When false, ResolveTenant passes every request straight through and
+         * the application behaves exactly as the original single-tenant ERP.
+         * This exists so the middleware can stay registered in the kernel
+         * during the migration instead of being commented in and out — a
+         * commented-out isolation control is one merge away from being lost.
+         *
+         * Flip to true only once the landlord database is migrated and at
+         * least one tenant is provisioned, or every request will 404.
+         */
+        'enabled' => (bool) env('SAAS_TENANCY_ENABLED', false),
+
         // How long a resolved host→tenant mapping is cached. Kept short: a
         // suspended or deleted tenant must stop serving quickly. The cache is
         // flushed explicitly on tenant and domain lifecycle events.

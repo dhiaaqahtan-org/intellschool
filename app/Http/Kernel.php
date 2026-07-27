@@ -16,10 +16,16 @@ class Kernel extends HttpKernel
     protected $middleware = [
         // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
-        // SaaS tenant resolution disabled for single-tenant development.
-        // The nwidart/laravel-modules package is not installed in vendor,
-        // so SaasServiceProvider cannot register the CurrentTenant binding.
-        // \Modules\Saas\Http\Middleware\ResolveTenant::class,
+        // Tenant resolution. MUST stay directly after TrustProxies: it reads
+        // the Host header, which is only trustworthy once proxy headers have
+        // been validated, and it must run before session, CSRF, route-model
+        // binding, authentication and UserConfig so every one of those looks
+        // at the correct tenant database.
+        //
+        // Behaviour is controlled by config('saas.tenancy.enabled'), not by
+        // commenting this line out. While that flag is false this is a
+        // pass-through and the app behaves as the original single-tenant ERP.
+        \Modules\Saas\Http\Middleware\ResolveTenant::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,

@@ -40,6 +40,14 @@ class ResolveTenant
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Kill switch. Lets the middleware stay permanently registered in the
+        // kernel while the application is still running single-tenant, rather
+        // than being commented out — a commented-out isolation control is one
+        // careless merge away from disappearing entirely.
+        if (! config('saas.tenancy.enabled', false)) {
+            return $next($request);
+        }
+
         // getHost() is only trustworthy because TrustProxies has already run.
         // If this middleware is ever moved above it, X-Forwarded-Host becomes
         // attacker-controlled and tenant selection with it.

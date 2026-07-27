@@ -193,26 +193,51 @@ function initHeroCanvas() {
   };
 
   // The hero may not have a box on the first frame (fonts, late layout).
-  // Keep retrying briefly rather than rendering into a 0x0 canvas forever.
-  let attempts = 0;
-  const start = () => {
-    if (resize()) {
-      if (!raf) raf = requestAnimationFrame(draw);
-      return;
-    }
-    if (attempts++ < 30) requestAnimationFrame(start);
+  /*
+   * Size the canvas and start rendering.
+   *
+   * This is called from several places on purpose. The hero has no height
+   * until the stylesheet applies, and with a module script the DOM is often
+   * ready before the CSS is — so the first attempt legitimately measures 0x0.
+   * Every path that could be the one where a real size first exists has to be
+   * able to start the loop, otherwise the canvas sizes correctly but nothing
+   * ever paints into it.
+   */
+  const sizeAndStart = () => {
+    if (!resize()) return false;
+    if (!raf && running) raf = requestAnimationFrame(draw);
+
+    return true;
   };
-  start();
+
+  sizeAndStart();
 
   if ('ResizeObserver' in window) {
-    new ResizeObserver(() => resize()).observe(canvas);
+    // Fires once on observe, and again when the stylesheet gives the hero its
+    // real height — which is usually the attempt that actually succeeds.
+    new ResizeObserver(() => sizeAndStart()).observe(canvas);
   } else {
     let resizeTimer = 0;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(resize, 180);
+      resizeTimer = window.setTimeout(sizeAndStart, 180);
     });
   }
+
+  // Backstops. A module script can execute before its stylesheet has applied,
+  // in which case the hero has no height and the first measurement is 0x0.
+  // These are cheap and idempotent — sizeAndStart() is a no-op once the canvas
+  // already matches its box — so it is better to have several than to depend
+  // on any single one winning the race.
+  if (document.readyState !== 'complete') {
+    window.addEventListener('load', sizeAndStart, { once: true });
+  }
+
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(sizeAndStart).catch(() => {});
+  }
+
+  requestAnimationFrame(() => requestAnimationFrame(sizeAndStart));
 
   // Stop burning frames when the hero scrolls away or the tab is hidden.
   if ('IntersectionObserver' in window) {

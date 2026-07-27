@@ -1,4 +1,4 @@
-﻿{{-- Shared SVG sprite. Referenced as <use href="#i-name"> throughout the
+{{-- Shared SVG sprite. Referenced as <use href="#i-name"> throughout the
      marketing views. Kept in one place so stroke width and corner radius stay
      consistent; do not inline one-off icons in a page view. --}}
 <svg style="display:none" aria-hidden="true" focusable="false">

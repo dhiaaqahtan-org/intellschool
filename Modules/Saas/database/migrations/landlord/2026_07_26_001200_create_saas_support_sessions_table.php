@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Support access sessions (plan §7, §12).
+ * Support access sessions (plan آ§7, آ§12).
  *
  * Platform operators access a tenant ONLY through an approved, time-limited,
  * fully audited session. This table records every session for compliance
@@ -13,11 +13,13 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
-    protected $connection = 'landlord';
-
+    public function getConnection(): string
+    {
+        return config('saas.database.landlord_connection', 'landlord');
+    }
     public function up(): void
     {
-        Schema::connection('landlord')->create('saas_support_sessions', function (Blueprint $table) {
+        Schema::connection($this->getConnection())->create('saas_support_sessions', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
 
@@ -62,6 +64,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('landlord')->dropIfExists('saas_support_sessions');
+        Schema::connection($this->getConnection())->dropIfExists('saas_support_sessions');
     }
 };

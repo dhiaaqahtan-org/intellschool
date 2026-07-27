@@ -112,7 +112,11 @@ final class HostNormalizer
             return null;
         }
 
-        $suffix = ltrim(self::normalize($suffix) ?? '', '.');
+        // Strip the leading dot BEFORE normalising. The suffix is conventionally
+        // written ".product.example"; normalising that first produces an empty
+        // leading label, which isPlausible() correctly rejects, and the whole
+        // lookup would silently return null for every host.
+        $suffix = self::normalize(ltrim($suffix, '.')) ?? '';
 
         if ($suffix === '' || $normalizedHost === $suffix) {
             return null;

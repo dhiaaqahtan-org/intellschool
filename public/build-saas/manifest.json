@@ -1,0 +1,35 @@
+{
+  "resources/assets/css/marketing.css": {
+    "file": "assets/marketing-B50Wv211.css",
+    "src": "resources/assets/css/marketing.css",
+    "isEntry": true
+  },
+  "resources/assets/js/marketing/app.js": {
+    "file": "assets/app-Chche17n.js",
+    "name": "app",
+    "src": "resources/assets/js/marketing/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/assets/js/marketing/components/RoleExplorer.vue",
+      "resources/assets/js/marketing/components/DemoForm.vue"
+    ]
+  },
+  "resources/assets/js/marketing/components/DemoForm.vue": {
+    "file": "assets/DemoForm-BlyQ4yAF.js",
+    "name": "DemoForm",
+    "src": "resources/assets/js/marketing/components/DemoForm.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/assets/js/marketing/app.js"
+    ]
+  },
+  "resources/assets/js/marketing/components/RoleExplorer.vue": {
+    "file": "assets/RoleExplorer-DgnDKw_g.js",
+    "name": "RoleExplorer",
+    "src": "resources/assets/js/marketing/components/RoleExplorer.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/assets/js/marketing/app.js"
+    ]
+  }
+}

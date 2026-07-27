@@ -6,7 +6,11 @@ use Illuminate\Contracts\Cache\Repository as Cache;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Contracts\EntitlementChecker;
 use Modules\Saas\Exceptions\EntitlementDenied;
+use Modules\Saas\Models\Landlord\Plan;
+use Modules\Saas\Models\Landlord\PlanFeature;
+use Modules\Saas\Models\Landlord\Subscription;
 use Modules\Saas\Models\Landlord\Tenant;
+use Modules\Saas\Models\Landlord\TenantEntitlement;
 
 /**
  * Checks whether the active tenant's plan includes a feature.
@@ -22,6 +26,15 @@ use Modules\Saas\Models\Landlord\Tenant;
 class FeatureEntitlementService implements EntitlementChecker
 {
     private const CACHE_TTL = 300; // 5 minutes
+
+    /**
+     * Subscription statuses that still grant access.
+     *
+     * `past_due` and `grace` are included deliberately: plan §8 and §12 require
+     * a payment failure to degrade to a grace/read-only state, not to cut a
+     * school off from its own records mid-term.
+     */
+    private const ENTITLING_STATUSES = ['trialing', 'active', 'past_due', 'grace'];
 
     public function __construct(
         private readonly CurrentTenant $tenant,
@@ -105,56 +118,80 @@ class FeatureEntitlementService implements EntitlementChecker
         return $data;
     }
 
+    /**
+     * Resolve the effective entitlements for a tenant (plan §8).
+     *
+     * Order, most specific wins:
+     *   1. saas_tenant_entitlements — per-tenant override, within its validity
+     *      window. Covers negotiated terms and temporary grants.
+     *   2. saas_plan_features       — the features of the plan version the
+     *      tenant's live subscription points at.
+     *   3. deny
+     *
+     * Note this reads the plan version recorded on the SUBSCRIPTION, not the
+     * newest version of that plan. Republishing a plan must not silently
+     * rewrite an existing customer's contract (plan §8).
+     */
     private function buildSnapshot(string $tenantUuid): array
     {
-        $tenant = Tenant::query()
-            ->with(['database'])
-            ->where('uuid', $tenantUuid)
-            ->first();
+        $tenant = Tenant::query()->where('uuid', $tenantUuid)->first();
 
         if ($tenant === null) {
             return ['plan_id' => null, 'features' => []];
         }
 
-        // TODO(Phase 6): Load from saas_subscriptions + saas_plan_features
-        // + saas_tenant_entitlements once billing tables are populated.
-        // For now, return a permissive development snapshot so the ERP
-        // remains usable before billing is wired.
-        if (app()->environment('local', 'testing')) {
-            return $this->developmentSnapshot();
-        }
+        $subscription = Subscription::query()
+            ->where('tenant_uuid', $tenantUuid)
+            ->whereIn('status', self::ENTITLING_STATUSES)
+            ->orderByDesc('id')
+            ->first();
 
-        // Production: deny by default until billing is configured.
-        return ['plan_id' => null, 'features' => []];
-    }
-
-    /**
-     * In development, all features are enabled so the ERP remains testable
-     * before billing infrastructure exists.
-     */
-    private function developmentSnapshot(): array
-    {
         $features = [];
-        $codes = [
-            'students.core', 'students.admissions', 'students.attendance',
-            'students.promotion', 'academics.classes', 'academics.subjects',
-            'academics.timetable', 'exam.core', 'exam.grading',
-            'finance.fees', 'finance.payroll', 'finance.expenses',
-            'hr.employees', 'hr.leave', 'hr.attendance',
-            'transport.routes', 'transport.vehicles',
-            'library.core', 'inventory.core', 'hostel.core',
-            'communication.sms', 'communication.email', 'communication.chat',
-            'website.cms', 'mobile.offline', 'api.access',
-            'reports.academic', 'reports.financial',
-            'campuses.max', 'storage.gb',
-        ];
+        $planCode = null;
 
-        foreach ($codes as $code) {
-            $features[$code] = ['enabled' => true, 'limit' => null];
+        if ($subscription !== null) {
+            $plan = Plan::query()->find($subscription->plan_id);
+            $planCode = $plan?->plan_code;
+
+            $planFeatures = PlanFeature::query()
+                ->where('plan_id', $subscription->plan_id)
+                ->get();
+
+            foreach ($planFeatures as $feature) {
+                $features[$feature->feature_code] = [
+                    'enabled' => (bool) $feature->enabled,
+                    'limit' => $feature->limit_value,
+                    'source' => 'plan',
+                ];
+            }
         }
 
-        return ['plan_id' => 'dev-unlimited', 'features' => $features];
+        // Overrides last so they win, but only while actually in effect.
+        $now = now();
+
+        $overrides = TenantEntitlement::query()
+            ->where('tenant_uuid', $tenantUuid)
+            ->inEffect($now)
+            ->get();
+
+        foreach ($overrides as $override) {
+            $features[$override->feature_code] = [
+                'enabled' => (bool) $override->enabled,
+                'limit' => $override->limit_value,
+                'source' => 'override',
+            ];
+        }
+
+        return ['plan_id' => $planCode, 'features' => $features];
     }
+
+    /*
+     * There was a developmentSnapshot() here that enabled every feature when
+     * the environment was local or testing. It is deliberately gone: it meant
+     * the entitlement layer was never actually exercised by any test, and the
+     * first time it ran for real would have been in production. Seed plans via
+     * PlanSeeder instead, so development runs the same code path as production.
+     */
 
     private function cacheKey(string $tenantUuid): string
     {

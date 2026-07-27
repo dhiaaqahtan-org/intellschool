@@ -24,31 +24,38 @@ class RouteServiceProvider extends ServiceProvider
     }
 
     /**
-     * Marketing routes own `/` on the marketing host only.
+     * Marketing routes own `/` on the marketing host, and only there.
      *
-     * ORDERING MATTERS. The core application registers routes/site.php, which
-     * also claims `/` for the tenant's public school website. Because the
-     * marketing routes carry a domain constraint they only match the marketing
-     * host, but they must still be registered BEFORE the unconstrained
-     * site.php route or that route will win on every host.
+     * A DOMAIN CONSTRAINT IS MANDATORY, not a nicety. Laravel's RouteCollection
+     * is keyed by domain+uri, so two routes claiming `/` with no domain are the
+     * same key and the later registration silently overwrites the earlier one.
+     * The core app registers routes/site.php (the tenant's own school website)
+     * at `/` too, so an unconstrained marketing route does not "win" or "lose"
+     * predictably — it depends on provider boot order, which is not something
+     * to build tenant routing on.
      *
-     * nwidart's provider is package-discovered and therefore boots before
-     * App\Providers\RouteServiceProvider in a default Laravel 12 application.
-     * Verify with `php artisan route:list --path=/` after installing: the
-     * domain-constrained marketing route must appear above the site route.
+     * With a domain set, the two routes have different keys and coexist: the
+     * host decides which one answers. That is the only arrangement that is
+     * correct regardless of boot order.
+     *
+     * If no host is configured we fall back to `localhost` in local/testing so
+     * a developer still has a working URL, and register nothing at all in
+     * production — better to 404 the marketing site than to shadow every
+     * tenant's school website.
      */
     protected function mapMarketingRoutes(): void
     {
         $host = config('saas.hosts.marketing');
 
-        $route = Route::middleware(['web', 'saas.landlord-host']);
+        if (empty($host)) {
+            if ($this->app->environment('production')) {
+                return; // fail closed
+            }
 
-        // No host configured (local development): serve marketing everywhere.
-        // Never leave this unset in production — `/` would shadow every
-        // tenant's own school website.
-        if (! empty($host)) {
-            $route = $route->domain($host);
+            $host = 'localhost';
         }
+
+        $route = Route::middleware(['web', 'saas.landlord-host'])->domain($host);
 
         $route->group(module_path($this->moduleName, 'routes/marketing.php'));
     }

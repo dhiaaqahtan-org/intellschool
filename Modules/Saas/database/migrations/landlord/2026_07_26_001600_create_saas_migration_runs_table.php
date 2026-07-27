@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Tenant migration run history (plan §5.1, Phase 4).
+ * Tenant migration run history (plan آ§5.1, Phase 4).
  *
  * Records every migration run per-tenant for:
  *  - Tracking schema versions across many tenant databases.
@@ -15,11 +15,13 @@ use Illuminate\Support\Facades\Schema;
  */
 return new class extends Migration
 {
-    protected $connection = 'landlord';
-
+    public function getConnection(): string
+    {
+        return config('saas.database.landlord_connection', 'landlord');
+    }
     public function up(): void
     {
-        Schema::connection('landlord')->create('saas_migration_runs', function (Blueprint $table) {
+        Schema::connection($this->getConnection())->create('saas_migration_runs', function (Blueprint $table) {
             $table->id();
 
             // Which tenant this migration run is for.
@@ -62,6 +64,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection('landlord')->dropIfExists('saas_migration_runs');
+        Schema::connection($this->getConnection())->dropIfExists('saas_migration_runs');
     }
 };

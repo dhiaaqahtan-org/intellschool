@@ -34,15 +34,22 @@
         verified — fabricated structured data is a search-policy violation and a
         consumer-protection risk.
     --}}
-    <script type="application/ld+json">
-        @json([
-            '@context'    => 'https://schema.org',
-            '@type'       => 'SoftwareApplication',
-            'name'        => $brand,
+    @php
+        // Built in PHP rather than with @json(...): the Blade directive parses
+        // its argument with a single-line regex, so a multi-line array literal
+        // is truncated into syntactically invalid PHP and the whole layout
+        // fails to compile.
+        $structuredData = [
+            '@context' => 'https://schema.org',
+            '@type' => 'SoftwareApplication',
+            'name' => $brand,
             'applicationCategory' => 'BusinessApplication',
-            'operatingSystem'     => 'Web',
-            'inLanguage'  => config('saas.facts.locales'),
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+            'operatingSystem' => 'Web',
+            'inLanguage' => config('saas.facts.locales'),
+        ];
+    @endphp
+    <script type="application/ld+json">
+        {!! json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}
     </script>
 
     @vite(['resources/assets/css/marketing.css', 'resources/assets/js/marketing/app.js'], 'build-saas')

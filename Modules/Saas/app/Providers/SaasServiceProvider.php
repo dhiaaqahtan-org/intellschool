@@ -5,6 +5,7 @@ namespace Modules\Saas\Providers;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Saas\Bootstrappers\CacheBootstrapper;
@@ -12,7 +13,6 @@ use Modules\Saas\Bootstrappers\FilesystemBootstrapper;
 use Modules\Saas\Contracts\BillingGateway;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Contracts\EntitlementChecker;
-use Modules\Saas\Contracts\TenantBootstrapper;
 use Modules\Saas\Contracts\TenantConnectionManager;
 use Modules\Saas\Contracts\TenantCredentialResolver;
 use Modules\Saas\Contracts\TenantStorage;
@@ -53,6 +53,8 @@ class SaasServiceProvider extends ServiceProvider
         $this->registerRateLimiters();
         $this->registerMiddlewareAliases();
         $this->registerCommands();
+        $this->registerPolicies();
+        $this->registerQueueTenancy();
 
         $this->publishes([
             module_path($this->moduleName, 'config/saas.php') => config_path('saas.php'),
@@ -113,8 +115,17 @@ class SaasServiceProvider extends ServiceProvider
      */
     protected function registerBootstrappers(): void
     {
-        $this->app->tag([CacheBootstrapper::class], 'saas.bootstrappers');
-        $this->app->tag([FilesystemBootstrapper::class], 'saas.bootstrappers');
+        // MUST be singletons. Each bootstrapper holds the original value it
+        // replaced (cache prefix, disk roots) and restores it in revert().
+        // Without a singleton binding the container hands out a fresh instance
+        // every time the tag is iterated, so revert() runs against an object
+        // that never captured anything, silently does nothing, and the tenant's
+        // cache prefix and storage root stay applied to the next tenant served
+        // by that worker.
+        $this->app->singleton(CacheBootstrapper::class);
+        $this->app->singleton(FilesystemBootstrapper::class);
+
+        $this->app->tag([CacheBootstrapper::class, FilesystemBootstrapper::class], 'saas.bootstrappers');
     }
 
     protected function registerTranslations(): void
@@ -199,5 +210,35 @@ class SaasServiceProvider extends ServiceProvider
         RateLimiter::for('saas-leads', function (Request $request) use ($attempts, $minutes) {
             return Limit::perMinutes((int) $minutes, (int) $attempts)->by($request->ip());
         });
+    }
+
+    /**
+     * Automatic tenant propagation through the queue (plan §7, Phase 8).
+     *
+     * This is what actually guarantees queue isolation. The TenantAwareJob
+     * middleware remains available for jobs that need explicit control, but
+     * correctness must not depend on 70 job classes each remembering to
+     * opt in.
+     */
+    protected function registerQueueTenancy(): void
+    {
+        if (! config('saas.tenancy.enabled', false)) {
+            return;
+        }
+
+        $this->app->make(\Modules\Saas\Queue\QueueTenancy::class)
+            ->register($this->app['events']);
+    }
+
+    /**
+     * Register platform authorization policies (plan §5.4).
+     * Deny-by-default: platform operators have no implicit tenant data access.
+     */
+    protected function registerPolicies(): void
+    {
+        Gate::policy(
+            \Modules\Saas\Models\Landlord\Tenant::class,
+            \Modules\Saas\Policies\PlatformPolicy::class
+        );
     }
 }
