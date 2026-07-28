@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Saas\Bootstrappers\CacheBootstrapper;
 use Modules\Saas\Bootstrappers\FilesystemBootstrapper;
+use Modules\Saas\Console\Commands\MigrateTenants;
+use Modules\Saas\Console\Commands\ProvisionTenant;
+use Modules\Saas\Console\Commands\PruneDemoRequests;
+use Modules\Saas\Console\Commands\ReconcileSubscriptions;
+use Modules\Saas\Console\Commands\VerifyTenantIsolation;
 use Modules\Saas\Contracts\BillingGateway;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Contracts\EntitlementChecker;
@@ -18,10 +23,17 @@ use Modules\Saas\Contracts\TenantCredentialResolver;
 use Modules\Saas\Contracts\TenantStorage;
 use Modules\Saas\Contracts\TenantUrlGenerator;
 use Modules\Saas\Domain\Tenancy\TenantContextManager;
+use Modules\Saas\Http\Middleware\EnsureTenantActive;
+use Modules\Saas\Http\Middleware\RequireEntitlement;
+use Modules\Saas\Http\Middleware\RequireLandlordHost;
+use Modules\Saas\Http\Middleware\RequireTenantHost;
+use Modules\Saas\Models\Landlord\Tenant;
+use Modules\Saas\Policies\PlatformPolicy;
+use Modules\Saas\Queue\QueueTenancy;
+use Modules\Saas\Services\Billing\NullBillingGateway;
 use Modules\Saas\Services\DatabaseTenantConnectionManager;
 use Modules\Saas\Services\EnvTenantCredentialResolver;
 use Modules\Saas\Services\FeatureEntitlementService;
-use Modules\Saas\Services\Billing\NullBillingGateway;
 use Modules\Saas\Services\Storage\FilesystemTenantStorage;
 use Modules\Saas\Services\Support\SupportAccessService;
 use Modules\Saas\Services\TenantContextGuard;
@@ -160,22 +172,22 @@ class SaasServiceProvider extends ServiceProvider
 
         $router->aliasMiddleware(
             'saas.landlord-host',
-            \Modules\Saas\Http\Middleware\RequireLandlordHost::class
+            RequireLandlordHost::class
         );
 
         $router->aliasMiddleware(
             'saas.tenant-host',
-            \Modules\Saas\Http\Middleware\RequireTenantHost::class
+            RequireTenantHost::class
         );
 
         $router->aliasMiddleware(
             'saas.tenant-active',
-            \Modules\Saas\Http\Middleware\EnsureTenantActive::class
+            EnsureTenantActive::class
         );
 
         $router->aliasMiddleware(
             'saas.entitlement',
-            \Modules\Saas\Http\Middleware\RequireEntitlement::class
+            RequireEntitlement::class
         );
     }
 
@@ -191,10 +203,11 @@ class SaasServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \Modules\Saas\Console\Commands\ProvisionTenant::class,
-                \Modules\Saas\Console\Commands\MigrateTenants::class,
-                \Modules\Saas\Console\Commands\VerifyTenantIsolation::class,
-                \Modules\Saas\Console\Commands\ReconcileSubscriptions::class,
+                ProvisionTenant::class,
+                MigrateTenants::class,
+                VerifyTenantIsolation::class,
+                ReconcileSubscriptions::class,
+                PruneDemoRequests::class,
             ]);
         }
     }
@@ -226,7 +239,7 @@ class SaasServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->app->make(\Modules\Saas\Queue\QueueTenancy::class)
+        $this->app->make(QueueTenancy::class)
             ->register($this->app['events']);
     }
 
@@ -236,9 +249,23 @@ class SaasServiceProvider extends ServiceProvider
      */
     protected function registerPolicies(): void
     {
+        // Abilities that take a Tenant model resolve through the policy.
         Gate::policy(
-            \Modules\Saas\Models\Landlord\Tenant::class,
-            \Modules\Saas\Policies\PlatformPolicy::class
+            Tenant::class,
+            PlatformPolicy::class
         );
+
+        /*
+         * Abilities with NO model argument must be defined as gates.
+         *
+         * Gate::policy() only maps abilities that are called with an instance
+         * or class name. `Gate::authorize('manageBilling')` has neither, so it
+         * finds no policy, falls through to Spatie's permission gate, and dies
+         * with "Call to undefined method PlatformUser::hasRole()" — because
+         * platform operators are a separate guard with no Spatie roles at all.
+         */
+        foreach (['manageUsers', 'createTenant', 'viewAnyTenant', 'manageBilling', 'accessSupport', 'viewAuditLog'] as $ability) {
+            Gate::define($ability, [PlatformPolicy::class, $ability]);
+        }
     }
 }

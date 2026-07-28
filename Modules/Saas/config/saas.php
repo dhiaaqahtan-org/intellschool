@@ -10,12 +10,12 @@ return [
     | and register the trademark, before anything ships publicly.
     */
     'brand' => [
-        'name'     => env('SAAS_BRAND_NAME', 'SchoolOS'),
-        'legal'    => env('SAAS_LEGAL_NAME', ''),
-        'reg_no'   => env('SAAS_COMPANY_REG', ''),
-        'address'  => env('SAAS_COMPANY_ADDRESS', ''),
-        'email'    => env('SAAS_CONTACT_EMAIL', ''),
-        'phone'    => env('SAAS_CONTACT_PHONE', ''),
+        'name' => env('SAAS_BRAND_NAME', 'SchoolOS'),
+        'legal' => env('SAAS_LEGAL_NAME', ''),
+        'reg_no' => env('SAAS_COMPANY_REG', ''),
+        'address' => env('SAAS_COMPANY_ADDRESS', ''),
+        'email' => env('SAAS_CONTACT_EMAIL', ''),
+        'phone' => env('SAAS_CONTACT_PHONE', ''),
     ],
 
     /*
@@ -28,7 +28,7 @@ return [
     */
     'hosts' => [
         'marketing' => env('SAAS_MARKETING_HOST'),   // www.product.example
-        'platform'  => env('SAAS_PLATFORM_HOST'),    // app.product.example
+        'platform' => env('SAAS_PLATFORM_HOST'),    // app.product.example
         'tenant_suffix' => env('SAAS_TENANT_SUFFIX'), // .product.example
     ],
 
@@ -99,9 +99,14 @@ return [
         // flushed explicitly on tenant and domain lifecycle events.
         'resolution_cache_ttl' => (int) env('SAAS_RESOLUTION_TTL', 60),
 
+        // School data is retained after cancellation so export and recovery
+        // remain possible. Irreversible purging is a separate reviewed job.
+        'cancellation_retention_days' => (int) env('SAAS_CANCELLATION_RETENTION_DAYS', 90),
+
         // Hosts that are always treated as control-plane, never as a tenant.
         // The marketing and platform hosts are added automatically.
         'reserved_hosts' => array_filter(explode(',', (string) env('SAAS_RESERVED_HOSTS', ''))),
+
 
         // Slugs that may never be issued as a tenant subdomain, because they
         // would shadow a platform host or be mistaken for one.
@@ -127,12 +132,12 @@ return [
     | Re-run those generators after any release that adds routes or permissions.
     */
     'facts' => [
-        'verified_at'      => '2026-07-26',
-        'modules'          => 34,
-        'api_endpoints'    => 1701,
-        'roles'            => 17,
-        'admin_permissions'=> 644,
-        'locales'          => ['en', 'ar'],
+        'verified_at' => '2026-07-26',
+        'modules' => 34,
+        'api_endpoints' => 1701,
+        'roles' => 17,
+        'admin_permissions' => 644,
+        'locales' => ['en', 'ar'],
     ],
 
     /*
@@ -145,15 +150,15 @@ return [
     */
     'claims' => [
         // Requires: approved commercial pricing sign-off.
-        'publish_pricing'      => env('SAAS_CLAIM_PRICING', false),
+        'publish_pricing' => env('SAAS_CLAIM_PRICING', false),
         // Requires: signed customer references. Never fabricate logos.
-        'publish_customers'    => env('SAAS_CLAIM_CUSTOMERS', false),
+        'publish_customers' => env('SAAS_CLAIM_CUSTOMERS', false),
         // Requires: monitoring history + published SLA.
-        'publish_uptime'       => env('SAAS_CLAIM_UPTIME', false),
+        'publish_uptime' => env('SAAS_CLAIM_UPTIME', false),
         // Requires: completed external security assessment.
         'publish_certifications' => env('SAAS_CLAIM_CERTS', false),
         // Requires: green flutter analyze/test/build + two-tenant device test.
-        'publish_mobile_ga'    => env('SAAS_CLAIM_MOBILE_GA', false),
+        'publish_mobile_ga' => env('SAAS_CLAIM_MOBILE_GA', false),
     ],
 
     /*
@@ -162,8 +167,24 @@ return [
     |--------------------------------------------------------------------------
     */
     'leads' => [
-        'notify'     => env('SAAS_LEAD_NOTIFY_EMAIL'),
+        'notify' => env('SAAS_LEAD_NOTIFY_EMAIL'),
         'rate_limit' => '5,60', // attempts, minutes
+        'queue' => env('SAAS_LEAD_QUEUE', 'notifications'),
+        'retention_days' => (int) env('SAAS_LEAD_RETENTION_DAYS', 90),
+        'size_options' => ['up_to_300', '300_to_800', '800_to_2000', 'over_2000'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public signup
+    |--------------------------------------------------------------------------
+    | Fail closed until commercial pricing, legal documents, email delivery,
+    | queue workers, and provisioning infrastructure have been approved.
+    */
+    'signup' => [
+        'enabled' => (bool) env('SAAS_PUBLIC_SIGNUP_ENABLED', false),
+        'owner_invitations_enabled' => (bool) env('SAAS_OWNER_INVITATIONS_ENABLED', false),
+        'invitation_expiry_days' => (int) env('SAAS_INVITATION_EXPIRY_DAYS', 7),
     ],
 
     /*
@@ -184,6 +205,10 @@ return [
         // Webhook signature verification secret. MUST be set before enabling
         // a real billing provider. Never commit the real value.
         'webhook_secret' => env('SAAS_BILLING_WEBHOOK_SECRET'),
+
+        // Optional absolute customer-facing URL exposed on entitlement denial.
+        // Invalid or missing URLs remain null in API responses.
+        'upgrade_url' => env('SAAS_BILLING_UPGRADE_URL'),
 
         // Provider API keys. Kept separate from the ERP's payment gateway keys.
         'api_key' => env('SAAS_BILLING_API_KEY'),
@@ -258,6 +283,9 @@ return [
     'provisioning' => [
         // Maximum concurrent provisioning runs.
         'max_concurrent' => (int) env('SAAS_PROVISION_MAX_CONCURRENT', 3),
+
+        // Dedicated queue so database creation never blocks web requests.
+        'queue' => env('SAAS_PROVISION_QUEUE', 'provisioning'),
 
         // Delay (seconds) between batch provisioning steps.
         'step_delay' => (int) env('SAAS_PROVISION_STEP_DELAY', 2),

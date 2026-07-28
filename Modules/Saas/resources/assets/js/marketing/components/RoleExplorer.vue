@@ -47,7 +47,12 @@ function onKeydown(event) {
 
 <template>
   <div class="roles">
-    <div class="roles__tabs" role="tablist" :aria-label="labels.tablist" @keydown="onKeydown">
+    <div
+      class="roles__tabs"
+      role="tablist"
+      :aria-label="labels.tablist"
+      @keydown="onKeydown"
+    >
       <button
         v-for="(role, i) in roles"
         :id="`role-tab-${role.key}`"
@@ -77,7 +82,13 @@ function onKeydown(event) {
       <h3>{{ current.name }} &mdash; {{ current.permissions.toLocaleString() }} {{ labels.permissions }}</h3>
       <p>{{ current.summary }}</p>
       <ul class="tags">
-        <li v-for="permission in current.sample" :key="permission" class="tag">{{ permission }}</li>
+        <li
+          v-for="permission in current.sample"
+          :key="permission"
+          class="tag"
+        >
+          {{ permission }}
+        </li>
       </ul>
     </div>
   </div>

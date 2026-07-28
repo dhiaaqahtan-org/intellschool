@@ -68,11 +68,15 @@ class RouteServiceProvider extends ServiceProvider
     {
         $host = config('saas.hosts.platform');
 
-        $route = Route::middleware(['web', 'saas.landlord-host']);
+        if (empty($host)) {
+            if ($this->app->environment('production')) {
+                return; // fail closed: never expose platform routes on tenant hosts
+            }
 
-        if (! empty($host)) {
-            $route = $route->domain($host);
+            $host = 'localhost';
         }
+
+        $route = Route::middleware(['web', 'saas.landlord-host'])->domain($host);
 
         $route->group(module_path($this->moduleName, 'routes/platform.php'));
     }
@@ -104,7 +108,17 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapApiRoutes(): void
     {
-        Route::middleware(['api'])
-            ->group(module_path($this->moduleName, 'routes/api.php'));
+        // `Route::group()` takes (array $attributes, $routes) — passing the file
+        // path as the single argument raised
+        // "Router::group(): Argument #1 ($attributes) must be of type array,
+        // string given" during provider boot, which took down EVERY request in
+        // the application (including /api/v1/*), not just the SaaS routes.
+        //
+        // routes/api.php declares its own `prefix('api/saas')`, so only the
+        // stateless `api` middleware group is applied here — matching how the
+        // sibling map*Routes() methods above are written.
+        // Public/mobile routes use the stateless API stack while platform
+        // JSON routes use the session-backed web stack with CSRF.
+        Route::group([], module_path($this->moduleName, 'routes/api.php'));
     }
 }

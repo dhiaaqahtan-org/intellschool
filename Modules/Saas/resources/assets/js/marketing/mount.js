@@ -45,7 +45,7 @@ export function mountIslands(root = document) {
       const app = createApp(module.default, props);
 
       app.config.errorHandler = (err) => {
-        // eslint-disable-next-line no-console
+
         console.error(`[saas] island "${name}" failed`, err);
       };
 
@@ -54,7 +54,7 @@ export function mountIslands(root = document) {
       el.dataset.vueMounted = 'true';
     } catch (err) {
       // Leave the Blade fallback in place. The page remains fully usable.
-      // eslint-disable-next-line no-console
+
       console.error(`[saas] could not mount island "${name}"`, err);
     }
   });

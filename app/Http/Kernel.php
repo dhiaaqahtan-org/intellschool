@@ -26,6 +26,7 @@ class Kernel extends HttpKernel
         // commenting this line out. While that flag is false this is a
         // pass-through and the app behaves as the original single-tenant ERP.
         \Modules\Saas\Http\Middleware\ResolveTenant::class,
+        \Modules\Saas\Http\Middleware\InitializeTenant::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
@@ -47,8 +48,12 @@ class Kernel extends HttpKernel
             // \Illuminate\Session\Middleware\AuthenticateSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\Init::class,
+            // These middleware are no-ops for ordinary ERP/admin routes. They
+            // act only on routes registered through Route::localize().
+            \NielsNumbers\LaravelLocalizer\Middleware\SetLocale::class,
+            \NielsNumbers\LaravelLocalizer\Middleware\RedirectLocale::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
         'api' => [

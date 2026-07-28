@@ -174,6 +174,23 @@ it('throws when ensure() is called for a feature the tenant lacks', function () 
     });
 })->throws(EntitlementDenied::class);
 
+it('preserves the denial status and only exposes a valid configured upgrade URL', function () {
+    config()->set('saas.billing.upgrade_url', 'https://platform.example.test/upgrade');
+
+    $response = EntitlementDenied::withMessage('storage.export', 'Exports are unavailable.', 403)->render();
+
+    expect($response->getStatusCode())->toBe(403)
+        ->and($response->getData(true))->toMatchArray([
+            'error' => 'entitlement_denied',
+            'feature' => 'storage.export',
+            'upgrade_url' => 'https://platform.example.test/upgrade',
+        ]);
+
+    config()->set('saas.billing.upgrade_url', 'javascript:alert(1)');
+
+    expect(EntitlementDenied::forFeature('storage.export')->render()->getData(true)['upgrade_url'])->toBeNull();
+});
+
 it('keeps a customer on the plan version they subscribed to', function () {
     subscribe($this->tenantA->uuid, $this->plan->id);
 

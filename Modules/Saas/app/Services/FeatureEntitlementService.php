@@ -5,6 +5,8 @@ namespace Modules\Saas\Services;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Contracts\EntitlementChecker;
+use Modules\Saas\Domain\Billing\SubscriptionStatus;
+use Modules\Saas\Domain\Entitlements\EntitlementSnapshot;
 use Modules\Saas\Exceptions\EntitlementDenied;
 use Modules\Saas\Models\Landlord\Plan;
 use Modules\Saas\Models\Landlord\PlanFeature;
@@ -25,8 +27,6 @@ use Modules\Saas\Models\Landlord\TenantEntitlement;
  */
 class FeatureEntitlementService implements EntitlementChecker
 {
-    private const CACHE_TTL = 300; // 5 minutes
-
     /**
      * Subscription statuses that still grant access.
      *
@@ -34,13 +34,10 @@ class FeatureEntitlementService implements EntitlementChecker
      * a payment failure to degrade to a grace/read-only state, not to cut a
      * school off from its own records mid-term.
      */
-    private const ENTITLING_STATUSES = ['trialing', 'active', 'past_due', 'grace'];
-
     public function __construct(
         private readonly CurrentTenant $tenant,
         private readonly Cache $cache,
-    ) {
-    }
+    ) {}
 
     public function has(string $featureCode): bool
     {
@@ -50,9 +47,7 @@ class FeatureEntitlementService implements EntitlementChecker
             return false;
         }
 
-        $snapshot = $this->snapshot($context->uuid);
-
-        return ($snapshot['features'][$featureCode]['enabled'] ?? false) === true;
+        return $this->valueSnapshot($context->uuid)->has($featureCode);
     }
 
     public function remaining(string $featureCode): ?int
@@ -63,15 +58,7 @@ class FeatureEntitlementService implements EntitlementChecker
             return 0;
         }
 
-        $snapshot = $this->snapshot($context->uuid);
-        $feature = $snapshot['features'][$featureCode] ?? null;
-
-        if ($feature === null || ! ($feature['enabled'] ?? false)) {
-            return 0;
-        }
-
-        // null limit means unlimited
-        return $feature['limit'] ?? null;
+        return $this->valueSnapshot($context->uuid)->remaining($featureCode);
     }
 
     public function ensure(string $featureCode): void
@@ -89,9 +76,7 @@ class FeatureEntitlementService implements EntitlementChecker
             return null;
         }
 
-        $snapshot = $this->snapshot($context->uuid);
-
-        return $snapshot['plan_id'] ?? null;
+        return $this->valueSnapshot($context->uuid)->planCode;
     }
 
     public function flushCache(string $tenantUuid): void
@@ -104,18 +89,20 @@ class FeatureEntitlementService implements EntitlementChecker
      */
     public function snapshot(string $tenantUuid): array
     {
+        return $this->valueSnapshot($tenantUuid)->toArray();
+    }
+
+    private function valueSnapshot(string $tenantUuid): EntitlementSnapshot
+    {
         $data = $this->cache->remember(
             $this->cacheKey($tenantUuid),
-            self::CACHE_TTL,
+            max(1, (int) config('saas.entitlements.cache_ttl', 300)),
             fn () => $this->buildSnapshot($tenantUuid)
         );
 
-        // Add metadata for API consumers.
         $data['cached_at'] = now()->toIso8601String();
-        $data['plan_code'] = $data['plan_id'] ?? null;
-        $data['limits'] = $this->extractLimits($data['features'] ?? []);
 
-        return $data;
+        return EntitlementSnapshot::fromArray($data);
     }
 
     /**
@@ -142,7 +129,7 @@ class FeatureEntitlementService implements EntitlementChecker
 
         $subscription = Subscription::query()
             ->where('tenant_uuid', $tenantUuid)
-            ->whereIn('status', self::ENTITLING_STATUSES)
+            ->whereIn('status', SubscriptionStatus::entitlingValues())
             ->orderByDesc('id')
             ->first();
 
@@ -196,21 +183,5 @@ class FeatureEntitlementService implements EntitlementChecker
     private function cacheKey(string $tenantUuid): string
     {
         return "saas:entitlements:{$tenantUuid}";
-    }
-
-    /**
-     * Extract limit values from features for API response.
-     */
-    private function extractLimits(array $features): array
-    {
-        $limits = [];
-
-        foreach ($features as $code => $feature) {
-            if (isset($feature['limit']) && $feature['limit'] !== null) {
-                $limits[$code] = $feature['limit'];
-            }
-        }
-
-        return $limits;
     }
 }

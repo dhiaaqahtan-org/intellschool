@@ -4,6 +4,7 @@ namespace Modules\Saas\Models\Landlord;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Saas\Domain\Billing\SubscriptionStatus;
 
 /**
  * Subscription lifecycle for a tenant (plan §9.2).
@@ -56,19 +57,19 @@ class Subscription extends LandlordModel
 
     public function isActive(): bool
     {
-        return in_array($this->status, ['active', 'trialing'], true);
+        return in_array($this->status, [SubscriptionStatus::Active->value, SubscriptionStatus::Trialing->value], true);
     }
 
     public function isInGracePeriod(): bool
     {
-        return $this->status === 'grace'
+        return $this->status === SubscriptionStatus::Grace->value
             && $this->grace_ends_at !== null
             && $this->grace_ends_at->isFuture();
     }
 
     public function isTerminated(): bool
     {
-        return in_array($this->status, ['canceled', 'terminated'], true);
+        return SubscriptionStatus::tryFrom($this->status)?->isTerminal() ?? false;
     }
 
     public function scopeForTenant($query, string $tenantUuid)
@@ -78,6 +79,6 @@ class Subscription extends LandlordModel
 
     public function scopeActiveOrTrialing($query)
     {
-        return $query->whereIn('status', ['active', 'trialing']);
+        return $query->whereIn('status', [SubscriptionStatus::Active->value, SubscriptionStatus::Trialing->value]);
     }
 }

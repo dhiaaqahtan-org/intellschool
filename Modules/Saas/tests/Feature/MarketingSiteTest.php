@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Middleware\Init;
 use Illuminate\Support\Facades\Route;
+use Modules\Saas\Http\Controllers\Marketing\PageController;
+use Modules\Saas\Domain\Website\ClaimGate;
 use Modules\Saas\Tests\TenancyTestCase;
 
 /**
@@ -18,21 +21,36 @@ beforeEach(function () {
     // This application's default locale is `ar`. Pin it so assertions about
     // English copy are testing the content, not the environment.
     app()->setLocale('en');
+    config()->set('app.url', 'http://localhost');
+    app('url')->forceRootUrl('http://localhost');
+    config()->set('saas.hosts.marketing', 'localhost');
+    $this->withServerVariables([
+        'HTTP_HOST' => 'localhost',
+        'SERVER_NAME' => 'localhost',
+    ]);
 });
 
 function homeData(): array
 {
-    $controller = new ReflectionClass(\Modules\Saas\Http\Controllers\Marketing\PageController::class);
+    $controller = new ReflectionClass(PageController::class);
     $instance = $controller->newInstance();
 
     $facts = $controller->getMethod('facts');
     $facts->setAccessible(true);
     $modules = $controller->getMethod('moduleCoverage');
     $modules->setAccessible(true);
+    $claimGate = app(ClaimGate::class);
+
     $roles = $controller->getMethod('roleCoverage');
     $roles->setAccessible(true);
 
     return [
+        'claims' => [
+            'pricing' => $claimGate->pricing(),
+            'mobile_ga' => $claimGate->mobileGeneralAvailability(),
+            'uptime' => $claimGate->uptime(),
+            'certifications' => $claimGate->certifications(),
+        ],
         'facts' => $facts->invoke($instance),
         'modules' => $modules->invoke($instance),
         'roles' => $roles->invoke($instance),
@@ -48,6 +66,23 @@ it('renders the home page with meaningful server-rendered content', function () 
         ->and($html)->toContain('1,701')     // endpoint count
         ->and($html)->toContain('644')       // permission count
         ->and($html)->toContain('own database');
+});
+
+it('renders the localized demo form through the complete HTTP stack', function () {
+    $response = $this->get('/ar/demo');
+
+    $response
+        ->assertOk()
+        ->assertSee('<html lang="ar" dir="rtl"', false)
+        ->assertSee('name="email"', false)
+        ->assertSee(__('saas::marketing.form.submit', locale: 'ar'));
+
+    preg_match('/<script type="application\/json" data-props>(.*?)<\/script>/s', $response->getContent(), $matches);
+    $props = json_decode($matches[1] ?? '', true, flags: JSON_THROW_ON_ERROR);
+
+    expect($props['action'])->toEndWith('/ar/demo')
+        ->and($props['t']['name'])->toBe(__('saas::marketing.form.name', locale: 'ar'))
+        ->and($props['sizes'][0]['label'])->toBe(__('saas::marketing.form.size_options.up_to_300', locale: 'ar'));
 });
 
 it('renders the 3D product stage as real markup, not an image', function () {
@@ -136,26 +171,99 @@ it('carries no-JS fallbacks so content survives a failed bundle', function () {
 });
 
 it('registers marketing routes only on the marketing host', function () {
-    config()->set('saas.hosts.marketing', 'www.product.test');
+    // The provider already baked the configured marketing domain into these routes.
 
     $routes = collect(Route::getRoutes()->getRoutes())
-        ->filter(fn ($r) => str_starts_with((string) $r->getName(), 'saas.marketing.'));
+        ->filter(fn ($r) => str_starts_with((string) $r->baseName(), 'saas.marketing.'));
 
     expect($routes)->not->toBeEmpty();
 
     // If marketing `/` were unconstrained it would shadow every tenant's own
     // school website, which routes/site.php serves at the same path.
-    $home = $routes->first(fn ($r) => $r->getName() === 'saas.marketing.home');
+    $home = $routes->first(fn ($r) => $r->baseName() === 'saas.marketing.home');
     expect($home)->not->toBeNull()
         ->and($home->gatherMiddleware())->toContain('saas.landlord-host');
 });
 
 it('keeps the demo endpoint rate limited', function () {
     $post = collect(Route::getRoutes()->getRoutes())
-        ->first(fn ($r) => $r->getName() === 'saas.marketing.demo.store');
+        ->first(fn ($r) => $r->baseName() === 'saas.marketing.demo.store');
 
     expect($post)->not->toBeNull()
         ->and($post->gatherMiddleware())->toContain('throttle:saas-leads');
+});
+
+it('detects English from the customer browser on the first visit', function () {
+    $this->withoutMiddleware(Init::class);
+
+    $response = $this->withHeader('Accept-Language', 'en-US,en;q=0.9')
+        ->get('/');
+
+    $response->assertRedirect('http://localhost/en')
+        ->assertCookie('locale');
+});
+
+it('detects Arabic regional preferences from the customer browser', function () {
+    $this->withoutMiddleware(Init::class);
+
+    $response = $this->withHeader('Accept-Language', 'ar-SA,ar;q=0.9,en;q=0.5')
+        ->get('/');
+
+    $response->assertRedirect('http://localhost/ar')
+        ->assertCookie('locale');
+});
+
+it('uses English as the fallback for unsupported browser languages', function () {
+    $this->withoutMiddleware(Init::class);
+
+    $this->withHeader('Accept-Language', 'fr-FR,fr;q=0.9')
+        ->get('/')
+        ->assertRedirect('http://localhost/en');
+});
+
+it('lets an explicit localized URL override the browser preference', function () {
+    $this->withoutMiddleware(Init::class);
+
+    $this->withHeader('Accept-Language', 'ar-SA,ar;q=0.9')
+        ->get('/en')
+        ->assertOk()
+        ->assertSee('<html lang="en" dir="ltr"', false)
+        ->assertSee(__('saas::marketing.hero.title_a', locale: 'en'));
+
+    $this->withHeader('Accept-Language', 'en-US,en;q=0.9')
+        ->get('/ar')
+        ->assertOk()
+        ->assertSee('<html lang="ar" dir="rtl"', false)
+        ->assertSee(__('saas::marketing.hero.title_a', locale: 'ar'));
+});
+
+it('persists a manual language choice in the session', function () {
+    $this->withoutMiddleware(Init::class);
+
+    $this->withSession(['locale' => 'ar'])
+        ->get('/demo')
+        ->assertRedirect('http://localhost/ar/demo');
+});
+
+it('publishes canonical language URLs and a working switcher without query hacks', function () {
+    $this->withoutMiddleware(Init::class);
+
+    $response = $this->get('/en');
+
+    $response->assertOk()
+        ->assertSee('<link rel="canonical" href="http://localhost/en">', false)
+        ->assertSee('<link rel="alternate" hreflang="en" href="http://localhost/en">', false)
+        ->assertSee('<link rel="alternate" hreflang="ar" href="http://localhost/ar">', false)
+        ->assertSee('<link rel="alternate" hreflang="x-default" href="http://localhost">', false)
+        ->assertSee('href="http://localhost/ar"', false)
+        ->assertDontSee('?lang=', false);
+});
+
+it('keeps the legacy school and admin locale routes outside package localization', function () {
+    expect(Route::has('site.locale'))->toBeTrue()
+        ->and(Route::has('admin.locale'))->toBeTrue()
+        ->and(Route::hasLocalized('site.locale'))->toBeFalse()
+        ->and(Route::hasLocalized('admin.locale'))->toBeFalse();
 });
 
 it('exposes the built asset manifest so production does not need a dev server', function () {

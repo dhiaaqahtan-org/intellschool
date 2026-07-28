@@ -5,6 +5,7 @@ namespace Modules\Saas\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Modules\Saas\Contracts\EntitlementChecker;
+use Modules\Saas\Domain\Entitlements\FeatureCode;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -21,13 +22,15 @@ class RequireEntitlement
 {
     public function __construct(
         private readonly EntitlementChecker $entitlements,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next, string $featureCode): Response
     {
+        $feature = FeatureCode::tryFrom($featureCode);
+        abort_if($feature === null, 404);
+
         // ensure() throws EntitlementDenied (402) when the plan lacks the feature.
-        $this->entitlements->ensure($featureCode);
+        $this->entitlements->ensure($feature->value);
 
         return $next($request);
     }

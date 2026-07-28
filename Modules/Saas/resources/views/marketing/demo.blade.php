@@ -28,13 +28,16 @@
             </div>
 
             <div class="reveal" data-vue-component="demo-form">
-                <script type="application/json" data-props>@json([
-                    'action'     => route('saas.marketing.demo.store'),
-                    'csrf'       => csrf_token(),
-                    'sizes'      => $sizes,
-                    'privacyUrl' => route('saas.marketing.legal.privacy'),
-                    't'          => __('saas::marketing.form'),
-                ])</script>
+                @php
+                    $demoProps = [
+                        'action' => route('saas.marketing.demo.store'),
+                        'csrf' => csrf_token(),
+                        'sizes' => $sizes,
+                        'privacyUrl' => route('saas.marketing.legal.privacy'),
+                        't' => __('saas::marketing.form'),
+                    ];
+                @endphp
+                <script type="application/json" data-props>@json($demoProps)</script>
 
                 {{--
                     Server-rendered baseline. Identical fields, identical
@@ -90,7 +93,7 @@
                             <select id="demo-size" name="size">
                                 <option value="">{{ __('saas::marketing.form.size_placeholder') }}</option>
                                 @foreach ($sizes as $option)
-                                    <option value="{{ $option }}" @selected(old('size') === $option)>{{ $option }}</option>
+                                    <option value="{{ $option['value'] }}" @selected(old('size') === $option['value'])>{{ $option['label'] }}</option>
                                 @endforeach
                             </select>
                         </div>

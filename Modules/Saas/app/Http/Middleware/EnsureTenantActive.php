@@ -25,6 +25,7 @@ class EnsureTenantActive
      */
     private const ALWAYS_ALLOWED = [
         'billing.*',
+        'saas.tenant.billing.*',
         'subscription.*',
         'export.*',
         'auth.logout',
@@ -33,8 +34,7 @@ class EnsureTenantActive
 
     public function __construct(
         private readonly CurrentTenant $tenant,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {

@@ -53,6 +53,13 @@ class TenantContextManager implements CurrentTenant
 
     public function set(TenantContext $context): void
     {
+        // Switching an already-initialized singleton must completely unwind
+        // the previous tenant first. Reusing bootstrappers while they still
+        // hold tenant A's roots/prefixes can otherwise leak that state into B.
+        if ($this->context !== null) {
+            $this->forget();
+        }
+
         // Connection first: if credentials are wrong we want to fail before
         // any other global has been mutated.
         $this->connections->connect($context);
@@ -90,7 +97,11 @@ class TenantContextManager implements CurrentTenant
         } finally {
             // Restore in a finally so a throwing callback cannot leave a
             // long-lived worker pointed at the wrong tenant.
-            $previous === null ? $this->forget() : $this->set($previous);
+            $this->forget();
+
+            if ($previous !== null) {
+                $this->set($previous);
+            }
         }
     }
 

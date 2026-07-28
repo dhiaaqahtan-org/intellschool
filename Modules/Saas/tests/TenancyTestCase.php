@@ -2,10 +2,13 @@
 
 namespace Modules\Saas\Tests;
 
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Modules\Saas\Contracts\CurrentTenant;
+use Modules\Saas\Contracts\TenantCredentialResolver;
 use Modules\Saas\Domain\Tenancy\TenantContext;
 use Modules\Saas\Enums\ProvisioningState;
 use Modules\Saas\Enums\TenantStatus;
@@ -13,7 +16,6 @@ use Modules\Saas\Models\Landlord\Tenant;
 use Modules\Saas\Models\Landlord\TenantDatabase;
 use Modules\Saas\Models\Landlord\TenantDomain;
 use Tests\CreatesApplication;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 /**
  * Base case for tenancy tests.
@@ -44,7 +46,9 @@ abstract class TenancyTestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->tenantDbPath = storage_path('framework/testing/tenants');
+        // Separate concurrent Pest/PHP processes. A shared landlord.sqlite
+        // lets one process truncate another process's open database.
+        $this->tenantDbPath = storage_path('framework/testing/tenants/'.getmypid());
         File::ensureDirectoryExists($this->tenantDbPath);
 
         config()->set('saas.tenancy.enabled', true);
@@ -87,7 +91,7 @@ abstract class TenancyTestCase extends BaseTestCase
 
     protected function tearDown(): void
     {
-        app(\Modules\Saas\Contracts\CurrentTenant::class)->forget();
+        app(CurrentTenant::class)->forget();
 
         foreach ($this->tenantFiles as $path) {
             File::delete($path);
@@ -95,6 +99,7 @@ abstract class TenancyTestCase extends BaseTestCase
 
         File::delete($this->landlordFile);
         $this->tenantFiles = [];
+        File::deleteDirectory($this->tenantDbPath);
 
         if ($this->cacheDir !== null) {
             File::deleteDirectory($this->cacheDir);
@@ -128,8 +133,8 @@ abstract class TenancyTestCase extends BaseTestCase
     protected function swapCredentialResolver(): void
     {
         $this->app->bind(
-            \Modules\Saas\Contracts\TenantCredentialResolver::class,
-            fn () => new class implements \Modules\Saas\Contracts\TenantCredentialResolver
+            TenantCredentialResolver::class,
+            fn () => new class implements TenantCredentialResolver
             {
                 public function resolveFor(TenantContext $context): array
                 {
@@ -198,7 +203,7 @@ abstract class TenancyTestCase extends BaseTestCase
      */
     protected function seedTenantSchema(Tenant $tenant, string $host): void
     {
-        app(\Modules\Saas\Contracts\CurrentTenant::class)->runFor(
+        app(CurrentTenant::class)->runFor(
             $tenant->toContext($host),
             function () use ($tenant) {
                 Schema::create('students', function ($table) {

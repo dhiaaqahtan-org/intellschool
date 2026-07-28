@@ -30,16 +30,19 @@
         </nav>
 
         <div class="header-actions">
+            @if (Route::isLocalized())
             <div class="lang-switch" role="group" aria-label="{{ __('saas::marketing.nav.language') }}">
-                @foreach (config('saas.facts.locales', ['en']) as $alt)
-                    <a href="{{ request()->fullUrlWithQuery(['lang' => $alt]) }}"
+                @foreach (config('localizer.supported_locales', ['en', 'ar']) as $alt)
+                    <a href="{{ Route::localizedSwitcherUrl($alt) }}"
                        lang="{{ $alt }}"
+                       dir="{{ Localizer::localeDirection($alt) }}"
                        hreflang="{{ $alt }}"
                        @if ($alt === $locale) aria-current="true" @endif>
                         {{ $alt === 'ar' ? 'ع' : strtoupper($alt) }}
                     </a>
                 @endforeach
             </div>
+            @endif
 
             {{-- Sign-in goes to the platform host, never to the marketing host. --}}
             @if ($platformHost = config('saas.hosts.platform'))
@@ -68,6 +71,11 @@
             @foreach ($links as $key => $href)
                 <a href="{{ $href }}">{{ __("saas::marketing.nav.$key") }}</a>
             @endforeach
+            @if ($platformHost)
+                <a href="{{ 'https://'.$platformHost.'/login' }}">
+                    {{ __('saas::marketing.nav.signin') }}
+                </a>
+            @endif
             <a href="{{ route('saas.marketing.demo') }}">{{ __('saas::marketing.nav.demo') }}</a>
         </div>
     </div>

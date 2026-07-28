@@ -3,6 +3,7 @@
 namespace Modules\Saas\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreDemoRequest extends FormRequest
 {
@@ -14,11 +15,11 @@ class StoreDemoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'    => ['required', 'string', 'max:120'],
-            'school'  => ['required', 'string', 'max:180'],
-            'email'   => ['required', 'email:rfc,dns', 'max:190'],
-            'phone'   => ['nullable', 'string', 'max:40'],
-            'size'    => ['nullable', 'string', 'max:40'],
+            'name' => ['required', 'string', 'max:120'],
+            'school' => ['required', 'string', 'max:180'],
+            'email' => ['required', 'email:rfc,dns', 'max:190'],
+            'phone' => ['nullable', 'string', 'max:40'],
+            'size' => ['nullable', Rule::in(config('saas.leads.size_options', []))],
             'message' => ['nullable', 'string', 'max:2000'],
             'consent' => ['accepted'],
 
@@ -31,7 +32,7 @@ class StoreDemoRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'consent.accepted'  => __('saas::marketing.form.consent_required'),
+            'consent.accepted' => __('saas::marketing.form.consent_required'),
             'website.prohibited' => __('saas::marketing.form.rejected'),
         ];
     }
@@ -39,10 +40,10 @@ class StoreDemoRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'name'    => __('saas::marketing.form.name'),
-            'school'  => __('saas::marketing.form.school'),
-            'email'   => __('saas::marketing.form.email'),
-            'size'    => __('saas::marketing.form.size'),
+            'name' => __('saas::marketing.form.name'),
+            'school' => __('saas::marketing.form.school'),
+            'email' => __('saas::marketing.form.email'),
+            'size' => __('saas::marketing.form.size'),
             'message' => __('saas::marketing.form.message'),
         ];
     }

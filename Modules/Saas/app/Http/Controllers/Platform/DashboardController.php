@@ -4,6 +4,7 @@ namespace Modules\Saas\Http\Controllers\Platform;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 use Modules\Saas\Models\Landlord\Tenant;
 use Modules\Saas\Models\Landlord\ProvisioningRun;
@@ -16,11 +17,14 @@ class DashboardController extends Controller
      */
     public function index(Request $request): View
     {
+        Gate::forUser(auth('platform')->user())->authorize('viewAnyTenant');
+
         $stats = [
             'total_tenants' => Tenant::count(),
             'active_tenants' => Tenant::where('status', 'active')->count(),
-            'trialing_tenants' => Tenant::where('status', 'trialing')->count(),
-            'active_subscriptions' => Subscription::whereIn('status', ['active', 'trialing'])->count(),
+            'pending_tenants' => Tenant::where('status', 'pending')->count(),
+            'trialing_subscriptions' => Subscription::where('status', 'trialing')->count(),
+            'failed_provisioning' => ProvisioningRun::whereIn('state', ['failed_recoverable', 'failed_manual_review'])->count(),
         ];
 
         $recentTenants = Tenant::query()
@@ -31,7 +35,7 @@ class DashboardController extends Controller
 
         $provisioningRuns = ProvisioningRun::query()
             ->with('tenant')
-            ->whereIn('state', ['queued', 'running', 'failed_recoverable', 'failed_manual_review'])
+            ->whereIn('state', ['queued', 'allocating_database', 'migrating', 'seeding', 'configuring_domain', 'verifying', 'failed_recoverable', 'failed_manual_review'])
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get();

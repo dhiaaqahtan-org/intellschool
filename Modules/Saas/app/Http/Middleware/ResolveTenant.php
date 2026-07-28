@@ -4,13 +4,12 @@ namespace Modules\Saas\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Services\TenantResolver;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Resolves the tenant and swaps the database connection.
+ * Resolves a trusted request host to an immutable tenant context.
  *
  * MUST run in the GLOBAL middleware stack, immediately after TrustProxies and
  * before everything else — session, CSRF, SubstituteBindings, authentication
@@ -34,9 +33,7 @@ class ResolveTenant
 {
     public function __construct(
         private readonly TenantResolver $resolver,
-        private readonly CurrentTenant $tenant,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -45,6 +42,8 @@ class ResolveTenant
         // than being commented out — a commented-out isolation control is one
         // careless merge away from disappearing entirely.
         if (! config('saas.tenancy.enabled', false)) {
+            $request->attributes->set('saas.tenant_context', null);
+
             return $next($request);
         }
 
@@ -59,13 +58,15 @@ class ResolveTenant
 
         if ($classification->isControlPlane()) {
             // No tenant, and — importantly — no tenant connection left over
+            $request->attributes->set('saas.control_plane', true);
             // from a previous request on this worker.
-            $this->tenant->forget();
+            $request->attributes->set('saas.tenant_context', null);
 
             return $next($request);
         }
 
         $context = $this->resolver->resolve($classification->host);
+        $request->attributes->set('saas.control_plane', false);
 
         if ($context === null) {
             // Unknown, unverified, suspended-beyond-service or still
@@ -73,23 +74,9 @@ class ResolveTenant
             throw new NotFoundHttpException('No site is configured for this address.');
         }
 
-        $this->tenant->set($context);
-
-        // Locale and timezone follow the tenant, not the server.
-        app()->setLocale($context->locale);
-        date_default_timezone_set($context->timezone);
+        // InitializeTenant consumes this object without another landlord query.
+        $request->attributes->set('saas.tenant_context', $context);
 
         return $next($request);
-    }
-
-    /**
-     * Runs after the response is sent.
-     *
-     * Clearing here matters for long-lived workers (Octane, FrankenPHP) where
-     * the process survives the request. Under php-fpm it is belt and braces.
-     */
-    public function terminate(Request $request, Response $response): void
-    {
-        $this->tenant->forget();
     }
 }

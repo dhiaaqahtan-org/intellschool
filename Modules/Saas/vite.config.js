@@ -27,6 +27,10 @@ export default defineConfig({
             input: [
                 'resources/assets/css/marketing.css',
                 'resources/assets/js/marketing/app.js',
+                'resources/assets/css/components.css',
+                'resources/assets/js/app.js',
+                'resources/assets/css/platform.css',
+                'resources/assets/js/platform/app.js',
             ],
             refresh: [
                 'Modules/Saas/resources/views/**',

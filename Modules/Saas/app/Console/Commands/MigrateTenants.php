@@ -3,11 +3,10 @@
 namespace Modules\Saas\Console\Commands;
 
 use Illuminate\Console\Command;
-use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Models\Landlord\Tenant;
-use Modules\Saas\Models\Landlord\TenantDatabase;
 
 /**
+use Modules\Saas\Services\TenantMigrationRunner;
  * Run migrations across all tenant databases with batched rollout,
  * pause/resume, and per-tenant failure isolation (plan §Phase 4).
  *
@@ -27,7 +26,7 @@ class MigrateTenants extends Command
 
     protected $description = 'Run schema migrations across tenant databases';
 
-    public function handle(CurrentTenant $currentTenant): int
+    public function handle(TenantMigrationRunner $migrationRunner): int
     {
         $query = Tenant::query()
             ->where('provisioning_state', 'ready')
@@ -64,10 +63,13 @@ class MigrateTenants extends Command
 
         foreach ($batches as $batchIndex => $batch) {
             $this->newLine();
-            $this->info("Batch " . ($batchIndex + 1) . " ({$batch->count()} tenants)...");
+            $this->info('Batch '.($batchIndex + 1)." ({$batch->count()} tenants)...");
 
             foreach ($batch as $tenant) {
-                $result = $this->migrateTenant($tenant, $currentTenant);
+                $outcome = $migrationRunner->migrateTenant($tenant, force: true);
+                $result = $outcome['success']
+                    ? ($outcome['migrated'] > 0 ? true : null)
+                    : ($outcome['error'] ?? 'Unknown migration failure.');
 
                 if ($result === true) {
                     $migrated++;
@@ -90,7 +92,7 @@ class MigrateTenants extends Command
         }
 
         $this->newLine();
-        $this->info("Done. Migrated: {$migrated}, Failures: " . count($failures));
+        $this->info("Done. Migrated: {$migrated}, Failures: ".count($failures));
 
         if (! empty($failures)) {
             $this->newLine();
@@ -103,52 +105,6 @@ class MigrateTenants extends Command
         }
 
         return self::SUCCESS;
-    }
-
-    /**
-     * @return bool|null|string true=migrated, null=nothing to do, string=error
-     */
-    private function migrateTenant(Tenant $tenant, CurrentTenant $currentTenant): bool|null|string
-    {
-        $database = $tenant->database;
-
-        if ($database === null) {
-            return 'No database record found.';
-        }
-
-        try {
-            $context = $tenant->toContext($tenant->primaryDomain()?->hostname ?? $tenant->slug.'.localhost');
-
-            $migrated = false;
-
-            $currentTenant->runFor($context, function () use (&$migrated, $database, $tenant) {
-                $migrator = app('migrator');
-
-                $paths = [database_path('migrations')];
-                $tenantMigrationPath = module_path('Saas', 'database/migrations/tenant');
-                if (is_dir($tenantMigrationPath)) {
-                    $paths[] = $tenantMigrationPath;
-                }
-
-                $pending = $migrator->run($paths, ['pretend' => false]);
-
-                $migrated = count($migrator->getNotes()) > 0;
-
-                // Update schema tracking.
-                $database->update([
-                    'schema_version' => app()->version(),
-                    'last_migrated_at' => now(),
-                    'health_status' => 'healthy',
-                ]);
-            });
-
-            return $migrated ?: null;
-        } catch (\Throwable $e) {
-            // Update health status on failure.
-            $database->update(['health_status' => 'migration_failed']);
-
-            return $e->getMessage();
-        }
     }
 
     private function dryRun($tenants): int

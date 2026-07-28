@@ -47,11 +47,16 @@ class EntitlementDenied extends HttpException
      */
     public function render(): \Illuminate\Http\JsonResponse
     {
+        $configuredUrl = config('saas.billing.upgrade_url');
+        $upgradeUrl = is_string($configuredUrl) && filter_var($configuredUrl, FILTER_VALIDATE_URL)
+            ? $configuredUrl
+            : null;
+
         return response()->json([
             'message' => $this->getMessage(),
             'error' => 'entitlement_denied',
             'feature' => $this->featureCode,
-            'upgrade_url' => null, // TODO: set from platform config
-        ], 402);
+            'upgrade_url' => $upgradeUrl,
+        ], $this->getStatusCode());
     }
 }

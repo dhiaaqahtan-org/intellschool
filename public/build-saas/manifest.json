@@ -1,35 +1,117 @@
 {
+  "_http-B-2lmyXp.js": {
+    "file": "assets/http-B-2lmyXp.js",
+    "name": "http"
+  },
+  "_mount-YOKYbgeL.js": {
+    "file": "assets/mount-YOKYbgeL.js",
+    "name": "mount",
+    "imports": [
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
+    ],
+    "dynamicImports": [
+      "resources/assets/js/components/onboarding/ProvisioningProgress.vue",
+      "resources/assets/js/components/billing/SubscriptionSummary.vue",
+      "resources/assets/js/components/platform/TenantFilter.vue"
+    ]
+  },
+  "_runtime-dom.esm-bundler-D_5WVhJY.js": {
+    "file": "assets/runtime-dom.esm-bundler-D_5WVhJY.js",
+    "name": "runtime-dom.esm-bundler"
+  },
+  "resources/assets/css/components.css": {
+    "file": "assets/components-BIVJqsVy.css",
+    "src": "resources/assets/css/components.css",
+    "isEntry": true
+  },
   "resources/assets/css/marketing.css": {
-    "file": "assets/marketing-B50Wv211.css",
+    "file": "assets/marketing-CUykJ-G3.css",
     "src": "resources/assets/css/marketing.css",
     "isEntry": true
   },
+  "resources/assets/css/platform.css": {
+    "file": "assets/platform-CFjkmHPO.css",
+    "src": "resources/assets/css/platform.css",
+    "isEntry": true
+  },
+  "resources/assets/js/app.js": {
+    "file": "assets/app-ZX_P3iMD.js",
+    "name": "app",
+    "src": "resources/assets/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_mount-YOKYbgeL.js",
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
+    ]
+  },
+  "resources/assets/js/components/billing/SubscriptionSummary.vue": {
+    "file": "assets/SubscriptionSummary-2zdbFV6Y.js",
+    "name": "SubscriptionSummary",
+    "src": "resources/assets/js/components/billing/SubscriptionSummary.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_http-B-2lmyXp.js",
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
+    ]
+  },
+  "resources/assets/js/components/onboarding/ProvisioningProgress.vue": {
+    "file": "assets/ProvisioningProgress-DRsvsH9e.js",
+    "name": "ProvisioningProgress",
+    "src": "resources/assets/js/components/onboarding/ProvisioningProgress.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_http-B-2lmyXp.js",
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
+    ]
+  },
+  "resources/assets/js/components/platform/TenantFilter.vue": {
+    "file": "assets/TenantFilter-BriiYEmS.js",
+    "name": "TenantFilter",
+    "src": "resources/assets/js/components/platform/TenantFilter.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
+    ]
+  },
   "resources/assets/js/marketing/app.js": {
-    "file": "assets/app-Chche17n.js",
+    "file": "assets/app-M4NxO3yp.js",
     "name": "app",
     "src": "resources/assets/js/marketing/app.js",
     "isEntry": true,
+    "imports": [
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
+    ],
     "dynamicImports": [
       "resources/assets/js/marketing/components/RoleExplorer.vue",
       "resources/assets/js/marketing/components/DemoForm.vue"
     ]
   },
   "resources/assets/js/marketing/components/DemoForm.vue": {
-    "file": "assets/DemoForm-BlyQ4yAF.js",
+    "file": "assets/DemoForm-D4Szup9a.js",
     "name": "DemoForm",
     "src": "resources/assets/js/marketing/components/DemoForm.vue",
     "isDynamicEntry": true,
     "imports": [
-      "resources/assets/js/marketing/app.js"
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
     ]
   },
   "resources/assets/js/marketing/components/RoleExplorer.vue": {
-    "file": "assets/RoleExplorer-DgnDKw_g.js",
+    "file": "assets/RoleExplorer-2QTi-TdY.js",
     "name": "RoleExplorer",
     "src": "resources/assets/js/marketing/components/RoleExplorer.vue",
     "isDynamicEntry": true,
     "imports": [
-      "resources/assets/js/marketing/app.js"
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
+    ]
+  },
+  "resources/assets/js/platform/app.js": {
+    "file": "assets/app-C_jszq1A.js",
+    "name": "app",
+    "src": "resources/assets/js/platform/app.js",
+    "isEntry": true,
+    "imports": [
+      "_mount-YOKYbgeL.js",
+      "_runtime-dom.esm-bundler-D_5WVhJY.js"
     ]
   }
 }

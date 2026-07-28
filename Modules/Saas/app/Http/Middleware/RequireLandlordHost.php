@@ -23,20 +23,26 @@ class RequireLandlordHost
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $expected = config('saas.hosts.marketing');
+        $expectedHosts = array_values(array_filter([
+            config('saas.hosts.marketing'),
+            config('saas.hosts.platform'),
+        ]));
 
-        // Unconfigured is only tolerable outside production. In production an
-        // unset marketing host means `/` would shadow every tenant site.
-        if (empty($expected)) {
+        // Unconfigured control-plane hosts are only tolerable outside
+        // production, where RouteServiceProvider uses localhost.
+        if ($expectedHosts === []) {
             if (app()->environment('production')) {
-                throw new NotFoundHttpException('Marketing host is not configured.');
+                throw new NotFoundHttpException('Control-plane hosts are not configured.');
             }
 
             return $next($request);
         }
 
-        if ($this->normalise($request->getHost()) !== $this->normalise($expected)) {
-            throw new NotFoundHttpException('Marketing routes are not served on this host.');
+        $requestHost = $this->normalise($request->getHost());
+        $allowed = array_map(fn (string $host) => $this->normalise($host), $expectedHosts);
+
+        if (! in_array($requestHost, $allowed, true)) {
+            throw new NotFoundHttpException('Control-plane routes are not served on this host.');
         }
 
         return $next($request);

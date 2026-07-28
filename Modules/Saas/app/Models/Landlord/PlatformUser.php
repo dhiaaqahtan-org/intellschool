@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Modules\Saas\Models\Concerns\UsesLandlordConnection;
 
 /**
  * Platform operator identity (plan §5.4).
@@ -20,8 +21,7 @@ use Illuminate\Notifications\Notifiable;
 class PlatformUser extends Authenticatable
 {
     use HasUuids, Notifiable, SoftDeletes;
-
-    protected $connection = 'landlord';
+    use UsesLandlordConnection;
 
     protected $table = 'saas_platform_users';
 
@@ -67,6 +67,20 @@ class PlatformUser extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Accessor so `$user->is_active` works as well as `isActive()`.
+     *
+     * There is no is_active COLUMN — the table stores `status`. PlatformPolicy
+     * reads `$user->is_active` in every one of its methods, and without this
+     * accessor that resolves to null, so every authorization check returned
+     * false and the whole platform panel was locked out. Keep this in step
+     * with isActive() and scopeActive().
+     */
+    public function getIsActiveAttribute(): bool
+    {
+        return $this->isActive();
     }
 
     public function hasTwoFactorEnabled(): bool

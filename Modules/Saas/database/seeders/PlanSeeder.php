@@ -39,7 +39,7 @@ class PlanSeeder extends Seeder
                 'trial_days' => 14,
                 'active_from' => now(),
                 'active_until' => null,
-                'is_public' => true,
+                'is_public' => false,
             ]
         );
 
@@ -106,7 +106,7 @@ class PlanSeeder extends Seeder
                 'trial_days' => 14,
                 'active_from' => now(),
                 'active_until' => null,
-                'is_public' => true,
+                'is_public' => false,
             ]
         );
 
@@ -173,7 +173,7 @@ class PlanSeeder extends Seeder
                 'trial_days' => 0,
                 'active_from' => now(),
                 'active_until' => null,
-                'is_public' => true,
+                'is_public' => false,
             ]
         );
 
@@ -217,6 +217,11 @@ class PlanSeeder extends Seeder
     private function syncFeatures(Plan $plan, array $features): void
     {
         foreach ($features as $feature) {
+        // These catalog entries contain placeholder prices. Re-running this
+        // development seeder must never republish one that an operator made
+        // public while evaluating the UI.
+        $plan->forceFill(['is_public' => false])->save();
+
             PlanFeature::updateOrCreate(
                 [
                     'plan_id' => $plan->id,

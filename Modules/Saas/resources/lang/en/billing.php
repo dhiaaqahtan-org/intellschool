@@ -1,0 +1,38 @@
+<?php
+
+return [
+    'skip' => 'Skip to billing details',
+    'account' => 'Account and billing',
+    'title' => 'Subscription and billing',
+    'intro' => 'Review the subscription state currently enforced for this school.',
+    'subscription' => 'Current subscription',
+    'plan' => 'Plan',
+    'no_plan' => 'No plan assigned',
+    'status' => 'Status',
+    'period_end' => 'Current period ends',
+    'empty' => 'No subscription is attached to this school.',
+    'read_only' => 'This school is currently read-only. Billing and data export remain available.',
+    'statuses' => [
+        'pending' => 'Pending',
+        'trialing' => 'Trial',
+        'active' => 'Active',
+        'past_due' => 'Past due',
+        'grace' => 'Grace period',
+        'paused' => 'Paused',
+        'cancelled' => 'Cancelled',
+        'terminated' => 'Terminated',
+    ],
+    'vue' => [
+        'plan' => 'Plan',
+        'status' => 'Status',
+        'period_end' => 'Current period ends',
+        'empty' => 'No subscription is attached to this school.',
+        'refresh' => 'Refresh status',
+        'refreshing' => 'Refreshing',
+        'updated' => 'Subscription status updated.',
+        'expired' => 'Your session expired. Sign in again and retry.',
+        'denied' => 'You are not allowed to view billing details.',
+        'rate_limited' => 'Too many refresh attempts. Wait a moment and retry.',
+        'failed' => 'Billing status could not be refreshed.',
+    ],
+];

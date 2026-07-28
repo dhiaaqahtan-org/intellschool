@@ -3,9 +3,11 @@
 namespace Modules\Saas\Models\Landlord;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Saas\Database\Factories\TenantFactory;
 use Modules\Saas\Domain\Tenancy\TenantContext;
 use Modules\Saas\Enums\ProvisioningState;
 use Modules\Saas\Enums\TenantStatus;
@@ -18,6 +20,7 @@ use Modules\Saas\Enums\TenantStatus;
  */
 class Tenant extends LandlordModel
 {
+    use HasFactory;
     use HasUuids;
     use SoftDeletes;
 
@@ -38,6 +41,11 @@ class Tenant extends LandlordModel
         'purge_after' => 'datetime',
         'meta' => 'array',
     ];
+
+    protected static function newFactory(): TenantFactory
+    {
+        return TenantFactory::new();
+    }
 
     /**
      * HasUuids would otherwise treat `uuid` as the route key and primary key.

@@ -28,8 +28,9 @@ interface TenantStorage
     public function disk(?string $diskName = null): Filesystem;
 
     /**
-     * Build a tenant-scoped path. Guarantees the result starts with the
-     * tenant prefix and contains no traversal sequences.
+     * Normalize a path relative to the already tenant-rooted filesystem.
+     * The physical tenant prefix is applied by FilesystemBootstrapper and is
+     * deliberately not repeated here.
      *
      * @throws \InvalidArgumentException on path traversal attempts.
      * @throws \Modules\Saas\Exceptions\TenantNotResolved when no tenant is active.
@@ -55,7 +56,7 @@ interface TenantStorage
      * Assert that a path belongs to the active tenant. Used by download
      * controllers and export services before streaming a file.
      *
-     * @throws \Modules\Saas\Exceptions\EntitlementDenied when path escapes tenant prefix.
+     * @throws \InvalidArgumentException when the path is unsafe.
      */
     public function assertPathBelongsToTenant(string $path): void;
 

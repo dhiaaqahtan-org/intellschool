@@ -19,7 +19,7 @@ class TenantOwner extends LandlordModel
     protected $table = 'saas_tenant_owners';
 
     protected $fillable = [
-        'uuid', 'tenant_uuid', 'tenant_user_uuid', 'email', 'role',
+        'uuid', 'tenant_uuid', 'tenant_user_uuid', 'name', 'email', 'role',
         'status', 'invited_at', 'accepted_at', 'removed_at',
     ];
 

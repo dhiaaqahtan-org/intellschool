@@ -27,7 +27,8 @@ class DomainTenantUrlGenerator implements TenantUrlGenerator
 
     public function to(string $path = '', array $parameters = [], ?bool $secure = null): string
     {
-        $base = $this->baseUrl();
+        $context = $this->currentTenant->getOrFail();
+        $base = $this->resolvePrimaryHost($context->uuid);
         $secure ??= app()->environment('production');
 
         $scheme = $secure ? 'https' : 'http';
@@ -42,55 +43,63 @@ class DomainTenantUrlGenerator implements TenantUrlGenerator
 
     public function route(string $name, array $parameters = [], bool $absolute = true): string
     {
-        $context = $this->currentTenant->getOrFail();
-        $host = $this->resolvePrimaryHost($context->uuid);
-
-        // Temporarily set the URL root to the tenant's domain.
-        $previousRoot = URL::formatRoot();
-
-        $scheme = app()->environment('production') ? 'https' : 'http';
-        URL::forceRootUrl("{$scheme}://{$host}");
-
-        try {
-            return route($name, $parameters, $absolute);
-        } finally {
-            // Restore the original root to avoid polluting subsequent URLs.
-            if ($previousRoot) {
-                URL::forceRootUrl($previousRoot);
-            } else {
-                URL::forceRootUrl(null);
-            }
-        }
+        return $this->onTenantOrigin(
+            static fn (): string => route($name, $parameters, $absolute),
+        );
     }
 
     public function baseUrl(): string
     {
         $context = $this->currentTenant->getOrFail();
+        $host = $this->resolvePrimaryHost($context->uuid);
+        $scheme = app()->environment('production') ? 'https' : 'http';
 
-        return $this->resolvePrimaryHost($context->uuid);
+        return "{$scheme}://{$host}";
     }
 
     public function signedAsset(string $path, int $expiresInMinutes = 60): string
     {
         $context = $this->currentTenant->getOrFail();
 
-        return URL::temporarySignedRoute(
-            'saas.tenant.asset',
-            now()->addMinutes($expiresInMinutes),
-            [
-                'tenant' => $context->uuid,
-                'path' => encrypt($path),
-            ]
+        return $this->onTenantOrigin(
+            static fn (): string => URL::temporarySignedRoute(
+                'saas.tenant.asset',
+                now()->addMinutes($expiresInMinutes),
+                [
+                    'tenant' => $context->uuid,
+                    'path' => encrypt($path),
+                ],
+            ),
         );
     }
 
     public function apiBaseUrl(): string
     {
+        return $this->baseUrl().'/api';
+    }
+
+    /**
+     * Run URL generation against the tenant origin without leaking that
+     * process-wide setting into the next request or queued notification.
+     *
+     * @template T
+     * @param  \Closure(): T  $callback
+     * @return T
+     */
+    private function onTenantOrigin(\Closure $callback): mixed
+    {
         $context = $this->currentTenant->getOrFail();
         $host = $this->resolvePrimaryHost($context->uuid);
         $scheme = app()->environment('production') ? 'https' : 'http';
+        $previousRoot = URL::to('/');
 
-        return "{$scheme}://{$host}/api";
+        URL::useOrigin("{$scheme}://{$host}");
+
+        try {
+            return $callback();
+        } finally {
+            URL::useOrigin($previousRoot);
+        }
     }
 
     /**
@@ -106,7 +115,7 @@ class DomainTenantUrlGenerator implements TenantUrlGenerator
                 $domain = TenantDomain::query()
                     ->where('tenant_uuid', $tenantUuid)
                     ->where('is_primary', true)
-                    ->where('verified_at', '!=', null)
+                    ->routable()
                     ->first();
 
                 if ($domain) {

@@ -53,8 +53,7 @@ Route::middleware('permission:team:manage')->group(function () {
     Route::apiResource('teams', TeamController::class)->only(['index', 'show']);
     Route::apiResource('teams.roles', RoleController::class)->except(['update']);
 
-    Route::get('teams/{team}/config', [TeamActionController::class, 'storeConfig'])->name('teams.config');
-    Route::post('teams/{team}/config', [TeamActionController::class, 'storeConfig'])->name('teams.config');
+    Route::match(['get', 'post'], 'teams/{team}/config', [TeamActionController::class, 'storeConfig'])->name('teams.config');
     Route::get('teams/{team}/permissions/pre-requisite', [PermissionController::class, 'preRequisite']);
     Route::post('teams/{team}/permissions/role/assign', [PermissionController::class, 'roleWiseAssign']);
     Route::get('teams/{team}/permissions/search', [PermissionController::class, 'search']);

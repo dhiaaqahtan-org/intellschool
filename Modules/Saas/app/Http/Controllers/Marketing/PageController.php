@@ -4,6 +4,7 @@ namespace Modules\Saas\Http\Controllers\Marketing;
 
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use Modules\Saas\Domain\Website\ClaimGate;
 
 class PageController extends Controller
 {
@@ -19,17 +20,32 @@ class PageController extends Controller
 
     public function home(): View
     {
+        $claimGate = app(ClaimGate::class);
+
         return view('saas::marketing.home', [
-            'facts'   => $this->facts(),
+            'facts' => $this->facts(),
             'modules' => $this->moduleCoverage(),
-            'roles'   => $this->roleCoverage(),
+            'roles' => $this->roleCoverage(),
+            'claims' => [
+                'pricing' => $claimGate->pricing(),
+                'mobile_ga' => $claimGate->mobileGeneralAvailability(),
+                'uptime' => $claimGate->uptime(),
+                'certifications' => $claimGate->certifications(),
+            ],
         ]);
     }
 
     public function demo(): View
     {
+        $sizes = collect(config('saas.leads.size_options', []))
+            ->map(fn (string $value) => [
+                'value' => $value,
+                'label' => __("saas::marketing.form.size_options.{$value}"),
+            ])
+            ->all();
+
         return view('saas::marketing.demo', [
-            'sizes' => ['Up to 300', '300 – 800', '800 – 2,000', 'Over 2,000'],
+            'sizes' => $sizes,
         ]);
     }
 

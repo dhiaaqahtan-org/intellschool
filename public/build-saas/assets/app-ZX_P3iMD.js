@@ -1,0 +1,1 @@
+import{m as e}from"./mount-YOKYbgeL.js";import"./runtime-dom.esm-bundler-D_5WVhJY.js";function o(t=document){e(t)}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>o(),{once:!0}):o();

@@ -1,275 +1,171 @@
-# Modules/Saas — Marketing website
+# Modules/Saas
 
-The public SaaS product website for the school ERP, built as the `Modules/Saas`
-marketing surface described in `SAAS_MULTITENANT_NWIDART_IMPLEMENTATION_PLAN.md`
-§4.1 and §10: **server-rendered Blade + Vue 3 interactive islands, no Livewire,
-module-local Vite build.**
+`Modules/Saas` is the landlord control plane and public website for the InstiKit SaaS conversion. It uses `nwidart/laravel-modules`, server-rendered Blade, Vue 3 islands, and module-owned Vite assets. It does not use Livewire at runtime.
 
----
+This module is a substantial implementation, not a production-launch certificate. The authoritative launch gates remain in `SAAS_MULTITENANT_NWIDART_IMPLEMENTATION_PLAN.md`.
 
-## Look at it right now
+## Verified implementation status — 2026-07-28
 
-Open this file in a browser — no build step, no server, no dependencies:
-
-```
-Modules/Saas/preview/index.html
-```
-
-It is the same markup the Blade views produce, loading the same stylesheet and
-the same enhancement script from `resources/assets/`. Use it for design review;
-use the Blade views for anything that ships.
-
----
-
-## What was built
-
-| Area | Status |
+| Area | Current repository status |
 |---|---|
-| Design system (`resources/assets/css/marketing.css`) | Complete — tokens, components, dark hero + light body, RTL via logical properties |
-| Enhancement layer (`resources/assets/js/marketing/enhance.js`) | Complete — scroll reveal, 3D pointer parallax, hero canvas, counters, sticky header, WAI-ARIA tabs |
-| Home page (`resources/views/marketing/home.blade.php`) | Complete — 11 sections |
-| Demo page + endpoint | Complete — works with and without JavaScript |
-| Vue islands (`RoleExplorer.vue`, `DemoForm.vue`) | Complete |
-| English + Arabic copy | Complete (Arabic is a **first draft** — see below) |
-| Host isolation (route domain constraint + `RequireLandlordHost`) | Complete |
-| Legal pages | Routed placeholders only, `noindex` |
-| Rest of the plan's sitemap (§10.3) | **Not built** — see "Not built yet" |
+| Module and build boundary | Implemented with module providers, config, routes, migrations, translations, views, Vue assets, ESLint, Vitest, and Vite |
+| Landlord control plane | Tenant/domain/database/owner/platform-user/plan/subscription/entitlement/audit/support/invitation/provisioning schemas and platform UI are implemented |
+| Tenant isolation | Host resolution, fail-closed tenant middleware, database switching, cache/storage bootstrappers, queue propagation, and teardown tests are implemented |
+| Provisioning and migrations | Idempotent queued provisioning, scheduler fallback, tenant migration runner, migration repository setup, version/health tracking, and failure states are implemented |
+| Public website | Home, demo, legal placeholders, signup, signup result, and owner activation are implemented with meaningful Blade fallbacks |
+| Localization | `niels-numbers/laravel-localizer` detects browser/mobile language and serves canonical English `/en` and Arabic `/ar` routes with RTL metadata and a manual switcher |
+| Demo leads | Consent, landlord persistence, HMAC request metadata, retention/pruning, rate limiting, and optional queued email notification are implemented |
+| Signup and owner activation | Fail-closed plan selection, landlord transaction, queued provisioning, tenant-local owner linkage, hashed expiring invitation, queued email, one-time password setup, and replay rejection are implemented |
+| Entitlements and billing state | Server-side feature enforcement, versioned plans, verified/idempotent webhook inbox, lifecycle mapping, grace behavior, and scheduled reconciliation are implemented |
+| Real subscription charging | Not implemented: `NullBillingGateway` remains bound until a provider, merchant account, tax/currency policy, and checkout contract are approved |
+| Legal/commercial launch | Blocked: license provenance, operative legal documents, company identity, brand, approved pricing, and evidence-backed claims are external decisions |
+| Production infrastructure | Blocked: secret-manager credential resolver, DNS/TLS, Redis/Horizon policy, object storage, backups/restore drills, monitoring, WAF, and deployment runbooks must be supplied and verified |
+| Flutter and integrations | Not complete: tenant discovery, device storage partitioning, sync/outbox isolation, push routing, logout clearing, and two-tenant device tests remain |
 
-### The 3D / animation approach
+Public signup remains unavailable unless all three gates are true:
 
-The product visuals are **live HTML recreations of the application UI**, not
-exported screenshots, floated in a CSS `perspective` scene:
-
-- crisp at any zoom and on any DPI, unlike a PNG;
-- a few kilobytes instead of a few hundred;
-- reflow into a readable stack on narrow screens instead of shrinking to
-  illegibility;
-- animate (bar charts grow, attendance cells stagger in, donut fills) without
-  video or a canvas library;
-- contain **no real student data**, because there is none to leak.
-
-They were modelled on the actual application: Vue 3 + Tailwind (`tw-` prefix) +
-Inter, and the real domain vocabulary from the permission matrix — fee heads,
-receipts, batches, divisions, ledgers, gate passes.
-
-Deliberately **not** used: Three.js or WebGL. A 3D library in the hero would
-blow the LCP ≤ 2.5s target in plan §10.5 for decoration. The depth comes from
-CSS 3D transforms, and the hero backdrop is a ~60-node 2D canvas that pauses
-itself when scrolled out of view or when the tab is hidden.
-
-Every motion effect is gated on a single `--mo` custom property, which
-`prefers-reduced-motion: reduce` sets to `0`, plus explicit `animation: none`
-overrides. With JavaScript disabled the `.no-js` rules reveal everything
-immediately — no content is ever trapped behind an observer that never fires.
-
-### Positioning vs the four reference sites
-
-Kinderpedia, eSkooly, OurSchoolSoftware and SchoolSMS all lead with the same
-two claims: a long feature list, and social proof (school counts, logos,
-ratings). We can't match the second — there are no customers yet, and inventing
-them is not an option. So the site leads with the two things that are
-*verifiable today*:
-
-1. **Depth, quantified.** 34 modules with their real endpoint counts, 17 roles
-   with their real permission counts. Competitors say "all-in-one"; this shows
-   the number and lets a buyer check it.
-2. **Isolation as the differentiator.** None of the four says anything about how
-   one school's data is separated from another's — because they pool it. A
-   database per tenant is a genuine architectural advantage and it gets a full
-   section with a diagram.
-
----
-
-## Install
-
-```bash
-composer require nwidart/laravel-modules:^12.0
+```dotenv
+SAAS_PUBLIC_SIGNUP_ENABLED=true
+SAAS_OWNER_INVITATIONS_ENABLED=true
+SAAS_CLAIM_PRICING=true
 ```
 
-Add to the **root** `composer.json`, preserving existing `allow-plugins` entries:
+Do not enable them while the legal pages are placeholders or pricing/email delivery is unapproved.
 
-```json
-{
-  "extra": { "merge-plugin": { "include": ["Modules/*/composer.json"] } },
-  "config": { "allow-plugins": { "wikimedia/composer-merge-plugin": true } }
-}
-```
+## Installation
 
-Then:
+The repository currently requires the compatible Laravel 12 packages:
 
 ```bash
+composer require nwidart/laravel-modules:^12.0 niels-numbers/laravel-localizer:^1.4
 composer dump-autoload
 php artisan module:enable Saas
 ```
 
-Build the module assets:
+Build the module assets separately from the legacy application bundle:
 
 ```bash
 cd Modules/Saas
 npm install
+npm run lint
+npm test
 npm run build
 ```
 
-Output goes to `public/build-saas/`, kept separate from the core application's
-existing `public/build/` manifest.
+The production manifest is written to `public/build-saas/`.
 
-### Environment
+## Required configuration
+
+Start from the documented keys in the root `.env.example`. At minimum, separate the three host classes and configure a dedicated landlord database:
 
 ```dotenv
-SAAS_BRAND_NAME="Your Product"
-SAAS_MARKETING_HOST=www.yourproduct.com
-SAAS_PLATFORM_HOST=app.yourproduct.com
-SAAS_TENANT_SUFFIX=.yourproduct.com
-SAAS_LEGAL_NAME="Your Company Ltd"
-SAAS_COMPANY_REG="..."
-SAAS_COMPANY_ADDRESS="..."
-SAAS_CONTACT_EMAIL=hello@yourproduct.com
+SAAS_TENANCY_ENABLED=false
+SAAS_MARKETING_HOST=www.product.example
+SAAS_PLATFORM_HOST=app.product.example
+SAAS_TENANT_SUFFIX=.product.example
+SAAS_LANDLORD_DB_DATABASE=instikit_landlord
 ```
 
-### Verify route ordering before you trust it
+`SAAS_TENANCY_ENABLED` must stay false until landlord migrations, tenant credentials, wildcard DNS/TLS, and at least one verified tenant are ready. In production, `EnvTenantCredentialResolver` deliberately refuses to run; bind a real secret-manager-backed implementation of `TenantCredentialResolver`.
 
-The core `App\Providers\RouteServiceProvider` registers `routes/site.php`, which
-also claims `/` — that is the tenant's own public school website. The marketing
-routes carry a domain constraint so they only match the marketing host, but they
-must still be registered **first**. nwidart's provider is package-discovered and
-boots before app providers in a default Laravel 12 install, so this normally
-works out. Confirm it rather than assuming:
+Run landlord migrations and workers with explicit operational ownership:
 
 ```bash
-php artisan route:list --path=/
+php artisan migrate --database=landlord --path=Modules/Saas/database/migrations/landlord
+php artisan queue:work --queue=provisioning,notifications,default
+php artisan schedule:work
 ```
 
-The domain-constrained marketing route must appear above the site route.
-`RequireLandlordHost` is the second control if ordering ever regresses.
+The scheduler provides provisioning recovery, demo-lead pruning, and billing reconciliation. A queue broker outage does not erase committed provisioning runs; pending runs remain available to the scheduler/operator command.
 
----
+## English and Arabic routing
 
-## Before this goes public
+The public website uses `niels-numbers/laravel-localizer`:
 
-These are blocking, not nice-to-have.
+- supported locales and direction are in `config/localizer.php`;
+- translations are in `resources/lang/{en,ar}/marketing.php`;
+- the first unprefixed visit uses `Accept-Language` and persists the choice;
+- explicit `/en/...` or `/ar/...` URLs override browser preference;
+- canonical, `hreflang`, Open Graph locale, `lang`, and `dir` metadata are rendered in Blade;
+- ERP/admin/API routes outside `Route::localize()` keep their legacy behavior.
 
-### Legal and provenance
+After locale or route changes:
 
-- [ ] **Licensing.** The source directory is named `... v5.5.0 Nulled`. Publishing
-      a commercial SaaS on an unlicensed copy is a blocker (plan §19, Phase 0).
-      Resolve this before any of the rest matters.
-- [ ] Terms, privacy notice, DPA and subprocessor list drafted by counsel.
-      `resources/views/marketing/legal/stub.blade.php` is a routing placeholder
-      carrying `noindex` and is **not** an operative agreement.
-- [ ] Company legal name, registration number and registered address in
-      `config/saas.php` — several jurisdictions require these in the footer.
-
-### Brand and content
-
-- [ ] `SchoolOS` is a placeholder. Pick a real name, check the trademark, set
-      `SAAS_BRAND_NAME`.
-- [ ] Have the Arabic copy reviewed by a native speaker who knows school
-      administration terminology. `resources/lang/ar/marketing.php` was drafted
-      alongside the English and carries a warning header. Finance and academic
-      vocabulary varies by country.
-- [ ] Add a real Open Graph image (1200×630).
-
-### Claim gates
-
-`config/saas.php` has a `claims` block. Every flag is `false` and each one hides
-a specific claim until its evidence exists:
-
-| Flag | Unlocks | Needs |
-|---|---|---|
-| `publish_pricing` | Plan cards | Commercially approved prices; read them from `saas_plans`, never hard-code |
-| `publish_customers` | Logos, testimonials | Signed customer references |
-| `publish_uptime` | Availability figures | Monitoring history and a published SLA |
-| `publish_certifications` | Compliance badges | Completed external assessment |
-| `publish_mobile_ga` | Store links, offline guarantees | Green `flutter analyze`/test/build plus the two-tenant device test |
-
-Do not flip a flag to make a section look fuller.
-
-### Re-verify the numbers each release
-
-The hero facts and module/role counts come from `config/saas.php` and
-`PageController`, sourced from `docs/instikit-modules-endpoints.md` and
-`docs/instikit-role-capabilities.md` (verified 2026-07-26). Regenerate those
-docs and update the config after any release that changes routes or
-permissions — a stale "1,701 endpoints" is a false advertising claim, not a
-cosmetic drift.
-
-### Testing not yet done
-
-- [ ] Real-browser check at 375px. The preview pane used during development
-      could not go below ~580px; everything from 582px up was verified and no
-      horizontal overflow was found at 1440 / 1180 / 900 / 582, LTR and RTL.
-- [ ] Screen reader pass (NVDA or VoiceOver) on the tabs and the demo form.
-- [ ] Lighthouse / field Core Web Vitals against the plan's LCP ≤ 2.5s,
-      INP ≤ 200ms, CLS ≤ 0.1 targets.
-- [ ] `npm run build` has not been run — Node was not available in this
-      environment. The Vite config and `package.json` are written but unproven.
-- [ ] Vitest specs for the two Vue islands (`tests/Js/`).
-- [ ] Feature test asserting marketing routes 404 on a tenant host.
-
----
-
-## Not built yet
-
-From the plan's recommended sitemap (§10.3), still to do in Phase 7: per-role
-pages, per-module pages, a multi-campus page, a dedicated security page,
-resources/help centre, company/contact, and the signup + provisioning-progress
-flow. Routes for these were deliberately **not** registered — a route pointing
-at an empty view is worse than a missing route. Navigation currently targets
-sections of the home page.
-
-The demo endpoint logs that a request arrived and nothing else. It is not wired
-to a mailer, CRM or database on purpose: storing personal data before a
-retention policy exists would be the wrong order of operations. See the `TODO`
-in `DemoRequestController`.
-
----
-
-## Layout
-
+```bash
+php artisan route:clear
+php artisan route:cache
 ```
+
+Marketing and platform routes are domain constrained and protected by `RequireLandlordHost`. Tenant ERP/public-site routes require a resolved tenant. The marketing and platform hosts may differ; both are recognized as control-plane hosts, while a tenant host is rejected.
+
+## Verification evidence
+
+The following checks passed on 2026-07-28:
+
+```text
+PHP module suite:       236 tests, 761 assertions
+Vue component tests:   4 files, 7 tests
+PHP syntax:             213 files passed
+ESLint:                 0 errors, 0 warnings
+Vite production build: passed
+Laravel config cache:  passed
+Public browser QA:      English/Arabic, LTR/RTL, 375 px reflow, validation/focus passed
+Laravel route cache:   passed
+PHP syntax/diff check: passed
+```
+
+Composer schema validation passes. `composer audit` is not green: the legacy ERP dependency `firebase/php-jwt` has one low-severity advisory (CVE-2025-45769) affecting versions below 7.0; the installed Microsoft Socialite provider constrains it to 6.x. Remediation requires a coordinated provider/JWT major upgrade plus Microsoft-login and Billdesk regression testing.
+
+The full PHP suite was verified with `php -d xdebug.mode=off -d memory_limit=512M vendor/bin/pest Modules/Saas/tests --compact` in this checkout. The memory override is a test-runner allowance for the legacy Laravel route graph, not evidence that production memory should be raised without profiling.
+
+Key regression suites cover two physical tenant databases, host normalization, control-plane separation, queue context cleanup, cache/storage isolation, entitlements, provisioning idempotency, billing webhooks/reconciliation, localized routing, demo retention, signup, and one-time owner activation.
+
+## Production blockers
+
+The repository must not be described as launch-complete until all of these have evidence:
+
+- legitimate license/source ownership and SaaS redistribution rights;
+- counsel-approved terms, privacy notice, DPA, subprocessors, retention/deletion language, and consent-version storage;
+- approved brand, legal company details, currencies, tax behavior, prices, trials, renewal, cancellation, and refunds;
+- a real billing gateway adapter and provider contract tests;
+- a production secret-manager credential resolver and database allocation adapter;
+- Redis queue/cache/session, object storage, wildcard/custom-domain automation, TLS, monitoring, alerting, backup and restore drills;
+- authenticated platform browser tests at narrow/wide sizes in LTR/RTL, keyboard/screen-reader checks, and measured Core Web Vitals;
+- the remaining sitemap pages and the complete owner setup wizard;
+- remediation and integration regression evidence for the open `firebase/php-jwt` security advisory;
+- Flutter tenant partitioning and two-tenant offline/sync/device verification;
+- CI/CD security scans, load/noisy-tenant tests, external penetration testing, offboarding drills, and a controlled pilot.
+
+The legal routes intentionally remain `noindex` placeholders. Claim flags in `config/saas.php` must remain false until their supporting evidence exists.
+
+## Main structure (summary)
+
+```text
 Modules/Saas/
 ├── app/
-│   ├── Http/
-│   │   ├── Controllers/Marketing/{PageController,DemoRequestController}.php
-│   │   ├── Middleware/RequireLandlordHost.php
-│   │   └── Requests/StoreDemoRequest.php
-│   └── Providers/{SaasServiceProvider,RouteServiceProvider}.php
-├── config/saas.php              # brand, hosts, verified facts, claim gates
-├── preview/index.html           # standalone, no build required
+│   ├── Contracts/                 tenant, billing, storage and entitlement ports
+│   ├── Http/                      marketing, platform, webhook controllers and middleware
+│   ├── Jobs/                      provisioning, demo notification, owner invitation
+│   ├── Models/Landlord/           explicit landlord-connection models
+│   ├── Providers/                 module, routes and events
+│   └── Services/                  tenancy, migrations, billing, support and storage
+├── config/saas.php
+├── database/migrations/{landlord,tenant}/
 ├── resources/
-│   ├── assets/
-│   │   ├── css/marketing.css    # the whole design system
-│   │   └── js/marketing/
-│   │       ├── enhance.js       # framework-free progressive enhancement
-│   │       ├── mount.js         # island registry
-│   │       ├── app.js           # Vite entry
-│   │       └── components/{RoleExplorer,DemoForm}.vue
-│   ├── lang/{en,ar}/marketing.php
-│   └── views/marketing/
-│       ├── layouts/app.blade.php
-│       ├── partials/            # header, footer, icons, 3 product stages, plans
-│       ├── home.blade.php
-│       ├── demo.blade.php
-│       └── legal/stub.blade.php
-├── routes/marketing.php
-├── module.json · composer.json · package.json · vite.config.js
+│   ├── assets/{css,js}/
+│   ├── lang/{en,ar}/
+│   └── views/{marketing,platform,mail}/
+├── routes/{marketing,platform,webhooks}.php
+├── tests/{Feature,Unit,Js}/
+└── module.json, composer.json, package.json, vite.config.js
 ```
 
-### Design tokens
+The executable Section 4 architecture extends that compact tree with:
 
-Generated with the `ui-ux-pro-max` skill (pattern *Enterprise Gateway*, style
-*Soft UI Evolution*): primary `#2563eb`, accent `#ea580c`, Plus Jakarta Sans for
-Latin and IBM Plex Sans Arabic for Arabic. All of it lives in the `:root` block
-at the top of `marketing.css` — rebrand by editing that block, not by grepping
-for hex values.
-
-### Adding an island
-
-1. Drop the SFC in `resources/assets/js/marketing/components/`.
-2. Register it in `mount.js`.
-3. In Blade, wrap **working server-rendered markup** in
-   `<div data-vue-component="your-name">` with a
-   `<script type="application/json" data-props>` child.
-
-The fallback markup is not optional. If the chunk fails to load, that markup is
-what the visitor gets — so it has to work on its own.
+- `app/Domain/{Billing,Entitlements,Identity,Provisioning,Support,Tenancy,Usage,Website}`;
+- dedicated Marketing, Platform, Tenant, Webhook, and API controllers plus Form Requests and Resources;
+- `Models/Concerns`, explicit `Models/Landlord`, and fail-closed `Models/Tenant` boundaries;
+- `database/{factories,migrations,seeders}`;
+- `resources/views/{marketing,onboarding,platform,billing,mail}` and shared Vue component/service layers;
+- `routes/{marketing,platform,tenant,api,webhooks}.php`;
+- `tests/{Architecture,Feature,Integration,Unit,Js}`.

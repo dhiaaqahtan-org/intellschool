@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Saas\Http\Controllers\Api\EntitlementController;
+use Modules\Saas\Http\Controllers\Api\PlatformPlanController;
+use Modules\Saas\Http\Controllers\Api\PlatformSubscriptionController;
+use Modules\Saas\Http\Controllers\Api\PlatformTenantController;
 use Modules\Saas\Http\Controllers\Api\SubscriptionController;
 use Modules\Saas\Http\Controllers\Api\TenantApiController;
 
@@ -33,10 +36,13 @@ Route::prefix('api/saas')
 
         // Tenant discovery: validate a slug/subdomain and get basic info.
         Route::get('/discover/{slug}', [TenantApiController::class, 'discover'])
+            ->middleware(['api', 'saas.landlord-host', 'throttle:30,1'])
+            ->where('slug', '[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?')
             ->name('discover');
 
         // Public plan listing for pricing pages.
         Route::get('/plans', [SubscriptionController::class, 'publicPlans'])
+            ->middleware(['api', 'saas.landlord-host', 'throttle:60,1'])
             ->name('plans');
 
         /*
@@ -45,7 +51,7 @@ Route::prefix('api/saas')
         |----------------------------------------------------------------------
         */
 
-        Route::middleware(['auth:sanctum', 'saas.tenant-host', 'saas.tenant-active'])
+        Route::middleware(['api', 'auth:sanctum', 'saas.tenant-host', 'saas.tenant-active'])
             ->group(function () {
 
                 // Current tenant info and configuration.
@@ -58,6 +64,7 @@ Route::prefix('api/saas')
 
                 // Check a specific feature entitlement.
                 Route::get('/tenant/entitlements/{featureCode}', [EntitlementController::class, 'check'])
+                    ->where('featureCode', '[a-z0-9][a-z0-9._-]{0,79}')
                     ->name('tenant.entitlements.check');
 
                 // Current subscription status.
@@ -76,35 +83,38 @@ Route::prefix('api/saas')
         */
 
         Route::prefix('platform')
-            ->middleware(['auth:platform', 'saas.landlord-host'])
+            ->middleware(['web', 'auth:platform', 'saas.landlord-host'])
             ->name('platform.')
             ->group(function () {
 
                 // Tenant management.
-                Route::get('/tenants', [TenantApiController::class, 'platformIndex'])
+                Route::get('/tenants', [PlatformTenantController::class, 'index'])
                     ->name('tenants.index');
 
-                Route::get('/tenants/{tenant}', [TenantApiController::class, 'platformShow'])
+                Route::get('/tenants/{tenant:uuid}', [PlatformTenantController::class, 'show'])
                     ->name('tenants.show');
 
-                Route::post('/tenants', [TenantApiController::class, 'platformStore'])
+                Route::get('/tenants/{tenant:uuid}/provisioning', [PlatformTenantController::class, 'provisioning'])
+                    ->name('tenants.provisioning');
+
+                Route::post('/tenants', [PlatformTenantController::class, 'store'])
                     ->name('tenants.store');
 
-                Route::patch('/tenants/{tenant}/status', [TenantApiController::class, 'platformUpdateStatus'])
+                Route::patch('/tenants/{tenant:uuid}/status', [PlatformTenantController::class, 'updateStatus'])
                     ->name('tenants.status');
 
                 // Subscription management.
-                Route::get('/subscriptions', [SubscriptionController::class, 'platformIndex'])
+                Route::get('/subscriptions', [PlatformSubscriptionController::class, 'index'])
                     ->name('subscriptions.index');
 
-                Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'platformShow'])
+                Route::get('/subscriptions/{subscription:uuid}', [PlatformSubscriptionController::class, 'show'])
                     ->name('subscriptions.show');
 
                 // Plan management.
-                Route::get('/plans', [SubscriptionController::class, 'platformPlans'])
+                Route::get('/plans', [PlatformPlanController::class, 'index'])
                     ->name('plans.index');
 
-                Route::post('/plans', [SubscriptionController::class, 'platformStorePlan'])
+                Route::post('/plans', [PlatformPlanController::class, 'store'])
                     ->name('plans.store');
             });
     });

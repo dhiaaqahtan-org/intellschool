@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Contracts\EntitlementChecker;
+use Modules\Saas\Domain\Entitlements\FeatureCode;
 
 /**
  * API endpoints for entitlement checking.
@@ -18,8 +19,7 @@ class EntitlementController extends Controller
     public function __construct(
         private readonly CurrentTenant $currentTenant,
         private readonly EntitlementChecker $entitlements,
-    ) {
-    }
+    ) {}
 
     /**
      * GET /api/saas/tenant/entitlements
@@ -48,13 +48,15 @@ class EntitlementController extends Controller
     public function check(string $featureCode): JsonResponse
     {
         $context = $this->currentTenant->getOrFail();
+        $feature = FeatureCode::tryFrom($featureCode);
+        abort_if($feature === null, 404);
 
-        $hasAccess = $this->entitlements->has($featureCode);
-        $remaining = $this->entitlements->remaining($featureCode);
+        $hasAccess = $this->entitlements->has($feature->value);
+        $remaining = $this->entitlements->remaining($feature->value);
 
         return response()->json([
             'tenant_uuid' => $context->uuid,
-            'feature' => $featureCode,
+            'feature' => $feature->value,
             'enabled' => $hasAccess,
             'remaining' => $remaining,
             'unlimited' => $remaining === null && $hasAccess,

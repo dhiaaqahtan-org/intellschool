@@ -26,29 +26,20 @@
 
         <div class="notice" style="margin-block:var(--sp-6)">
             <svg aria-hidden="true"><use href="#i-alert"></use></svg>
-            <span>
-                This document has not been drafted or reviewed yet. It is a routing
-                placeholder so that footer links resolve during development.
-                <strong>The service must not be offered commercially until legal
-                counsel supplies the operative text</strong> — including the
-                governing law, the data-controller/processor split, retention and
-                deletion periods, the subprocessor list, and the incident
-                notification commitment.
-            </span>
+            <span>{{ __('saas::marketing.legal.notice') }}</span>
         </div>
 
         <p style="color:var(--c-muted)">
-            Required before launch (implementation plan §10.3, §12 and §20):
+            {{ __('saas::marketing.legal.required') }}
         </p>
         <ul class="list-check" style="margin-block-start:var(--sp-4)">
-            <li><svg aria-hidden="true"><use href="#i-check"></use></svg><span>Terms of service and acceptable use</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"></use></svg><span>Privacy notice covering student and guardian personal data</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"></use></svg><span>Data processing addendum with the subprocessor list</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"></use></svg><span>Retention, export and deletion policy, with consent version tracking</span></li>
+            @foreach (__('saas::marketing.legal.items') as $item)
+                <li><svg aria-hidden="true"><use href="#i-check"></use></svg><span>{{ $item }}</span></li>
+            @endforeach
         </ul>
 
         <p style="margin-block-start:var(--sp-6)">
-            <a class="btn btn--ghost" href="{{ route('saas.marketing.home') }}">&larr; Back to home</a>
+            <a class="btn btn--ghost" href="{{ route('saas.marketing.home') }}">{{ __('saas::marketing.legal.back_home') }}</a>
         </p>
     </div>
 </section>

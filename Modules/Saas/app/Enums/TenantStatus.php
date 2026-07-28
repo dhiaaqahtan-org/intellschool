@@ -30,6 +30,36 @@ enum TenantStatus: string
     case Terminated = 'terminated';
 
     /**
+     * Human-readable label for display.
+     *
+     * Exists so views never call ucfirst()/str_replace() on the enum itself.
+     * PHP 8 backed enums are objects, not strings, so `ucfirst($tenant->status)`
+     * is a fatal TypeError — one that only fires when a row actually exists,
+     * which is why it kept reaching runtime instead of being caught earlier.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::Pending => 'Pending',
+            self::Active => 'Active',
+            self::Suspended => 'Suspended',
+            self::Cancelled => 'Cancelled',
+            self::Terminated => 'Terminated',
+        };
+    }
+
+    /** Badge class for the platform panel. */
+    public function badgeClass(): string
+    {
+        return match ($this) {
+            self::Active => 'badge-success',
+            self::Pending => 'badge-warning',
+            self::Suspended, self::Cancelled => 'badge-danger',
+            self::Terminated => 'badge-gray',
+        };
+    }
+
+    /**
      * May the tenant serve HTTP requests at all?
      *
      * Suspended tenants still resolve — they need to reach the billing and

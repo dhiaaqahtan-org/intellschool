@@ -1,19 +1,29 @@
 @extends('saas::marketing.layouts.app')
 
-@section('title', 'Start Your Free Trial — ' . config('saas.brand.name'))
-@section('description', 'Create your school on ' . config('saas.brand.name') . '. Free ' . config('saas.billing.trial_days', 14) . '-day trial, no credit card required.')
+@section('title', __('saas::marketing.signup.title').' — '.config('saas.brand.name'))
+@section('description', __('saas::marketing.signup.description', ['brand' => config('saas.brand.name'), 'days' => config('saas.billing.trial_days', 14)]))
 
 @section('content')
 <section style="padding: 4rem 1.5rem; max-width: 640px; margin: 0 auto;">
     <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; text-align: center;">
-        Start Your Free Trial
+        {{ __('saas::marketing.signup.heading') }}
     </h1>
     <p style="text-align: center; color: #6b7280; margin-bottom: 2.5rem;">
-        {{ config('saas.billing.trial_days', 14) }} days free. No credit card required. Set up in minutes.
+        {{ __('saas::marketing.signup.lede', ['days' => config('saas.billing.trial_days', 14)]) }}
     </p>
 
+    @unless($signupAvailable)
+        <div class="alert alert--err" role="status" style="margin-block: 2rem;">
+            <strong>{{ __('saas::marketing.signup.unavailable_title') }}</strong>
+            <p>{{ __('saas::marketing.signup.unavailable_body') }}</p>
+        </div>
+        <a class="btn btn--accent btn--block" href="{{ route('saas.marketing.demo') }}">
+            {{ __('saas::marketing.signup.request_demo') }}
+        </a>
+    @else
+
     @if($errors->any())
-        <div style="background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
+        <div id="signup-errors" class="alert alert--err" role="alert" tabindex="-1" data-error-summary style="margin-bottom: 1.5rem;">
             <ul style="margin: 0; padding-inline-start: 1.25rem;">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -22,56 +32,63 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('saas.marketing.signup.register') }}">
+    <form method="POST" action="{{ route('saas.marketing.signup.register') }}" data-submit-guard>
         @csrf
 
         <div style="margin-bottom: 1.5rem;">
             <label for="school_name" style="display: block; font-weight: 600; margin-bottom: 0.375rem;">
-                School Name *
+                {{ __('saas::marketing.signup.school_name') }} *
             </label>
             <input type="text" id="school_name" name="school_name" value="{{ old('school_name') }}" required
-                   placeholder="e.g. Al-Noor International School"
+                   placeholder="{{ __('saas::marketing.signup.school_placeholder') }}"
+                   autocomplete="organization" @error('school_name') aria-invalid="true" aria-describedby="school-name-error" @enderror
                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            @error('school_name')<span id="school-name-error" class="err" style="display:block;margin-top:.35rem;">{{ $message }}</span>@enderror
         </div>
 
         <div style="margin-bottom: 1.5rem;">
             <label for="owner_name" style="display: block; font-weight: 600; margin-bottom: 0.375rem;">
-                Your Name *
+                {{ __('saas::marketing.signup.owner_name') }} *
             </label>
             <input type="text" id="owner_name" name="owner_name" value="{{ old('owner_name') }}" required
-                   placeholder="e.g. Ahmed Al-Rashid"
+                   placeholder="{{ __('saas::marketing.signup.owner_placeholder') }}"
+                   autocomplete="name" @error('owner_name') aria-invalid="true" aria-describedby="owner-name-error" @enderror
                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
+            @error('owner_name')<span id="owner-name-error" class="err" style="display:block;margin-top:.35rem;">{{ $message }}</span>@enderror
         </div>
 
         <div style="margin-bottom: 1.5rem;">
             <label for="email" style="display: block; font-weight: 600; margin-bottom: 0.375rem;">
-                Work Email *
+                {{ __('saas::marketing.signup.email') }} *
             </label>
             <input type="email" id="email" name="email" value="{{ old('email') }}" required
-                   placeholder="you@school.edu"
+                   placeholder="{{ __('saas::marketing.signup.email_placeholder') }}"
+                   inputmode="email" autocomplete="email"
+                   @error('email') aria-invalid="true" aria-describedby="email-hint email-error" @else aria-describedby="email-hint" @enderror
                    style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
-            <p style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
-                This will be your login and the primary contact for your school.
+            <p id="email-hint" style="font-size: 0.8rem; color: #6b7280; margin-top: 0.25rem;">
+                {{ __('saas::marketing.signup.email_hint') }}
             </p>
+            @error('email')<span id="email-error" class="err" style="display:block;margin-top:.35rem;">{{ $message }}</span>@enderror
         </div>
 
         @if($plans->count() > 0)
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-weight: 600; margin-bottom: 0.375rem;">
-                    Plan
-                </label>
+            <fieldset style="border:0;padding:0;margin:0 0 1.5rem;min-inline-size:0;">
+                <legend style="display: block; font-weight: 600; margin-bottom: 0.375rem;">
+                    {{ __('saas::marketing.signup.plan') }}
+                </legend>
                 <div style="display: grid; gap: 0.75rem;">
                     @foreach($plans as $plan)
-                        <label style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; cursor: pointer; transition: border-color 0.2s;"
-                               onmouseover="this.style.borderColor='#2563eb'" onmouseout="this.style.borderColor='#d1d5db'">
-                            <input type="radio" name="plan_id" value="{{ $plan->id }}"
+                        <label class="signup-plan-option">
+                            <input type="radio" name="plan_id" value="{{ $plan->id }}" required
+                                   @error('plan_id') aria-invalid="true" aria-describedby="plan-error" @enderror
                                    {{ old('plan_id', $plans->first()?->id) == $plan->id ? 'checked' : '' }}>
                             <div>
                                 <strong>{{ $plan->display_name }}</strong>
                                 @if($plan->price_cents)
-                                    <span style="color: #6b7280;"> — ${{ number_format($plan->price_cents / 100, 0) }}/{{ $plan->billing_interval ?? 'mo' }}</span>
+                                    <span style="color: #6b7280;"> — {{ \Illuminate\Support\Number::currency($plan->price_cents / 100, in: $plan->currency, locale: app()->getLocale()) }}/{{ __("saas::marketing.signup.intervals.".($plan->billing_interval ?? 'monthly')) }}</span>
                                 @else
-                                    <span style="color: #6b7280;"> — Custom pricing</span>
+                                    <span style="color: #6b7280;"> — {{ __('saas::marketing.signup.custom_pricing') }}</span>
                                 @endif
                                 <br>
                                 <small style="color: #6b7280;">{{ $plan->description ?? '' }}</small>
@@ -79,29 +96,29 @@
                         </label>
                     @endforeach
                 </div>
-            </div>
+                @error('plan_id')<span id="plan-error" class="err" style="display:block;margin-top:.35rem;">{{ $message }}</span>@enderror
+            </fieldset>
         @endif
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
             <div>
                 <label for="locale" style="display: block; font-weight: 600; margin-bottom: 0.375rem;">
-                    Language
+                    {{ __('saas::marketing.signup.language') }}
                 </label>
                 <select id="locale" name="locale"
                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
-                    <option value="en" {{ old('locale', 'en') === 'en' ? 'selected' : '' }}>English</option>
-                    <option value="ar" {{ old('locale') === 'ar' ? 'selected' : '' }}>العربية</option>
-                    <option value="fr" {{ old('locale') === 'fr' ? 'selected' : '' }}>Français</option>
-                    <option value="ur" {{ old('locale') === 'ur' ? 'selected' : '' }}>اردو</option>
+                    @foreach (config('localizer.supported_locales', ['en', 'ar']) as $supportedLocale)
+                        <option value="{{ $supportedLocale }}" {{ old('locale', app()->getLocale()) === $supportedLocale ? 'selected' : '' }}>{{ __("saas::marketing.signup.languages.$supportedLocale") }}</option>
+                    @endforeach
                 </select>
             </div>
             <div>
                 <label for="timezone" style="display: block; font-weight: 600; margin-bottom: 0.375rem;">
-                    Timezone
+                    {{ __('saas::marketing.signup.timezone') }}
                 </label>
                 <select id="timezone" name="timezone"
                         style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem;">
-                    <option value="UTC">UTC</option>
+                    <option value="UTC" {{ old('timezone', 'UTC') === 'UTC' ? 'selected' : '' }}>UTC</option>
                     <option value="Asia/Riyadh" {{ old('timezone') === 'Asia/Riyadh' ? 'selected' : '' }}>Asia/Riyadh</option>
                     <option value="Asia/Dubai" {{ old('timezone') === 'Asia/Dubai' ? 'selected' : '' }}>Asia/Dubai</option>
                     <option value="Asia/Karachi" {{ old('timezone') === 'Asia/Karachi' ? 'selected' : '' }}>Asia/Karachi</option>
@@ -113,16 +130,20 @@
             </div>
         </div>
 
-        <button type="submit"
-                style="width: 100%; padding: 1rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; font-size: 1.1rem; font-weight: 600; cursor: pointer;">
-            Create My School — Free for {{ config('saas.billing.trial_days', 14) }} Days
+        <button type="submit" data-submit-button
+                data-pending-label="{{ __('saas::marketing.signup.submitting') }}"
+                aria-describedby="signup-submit-note"
+                class="btn btn--accent btn--lg btn--block">
+            {{ __('saas::marketing.signup.submit', ['days' => config('saas.billing.trial_days', 14)]) }}
         </button>
 
-        <p style="text-align: center; font-size: 0.8rem; color: #6b7280; margin-top: 1rem;">
-            By signing up, you agree to our
-            <a href="{{ route('saas.marketing.legal.terms') }}" style="color: #2563eb;">Terms of Service</a> and
-            <a href="{{ route('saas.marketing.legal.privacy') }}" style="color: #2563eb;">Privacy Policy</a>.
+        <p id="signup-submit-note" style="text-align: center; font-size: 0.8rem; color: #6b7280; margin-top: 1rem;">
+            {{ __('saas::marketing.signup.agreement_prefix') }}
+            <a href="{{ route('saas.marketing.legal.terms') }}" style="color: #2563eb;">{{ __('saas::marketing.signup.terms') }}</a>
+            {{ __('saas::marketing.signup.agreement_join') }}
+            <a href="{{ route('saas.marketing.legal.privacy') }}" style="color: #2563eb;">{{ __('saas::marketing.signup.privacy') }}</a>{{ __('saas::marketing.signup.agreement_suffix') }}
         </p>
     </form>
+    @endunless
 </section>
 @endsection

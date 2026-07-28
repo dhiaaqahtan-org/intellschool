@@ -113,6 +113,19 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         Gate::before(function ($user, $ability) {
+            // Scoped to the ERP's own users. This runs for EVERY gate check in
+            // the application, including ones made by platform operators, who
+            // authenticate on a separate guard, live in the landlord database
+            // and have neither `is_default` nor Spatie roles — so without this
+            // guard the whole platform panel died on
+            // "Call to undefined method PlatformUser::hasRole()".
+            //
+            // It also matters for isolation: a blanket admin bypass must not
+            // extend to identities it was never designed for.
+            if (! $user instanceof \App\Models\User) {
+                return null;
+            }
+
             return ($user->is_default || $user->hasRole('admin')) ? true : null;
         });
 

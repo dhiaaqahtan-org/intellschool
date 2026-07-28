@@ -4,7 +4,7 @@ namespace Modules\Saas\Models\Landlord;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Str;
+use Modules\Saas\Domain\Identity\InvitationToken;
 
 /**
  * Tenant user invitation (plan §5.1).
@@ -45,18 +45,19 @@ class Invitation extends LandlordModel
      * Create a new invitation with a secure token.
      *
      * @return array{invitation: self, token: string} The plaintext token is
-     *                returned ONLY once — it is never stored.
+     *                                                returned ONLY once — it is never stored.
      */
     public static function createWithToken(array $attributes): array
     {
-        $token = Str::random(64);
+        $token = InvitationToken::generate();
 
-        $invitation = static::create(array_merge($attributes, [
-            'token_hash' => hash('sha256', $token),
+        $invitation = static::create(array_merge([
             'expires_at' => now()->addDays(7),
+        ], $attributes, [
+            'token_hash' => $token->digest(),
         ]));
 
-        return ['invitation' => $invitation, 'token' => $token];
+        return ['invitation' => $invitation, 'token' => $token->plainText];
     }
 
     /**
@@ -64,7 +65,9 @@ class Invitation extends LandlordModel
      */
     public static function findByToken(string $token): ?self
     {
-        return static::where('token_hash', hash('sha256', $token))->first();
+        $digest = InvitationToken::fromPlainText($token)->digest();
+
+        return static::where('token_hash', $digest)->first();
     }
 
     public function isExpired(): bool

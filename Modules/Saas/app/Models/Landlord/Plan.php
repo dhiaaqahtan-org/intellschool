@@ -3,8 +3,9 @@
 namespace Modules\Saas\Models\Landlord;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Saas\Database\Factories\PlanFactory;
 
 /**
  * Versioned plan definition (plan §9.3).
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Plan extends LandlordModel
 {
+    use HasFactory;
     use HasUuids;
 
     protected $table = 'saas_plans';
@@ -32,6 +34,11 @@ class Plan extends LandlordModel
         'active_until' => 'datetime',
         'is_public' => 'boolean',
     ];
+
+    protected static function newFactory(): PlanFactory
+    {
+        return PlanFactory::new();
+    }
 
     public function uniqueIds(): array
     {

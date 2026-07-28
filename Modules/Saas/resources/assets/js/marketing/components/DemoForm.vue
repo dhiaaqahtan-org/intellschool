@@ -101,14 +101,30 @@ async function submit() {
 </script>
 
 <template>
-  <form ref="formEl" class="form card" :action="action" method="post" novalidate @submit.prevent="submit">
-    <p v-if="banner" class="alert" :class="status === 'success' ? 'alert--ok' : 'alert--err'" role="alert" aria-live="assertive">
+  <form
+    ref="formEl"
+    class="form card"
+    :action="action"
+    method="post"
+    novalidate
+    @submit.prevent="submit"
+  >
+    <p
+      v-if="banner"
+      class="alert"
+      :class="status === 'success' ? 'alert--ok' : 'alert--err'"
+      role="alert"
+      aria-live="assertive"
+    >
       {{ banner }}
     </p>
 
     <div class="form__row">
       <div class="field">
-        <label :for="fieldId('name')">{{ t.name }} <span class="req" aria-hidden="true">*</span></label>
+        <label :for="fieldId('name')">{{ t.name }} <span
+          class="req"
+          aria-hidden="true"
+        >*</span></label>
         <input
           :id="fieldId('name')"
           v-model="form.name"
@@ -119,11 +135,18 @@ async function submit() {
           :aria-invalid="!!errors.name"
           :aria-describedby="errors.name ? fieldId('name') + '-err' : undefined"
         >
-        <span v-if="errors.name" :id="fieldId('name') + '-err'" class="err">{{ errors.name }}</span>
+        <span
+          v-if="errors.name"
+          :id="fieldId('name') + '-err'"
+          class="err"
+        >{{ errors.name }}</span>
       </div>
 
       <div class="field">
-        <label :for="fieldId('school')">{{ t.school }} <span class="req" aria-hidden="true">*</span></label>
+        <label :for="fieldId('school')">{{ t.school }} <span
+          class="req"
+          aria-hidden="true"
+        >*</span></label>
         <input
           :id="fieldId('school')"
           v-model="form.school"
@@ -134,13 +157,20 @@ async function submit() {
           :aria-invalid="!!errors.school"
           :aria-describedby="errors.school ? fieldId('school') + '-err' : undefined"
         >
-        <span v-if="errors.school" :id="fieldId('school') + '-err'" class="err">{{ errors.school }}</span>
+        <span
+          v-if="errors.school"
+          :id="fieldId('school') + '-err'"
+          class="err"
+        >{{ errors.school }}</span>
       </div>
     </div>
 
     <div class="form__row">
       <div class="field">
-        <label :for="fieldId('email')">{{ t.email }} <span class="req" aria-hidden="true">*</span></label>
+        <label :for="fieldId('email')">{{ t.email }} <span
+          class="req"
+          aria-hidden="true"
+        >*</span></label>
         <input
           :id="fieldId('email')"
           v-model="form.email"
@@ -152,40 +182,87 @@ async function submit() {
           :aria-invalid="!!errors.email"
           :aria-describedby="`${fieldId('email')}-hint${errors.email ? ' ' + fieldId('email') + '-err' : ''}`"
         >
-        <span :id="fieldId('email') + '-hint'" class="hint">{{ t.email_hint }}</span>
-        <span v-if="errors.email" :id="fieldId('email') + '-err'" class="err">{{ errors.email }}</span>
+        <span
+          :id="fieldId('email') + '-hint'"
+          class="hint"
+        >{{ t.email_hint }}</span>
+        <span
+          v-if="errors.email"
+          :id="fieldId('email') + '-err'"
+          class="err"
+        >{{ errors.email }}</span>
       </div>
 
       <div class="field">
         <label :for="fieldId('size')">{{ t.size }}</label>
-        <select :id="fieldId('size')" v-model="form.size" name="size">
-          <option value="">{{ t.size_placeholder }}</option>
-          <option v-for="option in sizes" :key="option" :value="option">{{ option }}</option>
+        <select
+          :id="fieldId('size')"
+          v-model="form.size"
+          name="size"
+        >
+          <option value="">
+            {{ t.size_placeholder }}
+          </option>
+          <option
+            v-for="option in sizes"
+            :key="option.value"
+            :value="option.value"
+          >
+            {{ option.label }}
+          </option>
         </select>
       </div>
     </div>
 
     <div class="field">
       <label :for="fieldId('message')">{{ t.message }}</label>
-      <textarea :id="fieldId('message')" v-model="form.message" name="message" rows="4" />
+      <textarea
+        :id="fieldId('message')"
+        v-model="form.message"
+        name="message"
+        rows="4"
+      />
     </div>
 
     <!-- Honeypot: hidden from users and assistive tech, attractive to bots. -->
-    <div class="visually-hidden" aria-hidden="true">
+    <div
+      class="visually-hidden"
+      aria-hidden="true"
+    >
       <label for="demo-website">Website</label>
-      <input id="demo-website" v-model="form.website" type="text" name="website" tabindex="-1" autocomplete="off">
+      <input
+        id="demo-website"
+        v-model="form.website"
+        type="text"
+        name="website"
+        tabindex="-1"
+        autocomplete="off"
+      >
     </div>
 
     <label class="consent">
-      <input v-model="form.consent" type="checkbox" name="consent" required :aria-invalid="!!errors.consent">
+      <input
+        v-model="form.consent"
+        type="checkbox"
+        name="consent"
+        required
+        :aria-invalid="!!errors.consent"
+      >
       <span>
         {{ t.consent }}
         <a :href="privacyUrl">{{ t.privacy_link }}</a>
       </span>
     </label>
-    <span v-if="errors.consent" class="err">{{ errors.consent }}</span>
+    <span
+      v-if="errors.consent"
+      class="err"
+    >{{ errors.consent }}</span>
 
-    <button class="btn btn--accent btn--lg btn--block" type="submit" :disabled="status === 'pending'">
+    <button
+      class="btn btn--accent btn--lg btn--block"
+      type="submit"
+      :disabled="status === 'pending'"
+    >
       <span v-if="status === 'pending'">{{ t.submitting }}</span>
       <span v-else>{{ t.submit }}</span>
     </button>

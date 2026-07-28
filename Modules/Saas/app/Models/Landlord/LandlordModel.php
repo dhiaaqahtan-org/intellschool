@@ -3,6 +3,7 @@
 namespace Modules\Saas\Models\Landlord;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Saas\Models\Concerns\UsesLandlordConnection;
 
 /**
  * Base for every control-plane model.
@@ -18,8 +19,5 @@ use Illuminate\Database\Eloquent\Model;
  */
 abstract class LandlordModel extends Model
 {
-    public function getConnectionName(): string
-    {
-        return config('saas.database.landlord_connection', 'landlord');
-    }
+    use UsesLandlordConnection;
 }

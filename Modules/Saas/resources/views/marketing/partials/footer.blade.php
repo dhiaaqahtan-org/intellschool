@@ -59,7 +59,7 @@
                 @endunless
             </span>
 
-            @unless (config('saas.claims.publish_pricing'))
+            @unless (app(Modules\Saas\Domain\Website\ClaimGate::class)->pricing())
                 <span class="badge badge--soon">{{ __('saas::marketing.footer.preview_badge') }}</span>
             @endunless
         </div>

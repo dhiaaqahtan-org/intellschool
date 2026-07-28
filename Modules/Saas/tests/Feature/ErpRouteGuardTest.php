@@ -1,8 +1,12 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Modules\Saas\Contracts\CurrentTenant;
+use Modules\Saas\Http\Middleware\RequireLandlordHost;
 use Modules\Saas\Http\Middleware\RequireTenantHost;
 use Modules\Saas\Tests\TenancyTestCase;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * The ERP's own routes must assert a tenant before touching school data.
@@ -42,7 +46,7 @@ it('guards every core route group that serves school data', function (string $fi
     $source = file_get_contents(base_path('app/Providers/RouteServiceProvider.php'));
 
     // Find the middleware(...) call immediately preceding this group().
-    $needle = "routes/".basename($file);
+    $needle = 'routes/'.basename($file);
     $position = strpos($source, $needle);
 
     expect($position)->not->toBeFalse();
@@ -73,14 +77,14 @@ it('rejects an ERP request when tenancy is on and no tenant resolved', function 
     $middleware = app(RequireTenantHost::class);
 
     expect(fn () => $middleware->handle(request(), fn () => response('ok')))
-        ->toThrow(Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+        ->toThrow(NotFoundHttpException::class);
 });
 
 it('allows an ERP request once a tenant is active', function () {
     config()->set('saas.tenancy.enabled', true);
 
     $tenant = $this->makeTenant('alpha', 'alpha.test');
-    $current = app(\Modules\Saas\Contracts\CurrentTenant::class);
+    $current = app(CurrentTenant::class);
 
     $result = $current->runFor($tenant->toContext('alpha.test'), function () {
         return app(RequireTenantHost::class)->handle(request(), fn () => response('ok'));
@@ -114,4 +118,23 @@ it('separates the three admin surfaces by host and prefix', function () {
     // Tenant staff: the existing ERP SPA, tenant host.
     expect(collect(Route::getRoutes()->getRoutes())
         ->contains(fn ($r) => str_starts_with($r->uri(), 'app')))->toBeTrue();
+});
+
+it('accepts both configured control-plane hosts and rejects tenant hosts', function () {
+    config()->set('saas.hosts.marketing', 'www.product.test');
+    config()->set('saas.hosts.platform', 'app.product.test');
+
+    $middleware = app(RequireLandlordHost::class);
+
+    foreach (['www.product.test', 'app.product.test'] as $host) {
+        $request = Request::create("https://{$host}/", 'GET');
+        $response = $middleware->handle($request, fn () => response('ok'));
+
+        expect($response->getContent())->toBe('ok');
+    }
+
+    $tenantRequest = Request::create('https://school.product.test/', 'GET');
+
+    expect(fn () => $middleware->handle($tenantRequest, fn () => response('unexpected')))
+        ->toThrow(NotFoundHttpException::class);
 });

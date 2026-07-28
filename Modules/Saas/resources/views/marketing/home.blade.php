@@ -3,8 +3,8 @@
 @php
     $brand       = config('saas.brand.name');
     $tenantHost  = ltrim((string) config('saas.hosts.tenant_suffix', 'example.com'), '.');
-    $showPricing = config('saas.claims.publish_pricing');
-    $mobileGa    = config('saas.claims.publish_mobile_ga');
+    $showPricing = $claims['pricing'];
+    $mobileGa    = $claims['mobile_ga'];
 
     /* Permission codes are literal identifiers from the application, not prose,
        so they are not translated. Names and summaries come from the lang file. */
@@ -274,7 +274,7 @@
                     @endforeach
                 </ul>
 
-                @unless (config('saas.claims.publish_uptime') && config('saas.claims.publish_certifications'))
+                @unless ($claims['uptime'] && $claims['certifications'])
                     <div class="notice" style="margin-block-start:var(--sp-6)">
                         <svg aria-hidden="true"><use href="#i-alert"></use></svg>
                         <span>{{ __('saas::marketing.isolation.no_claims') }}</span>

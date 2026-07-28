@@ -2,9 +2,12 @@
 
 namespace Modules\Saas\Services;
 
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Modules\Saas\Contracts\CurrentTenant;
+use Modules\Saas\Domain\Provisioning\ProvisioningStep;
 use Modules\Saas\Domain\Tenancy\TenantContext;
 use Modules\Saas\Enums\ProvisioningState;
 use Modules\Saas\Enums\TenantStatus;
@@ -14,6 +17,8 @@ use Modules\Saas\Models\Landlord\ProvisioningRun;
 use Modules\Saas\Models\Landlord\Tenant;
 use Modules\Saas\Models\Landlord\TenantDatabase;
 use Modules\Saas\Models\Landlord\TenantDomain;
+use Modules\Saas\Models\Landlord\TenantOwner;
+use Modules\Saas\Models\Tenant\TenantInstallation;
 use Throwable;
 
 /**
@@ -35,8 +40,7 @@ class TenantProvisioner
 {
     public function __construct(
         private readonly CurrentTenant $currentTenant,
-    ) {
-    }
+    ) {}
 
     /**
      * Create a pending tenant and queue its provisioning run.
@@ -48,6 +52,12 @@ class TenantProvisioner
     {
         $slug = $this->normalizeSlug($attributes['slug'] ?? $attributes['display_name'] ?? '');
 
+        $locale = $attributes['locale'] ?? config('app.fallback_locale', 'en');
+        if (! in_array($locale, config('localizer.supported_locales', ['en', 'ar']), true)) {
+            throw new \InvalidArgumentException(
+                "Unsupported tenant locale [{$locale}]. Supported locales: ".implode(', ', config('localizer.supported_locales', ['en', 'ar']))
+            );
+        }
         $this->assertSlugAvailable($slug);
 
         $tenant = Tenant::create([
@@ -57,11 +67,22 @@ class TenantProvisioner
             'status' => TenantStatus::Pending->value,
             'tier' => $attributes['tier'] ?? 'standard',
             'region' => $attributes['region'] ?? null,
-            'locale' => $attributes['locale'] ?? 'en',
+            'locale' => $locale,
             'timezone' => $attributes['timezone'] ?? 'UTC',
             'provisioning_state' => ProvisioningState::Queued->value,
             'meta' => $attributes['meta'] ?? null,
         ]);
+
+        if (isset($attributes['owner_email']) && trim((string) $attributes['owner_email']) !== '') {
+            TenantOwner::create([
+                'tenant_uuid' => $tenant->uuid,
+                'name' => $attributes['owner_name'] ?? null,
+                'email' => Str::lower(trim((string) $attributes['owner_email'])),
+                'role' => 'owner',
+                'status' => 'invited',
+                'invited_at' => now(),
+            ]);
+        }
 
         $idempotencyKey = "provision:{$tenant->uuid}";
 
@@ -91,19 +112,20 @@ class TenantProvisioner
         $tenant = Tenant::where('uuid', $run->tenant_uuid)->firstOrFail();
 
         $steps = [
-            'allocate_database' => fn () => $this->allocateDatabase($tenant),
-            'migrate' => fn () => $this->runMigrations($tenant),
-            'seed' => fn () => $this->seedDefaults($tenant),
-            'configure_domain' => fn () => $this->configureDomain($tenant),
-            'verify' => fn () => $this->verify($tenant),
+            [ProvisioningStep::AllocateDatabase, fn () => $this->allocateDatabase($tenant)],
+            [ProvisioningStep::Migrate, fn () => $this->runMigrations($tenant)],
+            [ProvisioningStep::Seed, fn () => $this->seedDefaults($tenant)],
+            [ProvisioningStep::ConfigureDomain, fn () => $this->configureDomain($tenant)],
+            [ProvisioningStep::Verify, fn () => $this->verify($tenant)],
         ];
 
-        foreach ($steps as $stepName => $stepFn) {
+        foreach ($steps as [$step, $stepFn]) {
+            $stepName = $step->value;
             if ($run->hasCompleted($stepName)) {
                 continue;
             }
 
-            $this->advanceState($run, $tenant, $stepName);
+            $this->advanceState($run, $tenant, $step);
 
             try {
                 $stepFn();
@@ -148,7 +170,7 @@ class TenantProvisioner
             'tenant_uuid' => $tenant->uuid,
             'cluster' => 'default',
             'database_name' => $databaseName,
-            'secret_ref' => "env:SAAS_CLUSTER_DEFAULT", // dev only; production uses secret manager
+            'secret_ref' => 'env:SAAS_CLUSTER_DEFAULT', // dev only; production uses secret manager
             'health_status' => 'creating',
         ]);
     }
@@ -174,22 +196,38 @@ class TenantProvisioner
             timezone: $tenant->timezone ?? 'UTC',
         );
 
-        $this->currentTenant->runFor($context, function () use ($tenant, $database) {
-            // Run the core ERP migrations.
+        $this->currentTenant->runFor($context, function () use ($database) {
             $migrator = app('migrator');
+            $tenantConnection = config('saas.database.tenant_connection', 'tenant');
+            $previousConnection = $migrator->getConnection();
             $paths = [database_path('migrations')];
 
-            // Also run the tenant-specific support migration.
             $tenantMigrationPath = module_path('Saas', 'database/migrations/tenant');
             if (is_dir($tenantMigrationPath)) {
                 $paths[] = $tenantMigrationPath;
             }
 
-            $migrator->run($paths);
+            try {
+                // Migrator keeps its own connection state; changing Laravel's
+                // default connection alone is insufficient on a long-lived
+                // worker. Always select the active tenant explicitly.
+                $migrator->setConnection($tenantConnection);
 
-            // Update schema version tracking.
+                if (! $migrator->repositoryExists()) {
+                    $migrator->getRepository()->createRepository();
+                }
+
+                $migrator->run($paths, ['step' => false]);
+                $schemaVersion = DB::table('migrations')
+                    ->orderByDesc('id')
+                    ->value('migration');
+            } finally {
+                $migrator->setConnection($previousConnection);
+            }
+
             $database->update([
-                'schema_version' => app()->version(),
+                'schema_version' => $schemaVersion,
+                'app_version' => config('app.version', app()->version()),
                 'last_migrated_at' => now(),
                 'health_status' => 'healthy',
             ]);
@@ -216,7 +254,7 @@ class TenantProvisioner
 
         $this->currentTenant->runFor($context, function () use ($tenant) {
             // Insert the tenant_installations self-identification record.
-            DB::table('tenant_installations')->updateOrInsert(
+            TenantInstallation::query()->updateOrCreate(
                 ['tenant_uuid' => $tenant->uuid],
                 [
                     'tenant_slug' => $tenant->slug,
@@ -224,8 +262,6 @@ class TenantProvisioner
                     'app_version' => config('app.version', '5.5.0'),
                     'provisioned_at' => now(),
                     'access_state' => 'active',
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]
             );
 
@@ -234,7 +270,7 @@ class TenantProvisioner
 
             if (class_exists($seederClass)) {
                 try {
-                    app(\Illuminate\Contracts\Console\Kernel::class)->call('db:seed', [
+                    app(Kernel::class)->call('db:seed', [
                         '--class' => $seederClass,
                         '--force' => true,
                     ]);
@@ -259,7 +295,7 @@ class TenantProvisioner
     private function seedEssentials(Tenant $tenant): void
     {
         // Create default organization if the table exists.
-        if (\Illuminate\Support\Facades\Schema::hasTable('organizations')) {
+        if (Schema::hasTable('organizations')) {
             $orgId = DB::table('organizations')->insertGetId([
                 'name' => $tenant->display_name,
                 'created_at' => now(),
@@ -267,7 +303,7 @@ class TenantProvisioner
             ]);
 
             // Create default team/campus.
-            if (\Illuminate\Support\Facades\Schema::hasTable('teams')) {
+            if (Schema::hasTable('teams')) {
                 DB::table('teams')->insert([
                     'organization_id' => $orgId,
                     'name' => $tenant->display_name,
@@ -330,7 +366,7 @@ class TenantProvisioner
 
         $this->currentTenant->runFor($context, function () use ($tenant) {
             // Verify the self-identification record matches.
-            $installation = DB::table('tenant_installations')
+            $installation = TenantInstallation::query()
                 ->where('tenant_uuid', $tenant->uuid)
                 ->first();
 
@@ -403,19 +439,11 @@ class TenantProvisioner
         );
     }
 
-    private function advanceState(ProvisioningRun $run, Tenant $tenant, string $step): void
+    private function advanceState(ProvisioningRun $run, Tenant $tenant, ProvisioningStep $step): void
     {
-        $stateMap = [
-            'allocate_database' => ProvisioningState::AllocatingDatabase,
-            'migrate' => ProvisioningState::Migrating,
-            'seed' => ProvisioningState::Seeding,
-            'configure_domain' => ProvisioningState::ConfiguringDomain,
-            'verify' => ProvisioningState::Verifying,
-        ];
+        $state = $step->state();
 
-        $state = $stateMap[$step] ?? ProvisioningState::Queued;
-
-        $run->update(['state' => $state->value, 'step' => $step]);
+        $run->update(['state' => $state->value, 'step' => $step->value, 'progress' => $step->progress()]);
         $tenant->update(['provisioning_state' => $state->value]);
     }
 

@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Models\Landlord\Tenant;
-use Modules\Saas\Models\Landlord\TenantDatabase;
 
 /**
  * Runs schema migrations on tenant databases (plan §4, Phase 4).
@@ -25,8 +24,7 @@ class TenantMigrationRunner
 {
     public function __construct(
         private readonly CurrentTenant $currentTenant,
-    ) {
-    }
+    ) {}
 
     /**
      * Run all pending migrations for a single tenant.
@@ -47,7 +45,7 @@ class TenantMigrationRunner
             ];
         }
 
-        $connectionName = $this->configureConnection($tenant, $database);
+        $connectionName = $this->configureConnection($tenant);
 
         try {
             // Record the migration run start.
@@ -61,6 +59,19 @@ class TenantMigrationRunner
             ]);
 
             $output = Artisan::output();
+
+            if ($exitCode === 0) {
+                $supportPath = module_path('Saas', 'database/migrations/tenant');
+                $exitCode = Artisan::call('migrate', [
+                    '--database' => $connectionName,
+                    '--path' => $supportPath,
+                    '--realpath' => true,
+                    '--force' => $force,
+                    '--no-interaction' => true,
+                ]);
+                $output .= PHP_EOL.Artisan::output();
+            }
+
             $migratedCount = $this->countMigrations($output);
 
             if ($exitCode === 0) {
@@ -69,7 +80,9 @@ class TenantMigrationRunner
                 // Update the tenant's schema version.
                 $database->update([
                     'schema_version' => $this->getCurrentSchemaVersion($connectionName),
+                    'app_version' => config('app.version', app()->version()),
                     'last_migrated_at' => now(),
+                    'health_status' => 'healthy',
                 ]);
 
                 Log::info('Tenant migration completed', [
@@ -93,6 +106,11 @@ class TenantMigrationRunner
                 'error' => $error,
             ];
         } catch (\Throwable $e) {
+            if (isset($runId)) {
+                $this->recordMigrationFailure($runId, $e->getMessage());
+            }
+            $database->update(['health_status' => 'migration_failed']);
+
             Log::error('Tenant migration exception', [
                 'tenant_uuid' => $tenant->uuid,
                 'error' => $e->getMessage(),
@@ -105,7 +123,7 @@ class TenantMigrationRunner
             ];
         } finally {
             // Always purge the dynamic connection.
-            $this->purgeConnection($connectionName);
+            $this->purgeConnection();
         }
     }
 
@@ -122,7 +140,7 @@ class TenantMigrationRunner
             return ['success' => false, 'error' => 'No database record.'];
         }
 
-        $connectionName = $this->configureConnection($tenant, $database);
+        $connectionName = $this->configureConnection($tenant);
 
         try {
             $migrationPath = module_path('Saas', 'database/migrations/tenant');
@@ -140,7 +158,7 @@ class TenantMigrationRunner
                 'error' => $exitCode === 0 ? null : Artisan::output(),
             ];
         } finally {
-            $this->purgeConnection($connectionName);
+            $this->purgeConnection();
         }
     }
 
@@ -155,7 +173,7 @@ class TenantMigrationRunner
             return false;
         }
 
-        $connectionName = $this->configureConnection($tenant, $database);
+        $connectionName = $this->configureConnection($tenant);
 
         try {
             Artisan::call('migrate:status', [
@@ -169,7 +187,7 @@ class TenantMigrationRunner
         } catch (\Throwable) {
             return true; // Assume pending if we can't check.
         } finally {
-            $this->purgeConnection($connectionName);
+            $this->purgeConnection();
         }
     }
 
@@ -181,37 +199,29 @@ class TenantMigrationRunner
         return $tenant->database?->schema_version;
     }
 
-    /**
-     * Configure a dynamic database connection for the tenant.
+    /** Enter the standard tenant context so credentials always pass through
+     * the configured TenantCredentialResolver (secret manager in production).
      */
-    private function configureConnection(Tenant $tenant, TenantDatabase $database): string
+    private function configureConnection(Tenant $tenant): string
     {
-        $connectionName = "tenant_migrate_{$tenant->uuid}";
-        $template = config('saas.database.tenant_template', 'mysql');
-        $templateConfig = config("database.connections.{$template}", []);
+        if ($this->currentTenant->has()) {
+            throw new \LogicException('Tenant migrations must start from the control plane.');
+        }
 
-        // Get credentials from the cluster configuration.
-        $cluster = $database->cluster ?? 'default';
-        $clusterConfig = config("saas.clusters.{$cluster}", []);
+        $host = $tenant->primaryDomain()?->hostname ?? $tenant->slug.'.migration';
+        $this->currentTenant->set($tenant->toContext($host));
 
-        config(["database.connections.{$connectionName}" => array_merge($templateConfig, [
-            'host' => $clusterConfig['host'] ?? env('DB_HOST', '127.0.0.1'),
-            'port' => $clusterConfig['port'] ?? env('DB_PORT', 3306),
-            'database' => $database->database_name,
-            'username' => $clusterConfig['username'] ?? env('DB_USERNAME', 'root'),
-            'password' => $clusterConfig['password'] ?? env('DB_PASSWORD', ''),
-        ])]);
-
-        return $connectionName;
+        return config('saas.database.tenant_connection', 'tenant');
     }
 
     /**
-     * Purge a dynamic connection to prevent leaks.
+     * Tear down the full tenant context, including cache and storage prefixes.
      */
-    private function purgeConnection(string $connectionName): void
+    private function purgeConnection(): void
     {
-        DB::purge($connectionName);
-        config(["database.connections.{$connectionName}" => null]);
+        if ($this->currentTenant->has()) {
+            $this->currentTenant->forget();
+        }
     }
 
     /**

@@ -5,25 +5,25 @@
 @section('content')
 <div class="page-header">
     <h1>Platform Dashboard</h1>
-    <p>Overview of your SaaS platform metrics and tenant activity.</p>
+    <p>Operational health across {{ $stats['total_tenants'] ?? 0 }} tenants, provisioning, and subscriptions.</p>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-value">{{ $stats['total_tenants'] ?? 0 }}</div>
-        <div class="stat-label">Total Tenants</div>
-    </div>
-    <div class="stat-card">
         <div class="stat-value">{{ $stats['active_tenants'] ?? 0 }}</div>
-        <div class="stat-label">Active Tenants</div>
+        <div class="stat-label">Active tenants</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ $stats['trialing_tenants'] ?? 0 }}</div>
-        <div class="stat-label">Trialing</div>
+        <div class="stat-value">{{ $stats['pending_tenants'] ?? 0 }}</div>
+        <div class="stat-label">Pending tenants</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ $stats['active_subscriptions'] ?? 0 }}</div>
-        <div class="stat-label">Active Subscriptions</div>
+        <div class="stat-value">{{ $stats['trialing_subscriptions'] ?? 0 }}</div>
+        <div class="stat-label">Trial subscriptions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ $stats['failed_provisioning'] ?? 0 }}</div>
+        <div class="stat-label">Provisioning needs attention</div>
     </div>
 </div>
 
@@ -45,19 +45,7 @@
                     <td>{{ $tenant->display_name }}</td>
                     <td><code>{{ $tenant->slug }}</code></td>
                     <td>
-                        @switch($tenant->status)
-                            @case('active')
-                                <span class="badge badge-success">Active</span>
-                                @break
-                            @case('trialing')
-                                <span class="badge badge-warning">Trialing</span>
-                                @break
-                            @case('suspended')
-                                <span class="badge badge-danger">Suspended</span>
-                                @break
-                            @default
-                                <span class="badge badge-gray">{{ ucfirst($tenant->status) }}</span>
-                        @endswitch
+                        <span class="badge {{ $tenant->status->badgeClass() }}">{{ $tenant->status->label() }}</span>
                     </td>
                     <td>{{ $tenant->created_at->diffForHumans() }}</td>
                     <td>
@@ -91,13 +79,7 @@
                 <tr>
                     <td>{{ $run->tenant?->display_name ?? $run->tenant_uuid }}</td>
                     <td>
-                        @if(in_array($run->state, ['ready', 'completed']))
-                            <span class="badge badge-success">{{ ucfirst($run->state) }}</span>
-                        @elseif(str_starts_with($run->state, 'failed'))
-                            <span class="badge badge-danger">{{ ucfirst(str_replace('_', ' ', $run->state)) }}</span>
-                        @else
-                            <span class="badge badge-warning">{{ ucfirst(str_replace('_', ' ', $run->state)) }}</span>
-                        @endif
+                        <span class="badge {{ $run->state->badgeClass() }}">{{ $run->state->label() }}</span>
                     </td>
                     <td>{{ $run->progress_percentage ?? 0 }}%</td>
                     <td>{{ $run->created_at->diffForHumans() }}</td>

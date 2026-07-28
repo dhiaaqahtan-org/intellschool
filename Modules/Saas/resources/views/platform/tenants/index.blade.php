@@ -3,27 +3,61 @@
 @section('title', 'Tenants')
 
 @section('content')
+@php $canCreateTenant = Illuminate\Support\Facades\Gate::forUser(auth('platform')->user())->allows('createTenant'); @endphp
 <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
     <div>
         <h1>Tenants</h1>
         <p>Manage all tenant schools on the platform.</p>
     </div>
-    <a href="{{ route('saas.platform.tenants.create') }}" class="btn btn-primary">+ New Tenant</a>
+    @if($canCreateTenant)
+        <a href="{{ route('saas.platform.tenants.create') }}" class="btn btn-primary">New tenant</a>
+    @endif
 </div>
 
 <div class="card">
-    <form method="GET" action="{{ route('saas.platform.tenants.index') }}" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name or slug..."
+    <div data-vue-component="tenant-filter">
+    <form method="GET" action="{{ route('saas.platform.tenants.index') }}" class="filter-bar" style="margin-bottom:1.5rem">
+        <label class="field filter-grow" for="tenant-search">Search tenants
+        <input id="tenant-search" type="search" name="search" value="{{ request('search') }}" placeholder="Name, slug, or exact UUID"
                style="flex: 1; padding: 0.5rem 1rem; border: 1px solid var(--color-gray-300); border-radius: 0.375rem;">
-        <select name="status" style="padding: 0.5rem 1rem; border: 1px solid var(--color-gray-300); border-radius: 0.375rem;">
+        </label>
+        <label class="field" for="tenant-status">Status
+        <select id="tenant-status" name="status" style="padding: 0.5rem 1rem; border: 1px solid var(--color-gray-300); border-radius: 0.375rem;">
             <option value="">All Statuses</option>
-            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
-            <option value="trialing" {{ request('status') === 'trialing' ? 'selected' : '' }}>Trialing</option>
-            <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
             <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+            <option value="suspended" {{ request('status') === 'suspended' ? 'selected' : '' }}>Suspended</option>
+            <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+            <option value="terminated" {{ request('status') === 'terminated' ? 'selected' : '' }}>Terminated</option>
         </select>
+        </label>
         <button type="submit" class="btn btn-primary">Filter</button>
+        @if(request()->filled('search') || request()->filled('status'))
+            <a class="btn" href="{{ route('saas.platform.tenants.index') }}">Clear</a>
+        @endif
     </form>
+        <script type="application/json" data-props>{!! json_encode([
+            'action' => route('saas.platform.tenants.index', [], false),
+            'initialSearch' => (string) request('search', ''),
+            'initialStatus' => (string) request('status', ''),
+            'statuses' => [
+                ['value' => 'pending', 'label' => 'Pending'],
+                ['value' => 'active', 'label' => 'Active'],
+                ['value' => 'suspended', 'label' => 'Suspended'],
+                ['value' => 'cancelled', 'label' => 'Cancelled'],
+                ['value' => 'terminated', 'label' => 'Terminated'],
+            ],
+            'labels' => [
+                'search' => 'Search tenants',
+                'placeholder' => 'Name, slug, or exact UUID',
+                'status' => 'Status',
+                'all' => 'All statuses',
+                'filter' => 'Filter',
+                'filtering' => 'Filtering?',
+                'clear' => 'Clear',
+            ],
+        ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+    </div>
 
     <table>
         <thead>
@@ -48,22 +82,7 @@
                     </td>
                     <td><code>{{ $tenant->slug }}</code></td>
                     <td>
-                        @switch($tenant->status)
-                            @case('active')
-                                <span class="badge badge-success">Active</span>
-                                @break
-                            @case('trialing')
-                                <span class="badge badge-warning">Trialing</span>
-                                @break
-                            @case('suspended')
-                                <span class="badge badge-danger">Suspended</span>
-                                @break
-                            @case('pending')
-                                <span class="badge badge-gray">Pending</span>
-                                @break
-                            @default
-                                <span class="badge badge-gray">{{ ucfirst($tenant->status) }}</span>
-                        @endswitch
+                        <span class="badge {{ $tenant->status->badgeClass() }}">{{ $tenant->status->label() }}</span>
                     </td>
                     <td>{{ $tenant->subscription?->plan?->display_name ?? '—' }}</td>
                     <td>

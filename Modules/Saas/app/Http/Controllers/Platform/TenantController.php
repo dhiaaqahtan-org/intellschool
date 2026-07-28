@@ -5,9 +5,14 @@ namespace Modules\Saas\Http\Controllers\Platform;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Modules\Saas\Domain\Tenancy\HostNormalizer;
 use Modules\Saas\Enums\TenantStatus;
 use Modules\Saas\Events\TenantStatusChanged;
+use Modules\Saas\Http\Requests\Api\PlatformTenantIndexRequest;
+use Modules\Saas\Jobs\ProvisionTenantJob;
 use Modules\Saas\Models\Landlord\AuditEvent;
 use Modules\Saas\Models\Landlord\Tenant;
 use Modules\Saas\Models\Landlord\TenantDomain;
@@ -23,15 +28,17 @@ use Modules\Saas\Services\TenantResolver;
  */
 class TenantController extends Controller
 {
-    public function index(Request $request): View
+    public function index(PlatformTenantIndexRequest $request): View
     {
+        $filters = $request->validated();
         $query = Tenant::query()->with(['domains', 'subscription.plan']);
 
-        if ($status = $request->query('status')) {
-            $query->where('status', $status);
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
         }
 
-        if ($search = $request->query('search')) {
+        if (isset($filters['search'])) {
+            $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('display_name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%")
@@ -39,30 +46,42 @@ class TenantController extends Controller
             });
         }
 
-        $tenants = $query->orderByDesc('created_at')->paginate(25);
+        $tenants = $query
+            ->orderByDesc('created_at')
+            ->paginate($filters['per_page'] ?? 25);
 
         return view('saas::platform.tenants.index', compact('tenants'));
     }
 
     public function create(): View
     {
+        Gate::forUser(auth('platform')->user())->authorize('createTenant');
+
         return view('saas::platform.tenants.create');
     }
 
     public function store(Request $request, TenantProvisioner $provisioner): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('createTenant');
+
         $validated = $request->validate([
             'display_name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:63', 'alpha_dash'],
             'legal_name' => ['nullable', 'string', 'max:255'],
-            'locale' => ['nullable', 'string', 'max:10'],
-            'timezone' => ['nullable', 'string', 'max:64'],
+            'locale' => ['nullable', Rule::in(config('localizer.supported_locales', ['en', 'ar']))],
+            'timezone' => ['nullable', 'timezone'],
             'region' => ['nullable', 'string', 'max:32'],
             'tier' => ['nullable', 'string', 'max:32'],
         ]);
 
         try {
             $result = $provisioner->createTenant($validated);
+
+            try {
+                ProvisionTenantJob::dispatch($result['run']->uuid)->afterCommit();
+            } catch (\Throwable $dispatchError) {
+                report($dispatchError);
+            }
 
             return redirect()
                 ->route('saas.platform.tenants.show', $result['tenant'])
@@ -74,6 +93,8 @@ class TenantController extends Controller
 
     public function show(Tenant $tenant): View
     {
+        Gate::forUser(auth('platform')->user())->authorize('viewTenant', $tenant);
+
         $tenant->load(['domains', 'database', 'subscription.plan', 'owners', 'provisioningRuns']);
 
         $recentAuditEvents = AuditEvent::where('tenant_uuid', $tenant->uuid)
@@ -86,11 +107,13 @@ class TenantController extends Controller
 
     public function update(Request $request, Tenant $tenant): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('updateTenant', $tenant);
+
         $validated = $request->validate([
             'display_name' => ['sometimes', 'string', 'max:255'],
             'legal_name' => ['nullable', 'string', 'max:255'],
-            'locale' => ['sometimes', 'string', 'max:10'],
-            'timezone' => ['sometimes', 'string', 'max:64'],
+            'locale' => ['sometimes', Rule::in(config('localizer.supported_locales', ['en', 'ar']))],
+            'timezone' => ['sometimes', 'timezone'],
             'region' => ['nullable', 'string', 'max:32'],
             'tier' => ['sometimes', 'string', 'max:32'],
             'meta' => ['nullable', 'array'],
@@ -113,6 +136,9 @@ class TenantController extends Controller
 
     public function suspend(Request $request, Tenant $tenant, TenantResolver $resolver): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('suspendTenant', $tenant);
+        $validated = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:500']]);
+
         if ($tenant->status === TenantStatus::Suspended) {
             return back()->with('error', 'Tenant is already suspended.');
         }
@@ -128,12 +154,12 @@ class TenantController extends Controller
             $resolver->forget($domain->hostname);
         }
 
-        TenantStatusChanged::dispatch($tenant->uuid, $previousStatus, TenantStatus::Suspended, $request->input('reason'));
+        TenantStatusChanged::dispatch($tenant->uuid, $previousStatus, TenantStatus::Suspended, $validated['reason']);
 
         AuditEvent::record(
             action: 'tenant.suspended',
             tenantUuid: $tenant->uuid,
-            context: ['reason' => $request->input('reason')],
+            context: ['reason' => $validated['reason']],
             actorType: 'platform',
             ip: $request->ip(),
         );
@@ -143,6 +169,8 @@ class TenantController extends Controller
 
     public function reactivate(Request $request, Tenant $tenant, TenantResolver $resolver): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('reactivateTenant', $tenant);
+
         if ($tenant->status === TenantStatus::Active) {
             return back()->with('error', 'Tenant is already active.');
         }
@@ -176,6 +204,12 @@ class TenantController extends Controller
 
     public function cancel(Request $request, Tenant $tenant, TenantResolver $resolver): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('suspendTenant', $tenant);
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:10', 'max:500'],
+            'retention_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
+        ]);
+
         if ($tenant->status === TenantStatus::Cancelled) {
             return back()->with('error', 'Tenant is already cancelled.');
         }
@@ -185,20 +219,22 @@ class TenantController extends Controller
         $tenant->update([
             'status' => TenantStatus::Cancelled->value,
             'cancelled_at' => now(),
-            'purge_after' => now()->addDays((int) $request->input('retention_days', 90)),
+            'purge_after' => now()->addDays((int) ($validated['retention_days']
+                ?? config('saas.tenancy.cancellation_retention_days', 90)
+            )),
         ]);
 
         foreach ($tenant->domains as $domain) {
             $resolver->forget($domain->hostname);
         }
 
-        TenantStatusChanged::dispatch($tenant->uuid, $previousStatus, TenantStatus::Cancelled, $request->input('reason'));
+        TenantStatusChanged::dispatch($tenant->uuid, $previousStatus, TenantStatus::Cancelled, $validated['reason']);
 
         AuditEvent::record(
             action: 'tenant.cancelled',
             tenantUuid: $tenant->uuid,
             context: [
-                'reason' => $request->input('reason'),
+                'reason' => $validated['reason'],
                 'purge_after' => $tenant->purge_after?->toIso8601String(),
             ],
             actorType: 'platform',
@@ -210,6 +246,8 @@ class TenantController extends Controller
 
     public function provision(Request $request, Tenant $tenant, TenantProvisioner $provisioner): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('provision', $tenant);
+
         $run = $tenant->provisioningRuns()
             ->whereIn('state', ['queued', 'failed_recoverable'])
             ->latest()
@@ -224,24 +262,34 @@ class TenantController extends Controller
 
             return back()->with('success', 'Provisioning completed.');
         } catch (\Throwable $e) {
-            return back()->with('error', 'Provisioning failed: ' . $e->getMessage());
+            report($e);
+
+            return back()->with('error', 'Provisioning failed. Review the provisioning history and application logs before retrying.');
         }
     }
 
     public function addDomain(Request $request, Tenant $tenant, TenantResolver $resolver): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('manageDomains', $tenant);
+
         $validated = $request->validate([
             'hostname' => ['required', 'string', 'max:253'],
             'type' => ['required', 'in:subdomain,custom'],
         ]);
 
-        if (TenantDomain::where('hostname', strtolower($validated['hostname']))->exists()) {
+        $hostname = HostNormalizer::normalize($validated['hostname']);
+
+        if ($hostname === null) {
+            return back()->withErrors(['hostname' => 'Enter a valid hostname without a path or scheme.'])->withInput();
+        }
+
+        if (TenantDomain::where('hostname', $hostname)->exists()) {
             return back()->with('error', 'This hostname is already registered.');
         }
 
         $domain = TenantDomain::create([
             'tenant_uuid' => $tenant->uuid,
-            'hostname' => strtolower($validated['hostname']),
+            'hostname' => $hostname,
             'type' => $validated['type'],
             'is_primary' => $tenant->domains()->count() === 0,
             'verification_token' => $validated['type'] === 'custom' ? bin2hex(random_bytes(32)) : null,
@@ -260,6 +308,8 @@ class TenantController extends Controller
 
     public function removeDomain(Request $request, Tenant $tenant, TenantDomain $domain, TenantResolver $resolver): RedirectResponse
     {
+        Gate::forUser(auth('platform')->user())->authorize('manageDomains', $tenant);
+
         if ($domain->tenant_uuid !== $tenant->uuid) {
             return back()->with('error', 'Domain does not belong to this tenant.');
         }

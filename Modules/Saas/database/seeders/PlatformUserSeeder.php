@@ -6,22 +6,25 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Modules\Saas\Models\Landlord\PlatformUser;
 
-/**
- * Seed the initial platform super-admin.
- *
- * Run on the LANDLORD connection:
- *   php artisan db:seed --class="Modules\Saas\Database\Seeders\PlatformUserSeeder"
- *
- * Credentials come from env vars or fall back to development defaults.
- * Change immediately after first login in production.
- */
+
 class PlatformUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = env('SAAS_PLATFORM_ADMIN_EMAIL', 'platform@admin.local');
+        $email = env('SAAS_PLATFORM_ADMIN_EMAIL');
         $name = env('SAAS_PLATFORM_ADMIN_NAME', 'Platform Administrator');
-        $password = env('SAAS_PLATFORM_ADMIN_PASSWORD', 'platform-admin-2026');
+        $password = env('SAAS_PLATFORM_ADMIN_PASSWORD');
+
+        if (blank($email) || blank($password)) {
+            if (app()->environment('production')) {
+                throw new \RuntimeException(
+                    'SAAS_PLATFORM_ADMIN_EMAIL and SAAS_PLATFORM_ADMIN_PASSWORD are required.'
+                );
+            }
+
+            $this->command?->warn('Platform admin not seeded: set SAAS_PLATFORM_ADMIN_EMAIL and SAAS_PLATFORM_ADMIN_PASSWORD.');
+            return;
+        }
 
         PlatformUser::query()->updateOrCreate(
             ['email' => $email],
@@ -39,6 +42,5 @@ class PlatformUserSeeder extends Seeder
         );
 
         $this->command?->info("Platform admin seeded: {$email}");
-        $this->command?->warn('Change the default password in production immediately.');
     }
 }

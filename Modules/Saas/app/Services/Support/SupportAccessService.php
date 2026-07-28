@@ -3,6 +3,7 @@
 namespace Modules\Saas\Services\Support;
 
 use Illuminate\Support\Facades\Cache;
+use Modules\Saas\Domain\Support\SupportScope;
 use Illuminate\Support\Facades\Log;
 use Modules\Saas\Models\Landlord\AuditEvent;
 use Modules\Saas\Models\Landlord\SupportSession;
@@ -35,13 +36,11 @@ class SupportAccessService
     ): SupportSession {
         $tenant = Tenant::where('uuid', $tenantUuid)->firstOrFail();
 
-        // Validate scope.
-        if (! in_array($scope, ['read', 'write'], true)) {
-            $scope = 'read';
-        }
+        $supportScope = SupportScope::tryFrom($scope) ?? SupportScope::Read;
+        $scope = $supportScope->value;
 
         // Write access requires stronger justification.
-        if ($scope === 'write' && strlen($reason) < 20) {
+        if ($supportScope->permitsWrites() && strlen($reason) < 20) {
             throw new \InvalidArgumentException(
                 'Write access requires a detailed reason (minimum 20 characters).'
             );

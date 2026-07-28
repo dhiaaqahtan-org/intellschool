@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Saas\Http\Controllers\Marketing\DemoRequestController;
+use Modules\Saas\Http\Controllers\Marketing\OwnerInvitationController;
 use Modules\Saas\Http\Controllers\Marketing\PageController;
 use Modules\Saas\Http\Controllers\Marketing\SignupController;
 
@@ -20,29 +21,39 @@ use Modules\Saas\Http\Controllers\Marketing\SignupController;
 | registered route pointing at an empty view is worse than a missing route.
 */
 
-Route::name('saas.marketing.')->group(function () {
-    Route::get('/', [PageController::class, 'home'])->name('home');
-    Route::get('/demo', [PageController::class, 'demo'])->name('demo');
+Route::localize(function () {
+    Route::name('saas.marketing.')->group(function () {
+        Route::get('/', [PageController::class, 'home'])->name('home');
+        Route::get('/demo', [PageController::class, 'demo'])->name('demo');
 
-    // Progressive enhancement: one endpoint answers both a normal form POST
-    // (redirect back with a flash message) and the Vue island's JSON request.
-    Route::post('/demo', [DemoRequestController::class, 'store'])
-        ->middleware('throttle:saas-leads')
-        ->name('demo.store');
+        // Progressive enhancement: one endpoint answers both a normal form POST
+        // (redirect back with a flash message) and the Vue island's JSON request.
+        Route::post('/demo', [DemoRequestController::class, 'store'])
+            ->middleware('throttle:saas-leads')
+            ->name('demo.store');
 
-    /*
-     * Legal pages are required before launch (plan §10.3). They are routed now
-     * so the footer never links to a 404, and each view carries a visible
-     * "not yet reviewed" notice until legal counsel supplies the text.
-     */
-    Route::view('/legal/terms', 'saas::marketing.legal.stub', ['doc' => 'terms'])->name('legal.terms');
-    Route::view('/legal/privacy', 'saas::marketing.legal.stub', ['doc' => 'privacy'])->name('legal.privacy');
-    Route::view('/legal/dpa', 'saas::marketing.legal.stub', ['doc' => 'dpa'])->name('legal.dpa');
+        /*
+         * Legal pages are required before launch (plan §10.3). They are routed now
+         * so the footer never links to a 404, and each view carries a visible
+         * "not yet reviewed" notice until legal counsel supplies the text.
+         */
+        Route::view('/legal/terms', 'saas::marketing.legal.stub', ['doc' => 'terms'])->name('legal.terms');
+        Route::view('/legal/privacy', 'saas::marketing.legal.stub', ['doc' => 'privacy'])->name('legal.privacy');
+        Route::view('/legal/dpa', 'saas::marketing.legal.stub', ['doc' => 'dpa'])->name('legal.dpa');
 
-    // Self-service signup (plan §7, §11).
-    Route::get('/signup', [SignupController::class, 'showForm'])->name('signup');
-    Route::post('/signup', [SignupController::class, 'register'])
-        ->middleware('throttle:saas-leads')
-        ->name('signup.register');
-    Route::get('/signup/success', [SignupController::class, 'showSuccess'])->name('signup.success');
+        // Self-service signup (plan §7, §11).
+        Route::get('/signup', [SignupController::class, 'showForm'])->name('signup');
+        Route::post('/signup', [SignupController::class, 'register'])
+            ->middleware('throttle:saas-leads')
+            ->name('signup.register');
+        Route::get('/signup/success', [SignupController::class, 'showSuccess'])->name('signup.success');
+
+        Route::get('/invitation/{token}', [OwnerInvitationController::class, 'show'])
+            ->where('token', '[A-Za-z0-9]{64}')
+            ->name('invitation.show');
+        Route::post('/invitation/{token}', [OwnerInvitationController::class, 'accept'])
+            ->where('token', '[A-Za-z0-9]{64}')
+            ->middleware('throttle:saas-leads')
+            ->name('invitation.accept');
+    });
 });

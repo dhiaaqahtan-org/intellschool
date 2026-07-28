@@ -4,11 +4,10 @@ namespace Modules\Saas\Services\Storage;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemManager;
-use Illuminate\Support\Facades\URL;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Contracts\TenantStorage;
-use Modules\Saas\Exceptions\EntitlementDenied;
 
+use Modules\Saas\Contracts\TenantUrlGenerator;
 /**
  * Default TenantStorage implementation backed by Laravel's filesystem manager.
  *
@@ -25,6 +24,7 @@ class FilesystemTenantStorage implements TenantStorage
     public function __construct(
         private readonly CurrentTenant $currentTenant,
         private readonly FilesystemManager $filesystemManager,
+        private readonly TenantUrlGenerator $tenantUrlGenerator,
     ) {
     }
 
@@ -38,10 +38,11 @@ class FilesystemTenantStorage implements TenantStorage
 
     public function path(string $relativePath): string
     {
-        $context = $this->currentTenant->getOrFail();
-        $this->rejectTraversal($relativePath);
+        $this->currentTenant->getOrFail();
+        $normalized = ltrim(str_replace('\\', '/', $relativePath), '/');
+        $this->rejectTraversal($normalized);
 
-        return $context->storagePrefix().'/'.ltrim($relativePath, '/');
+        return $normalized;
     }
 
     public function prefix(): string
@@ -51,7 +52,7 @@ class FilesystemTenantStorage implements TenantStorage
 
     public function temporaryUrl(string $relativePath, int $expiresInMinutes = 60): string
     {
-        $context = $this->currentTenant->getOrFail();
+        $this->currentTenant->getOrFail();
         $this->rejectTraversal($relativePath);
 
         $disk = $this->filesystemManager->disk();
@@ -68,48 +69,25 @@ class FilesystemTenantStorage implements TenantStorage
             }
         }
 
-        // Local disk fallback: generate a signed route URL.
-        return URL::temporarySignedRoute(
-            'saas.tenant.download',
-            now()->addMinutes($expiresInMinutes),
-            [
-                'tenant' => $context->uuid,
-                'path' => encrypt($relativePath),
-            ]
+        // Local fallback must use the tenant origin, not the worker's host.
+        return $this->tenantUrlGenerator->signedAsset(
+            $this->path($relativePath),
+            $expiresInMinutes,
         );
     }
 
     public function assertPathBelongsToTenant(string $path): void
     {
-        $context = $this->currentTenant->getOrFail();
-        $prefix = $context->storagePrefix();
-
-        $normalized = str_replace('\\', '/', $path);
-
-        if (! str_starts_with($normalized, $prefix.'/') && $normalized !== $prefix) {
-            throw EntitlementDenied::withMessage(
-                'storage.access',
-                "Path [{$path}] does not belong to the active tenant."
-            );
-        }
-
-        // Reject any traversal that could escape after prefix stripping.
-        if (str_contains($normalized, '..')) {
-            throw EntitlementDenied::withMessage(
-                'storage.access',
-                'Path traversal detected.'
-            );
-        }
+        $this->currentTenant->getOrFail();
+        $this->rejectTraversal($path);
     }
 
     public function usageBytes(): int
     {
         $disk = $this->disk();
-        $prefix = $this->prefix();
-
         $total = 0;
 
-        foreach ($disk->allFiles($prefix) as $file) {
+        foreach ($disk->allFiles() as $file) {
             $total += $disk->size($file);
         }
 
@@ -125,7 +103,7 @@ class FilesystemTenantStorage implements TenantStorage
 
         foreach ($disks as $diskName) {
             $disk = $this->filesystemManager->disk($diskName);
-            $disk->deleteDirectory($prefix);
+            $disk->deleteDirectory('');
         }
 
         logger()->warning('Tenant storage purged', [

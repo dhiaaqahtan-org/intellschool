@@ -29,6 +29,8 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        $credentials['status'] = 'active';
+
         if (! Auth::guard('platform')->attempt($credentials, $request->boolean('remember'))) {
             return back()
                 ->withInput($request->only('email'))
@@ -36,6 +38,11 @@ class AuthController extends Controller
         }
 
         $request->session()->regenerate();
+
+        Auth::guard('platform')->user()->forceFill([
+            'last_login_at' => now(),
+            'last_login_ip' => $request->ip(),
+        ])->save();
 
         return redirect()->intended(route('saas.platform.dashboard'));
     }

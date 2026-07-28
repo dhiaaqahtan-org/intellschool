@@ -46,6 +46,13 @@ class ProvisionTenant extends Command
             return self::FAILURE;
         }
 
+        $locale = (string) $this->option('locale');
+        if (! in_array($locale, config('localizer.supported_locales', ['en', 'ar']), true)) {
+            $this->error("Unsupported locale [{$locale}]. Choose one of: ".implode(', ', config('localizer.supported_locales', ['en', 'ar'])));
+
+            return self::FAILURE;
+        }
+
         return $this->createNew($provisioner);
     }
 

@@ -5,6 +5,7 @@ namespace Modules\Saas\Services;
 use Illuminate\Support\Facades\DB;
 use Modules\Saas\Contracts\CurrentTenant;
 use Modules\Saas\Contracts\EntitlementChecker;
+use Modules\Saas\Domain\Usage\UsageMetric;
 
 /**
  * Tracks and enforces metered plan limits (plan §8).
@@ -176,13 +177,6 @@ class UsageMeter
      */
     private function metricToFeatureCode(string $metric): string
     {
-        return match ($metric) {
-            'active_students' => 'students.core',
-            'active_staff' => 'hr.employees',
-            'campuses' => 'campuses.max',
-            'storage_bytes' => 'storage.gb',
-            'api_calls_month' => 'api.access',
-            default => $metric,
-        };
+        return UsageMetric::tryFrom($metric)?->featureCode() ?? $metric;
     }
 }

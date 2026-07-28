@@ -4,6 +4,7 @@ namespace Modules\Saas\Models\Landlord;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Saas\Domain\Support\SupportScope;
 
 /**
  * A time-limited, approved, fully audited support access session (plan §7, §12).
@@ -44,6 +45,15 @@ class SupportSession extends LandlordModel
         return ['uuid'];
     }
 
+    /**
+     * Bind by UUID, matching Tenant. Sequential ids in platform URLs leak how
+     * many support sessions exist and invite enumeration.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class, 'tenant_uuid', 'uuid');
@@ -70,7 +80,7 @@ class SupportSession extends LandlordModel
 
     public function isReadOnly(): bool
     {
-        return $this->scope === 'read';
+        return SupportScope::tryFrom($this->scope) !== SupportScope::Write;
     }
 
     public function scopeActive($query)

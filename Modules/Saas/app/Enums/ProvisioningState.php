@@ -24,6 +24,25 @@ enum ProvisioningState: string
     case FailedRecoverable   = 'failed_recoverable';
     case FailedManualReview  = 'failed_manual_review';
 
+    /**
+     * Human-readable label. See TenantStatus::label() — views must never call
+     * ucfirst()/str_replace() on the enum object itself.
+     */
+    public function label(): string
+    {
+        return ucfirst(str_replace('_', ' ', $this->value));
+    }
+
+    /** Badge class for the platform panel. */
+    public function badgeClass(): string
+    {
+        return match (true) {
+            $this === self::Ready => 'badge-success',
+            $this->isFailure() => 'badge-danger',
+            default => 'badge-warning',
+        };
+    }
+
     public function isTerminal(): bool
     {
         return in_array($this, [self::Ready, self::FailedManualReview], true);

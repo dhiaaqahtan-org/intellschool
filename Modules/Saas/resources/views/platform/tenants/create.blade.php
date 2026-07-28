@@ -54,11 +54,11 @@
                     Locale
                 </label>
                 <select name="locale" style="width: 100%; padding: 0.625rem 1rem; border: 1px solid var(--color-gray-300); border-radius: 0.375rem; font-size: 0.875rem;">
-                    <option value="en" {{ old('locale', 'en') === 'en' ? 'selected' : '' }}>English</option>
-                    <option value="ar" {{ old('locale') === 'ar' ? 'selected' : '' }}>Arabic</option>
-                    <option value="fr" {{ old('locale') === 'fr' ? 'selected' : '' }}>French</option>
-                    <option value="ur" {{ old('locale') === 'ur' ? 'selected' : '' }}>Urdu</option>
+                    @foreach (config('localizer.supported_locales', ['en', 'ar']) as $supportedLocale)
+                        <option value="{{ $supportedLocale }}" {{ old('locale', config('app.fallback_locale', 'en')) === $supportedLocale ? 'selected' : '' }}>{{ $supportedLocale === 'ar' ? 'Arabic' : 'English' }}</option>
+                    @endforeach
                 </select>
+                @error('locale') <p style="color: var(--color-danger); font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</p> @enderror
             </div>
             <div>
                 <label style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">
@@ -75,6 +75,7 @@
                     <option value="Europe/London" {{ old('timezone') === 'Europe/London' ? 'selected' : '' }}>Europe/London</option>
                     <option value="America/New_York" {{ old('timezone') === 'America/New_York' ? 'selected' : '' }}>America/New_York</option>
                 </select>
+                @error('timezone') <p style="color: var(--color-danger); font-size: 0.75rem; margin-top: 0.25rem;">{{ $message }}</p> @enderror
             </div>
         </div>
 

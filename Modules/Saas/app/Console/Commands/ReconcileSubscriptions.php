@@ -5,6 +5,8 @@ namespace Modules\Saas\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Modules\Saas\Contracts\BillingGateway;
+use Modules\Saas\Domain\Billing\SubscriptionStatus;
+use Modules\Saas\Enums\TenantStatus;
 use Modules\Saas\Events\SubscriptionStateChanged;
 use Modules\Saas\Models\Landlord\Subscription;
 use Modules\Saas\Models\Landlord\Tenant;
@@ -51,7 +53,7 @@ class ReconcileSubscriptions extends Command
         );
 
         $query = Subscription::query()
-            ->whereIn('status', ['pending', 'trialing', 'active', 'past_due', 'grace'])
+            ->whereIn('status', SubscriptionStatus::reconcilableValues())
             ->whereNotNull('provider_subscription_id');
 
         if ($tenantFilter) {
@@ -95,7 +97,7 @@ class ReconcileSubscriptions extends Command
         $bar->finish();
         $this->newLine(2);
 
-        $this->info("Reconciliation complete.");
+        $this->info('Reconciliation complete.');
         $this->table(
             ['Metric', 'Count'],
             [
@@ -154,7 +156,6 @@ class ReconcileSubscriptions extends Command
 
                 event(new SubscriptionStateChanged(
                     $subscription->tenant_uuid,
-                    $subscription->uuid,
                     $oldStatus,
                     $providerStatus,
                     'reconciliation'
@@ -184,7 +185,6 @@ class ReconcileSubscriptions extends Command
 
                 event(new SubscriptionStateChanged(
                     $subscription->tenant_uuid,
-                    $subscription->uuid,
                     'trialing',
                     'past_due',
                     'trial_expiry_reconciliation'
@@ -207,7 +207,6 @@ class ReconcileSubscriptions extends Command
 
                 event(new SubscriptionStateChanged(
                     $subscription->tenant_uuid,
-                    $subscription->uuid,
                     'grace',
                     'paused',
                     'grace_expiry_reconciliation'
@@ -215,7 +214,7 @@ class ReconcileSubscriptions extends Command
 
                 // Suspend the tenant's write access.
                 $tenant = Tenant::where('uuid', $subscription->tenant_uuid)->first();
-                if ($tenant && $tenant->status === 'active') {
+                if ($tenant && $tenant->status === TenantStatus::Active) {
                     $tenant->status = 'suspended';
                     $tenant->save();
                 }
@@ -232,15 +231,6 @@ class ReconcileSubscriptions extends Command
      */
     private function mapProviderStatus(string $providerStatus): ?string
     {
-        return match (strtolower($providerStatus)) {
-            'trialing', 'trial' => 'trialing',
-            'active', 'paid', 'current' => 'active',
-            'past_due', 'unpaid', 'payment_failed' => 'past_due',
-            'paused', 'on_hold' => 'paused',
-            'canceled', 'cancelled' => 'canceled',
-            'terminated', 'expired', 'deleted' => 'terminated',
-            'incomplete', 'pending' => 'pending',
-            default => null,
-        };
+        return SubscriptionStatus::fromProvider($providerStatus)?->value;
     }
 }

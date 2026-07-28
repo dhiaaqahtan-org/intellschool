@@ -34,6 +34,13 @@ it('creates a pending tenant with a queued run', function () {
         ->and($run->tenant_uuid)->toBe($tenant->uuid);
 });
 
+it('rejects tenant locales that are not supported by the application', function () {
+    expect(fn () => $this->provisioner->createTenant([
+        'display_name' => 'Unsupported Locale School',
+        'locale' => 'fr',
+    ]))->toThrow(InvalidArgumentException::class, 'Unsupported tenant locale [fr]');
+});
+
 it('gives each run a unique idempotency key', function () {
     ['run' => $run] = $this->provisioner->createTenant(['display_name' => 'One']);
 

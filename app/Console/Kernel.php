@@ -24,6 +24,28 @@ class Kernel extends ConsoleKernel
         // $schedule->command('ccavenue:status')->everyFiveMinutes();
         // $schedule->command('billdesk:status')->everyFiveMinutes();
         $schedule->command('student:update-service-allocation')->dailyAt('01:00');
+
+        if (config('saas.tenancy.enabled', false)) {
+            // Queue dispatch is the primary path; this command recovers runs
+            // created while the broker was unavailable.
+            $schedule->command('saas:provision --pending')
+                ->everyFiveMinutes()
+                ->withoutOverlapping(15)
+                ->onOneServer();
+
+            $schedule->command('saas:prune-demo-requests')
+                ->dailyAt('03:15')
+                ->withoutOverlapping(30)
+                ->onOneServer();
+
+            if (config('saas.billing.provider', 'null') !== 'null') {
+                $schedule->command('saas:reconcile-subscriptions')
+
+                    ->cron((string) config('saas.billing.reconcile_schedule', '0 */6 * * *'))
+                    ->withoutOverlapping(30)
+                    ->onOneServer();
+            }
+        }
     }
 
     /**

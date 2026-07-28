@@ -400,6 +400,39 @@ function initTabs() {
   });
 }
 
+/* -------------------------------------------------------------------------
+ * Progressive form safeguards for server-rendered forms.
+ * ---------------------------------------------------------------------- */
+function initProtectedForms() {
+  const reset = (form) => {
+    const button = form.querySelector('[data-submit-button]');
+    if (!button) return;
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+    if (button.dataset.defaultLabel) button.textContent = button.dataset.defaultLabel;
+  };
+
+  document.querySelectorAll('[data-submit-guard]').forEach((form) => {
+    const button = form.querySelector('[data-submit-button]');
+    if (!button) return;
+    button.dataset.defaultLabel = button.textContent.trim();
+
+    form.addEventListener('submit', () => {
+      if (button.disabled) return;
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      button.textContent = button.dataset.pendingLabel || button.dataset.defaultLabel;
+    });
+  });
+
+  const summary = document.querySelector('[data-error-summary]');
+  if (summary) summary.focus({ preventScroll: true });
+
+  window.addEventListener('pageshow', () => {
+    document.querySelectorAll('[data-submit-guard]').forEach(reset);
+  });
+}
+
 /* ----------------------------------------------------------------------
  * No `export` on purpose: this file must load both as a Vite side-effect
  * import and as a plain <script> in preview/index.html opened over file://
@@ -415,6 +448,7 @@ function boot() {
   initDonuts();
   initHeader();
   initTabs();
+  initProtectedForms();
 }
 
 window.SaasMarketing = { boot };

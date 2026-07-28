@@ -11,6 +11,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
@@ -98,7 +99,7 @@ class TenantSeeder extends Seeder
         }
 
         // Try to get display name from landlord (cross-database read).
-        if ($this->tenantUuid && Schema::hasTable('saas_tenants')) {
+        if ($this->tenantUuid !== '') {
             try {
                 $tenant = DB::connection(config('saas.database.landlord_connection', 'landlord'))
                     ->table('saas_tenants')
@@ -232,8 +233,8 @@ class TenantSeeder extends Seeder
      */
     private function seedOwner(Team $team): void
     {
-        $email = $this->ownerEmail ?? 'admin@' . $this->tenantSlug . '.example.com';
-        $name = $this->ownerName ?? $this->tenantDisplayName . ' Admin';
+        $email = $this->ownerEmail ?? 'admin@'.$this->tenantSlug.'.example.com';
+        $name = $this->ownerName ?? $this->tenantDisplayName.' Admin';
 
         $existing = User::query()->where('email', $email)->first();
 
@@ -244,15 +245,17 @@ class TenantSeeder extends Seeder
                 $existing->assignRole('admin');
             }
 
+            $this->linkOwnerToTenantUser($existing);
+
             return;
         }
 
         $user = new User;
         $user->forceFill([
             'name' => $name,
-            'username' => \Illuminate\Support\Str::slug($this->tenantSlug, '_') . '_admin',
+            'username' => Str::slug($this->tenantSlug, '_').'_admin',
             'email' => $email,
-            'password' => bcrypt(\Illuminate\Support\Str::random(16)), // Owner sets password via invitation
+            'password' => bcrypt(Str::random(16)), // Owner sets password via invitation
             'email_verified_at' => now(),
             'status' => UserStatus::ACTIVATED->value,
             'meta' => [
@@ -266,5 +269,26 @@ class TenantSeeder extends Seeder
         // Assign admin role.
         SysHelper::setTeam($team->id);
         $user->assignRole('admin');
+        $this->linkOwnerToTenantUser($user);
+    }
+
+    private function linkOwnerToTenantUser(User $user): void
+    {
+        if ($this->tenantUuid === '' || $this->ownerEmail === null) {
+            return;
+        }
+
+        try {
+            DB::connection(config('saas.database.landlord_connection', 'landlord'))
+                ->table('saas_tenant_owners')
+                ->where('tenant_uuid', $this->tenantUuid)
+                ->where('email', $this->ownerEmail)
+                ->update([
+                    'tenant_user_uuid' => $user->uuid,
+                    'updated_at' => now(),
+                ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }
