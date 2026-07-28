@@ -126,9 +126,49 @@
         });
     };
 
+    const arabicLabelMap = {
+        "القسم": "الأقسام",
+        "البرنامج": "البرامج",
+        "نوع البرنامج": "أنواع البرامج",
+        "الدورة الدراسية": "الدورات الدراسية",
+        "العام الدراسي": "الأعوام الدراسية",
+        "المرحلة": "المراحل",
+        "الصف": "الصفوف",
+        "الشعبة": "الشعب",
+        "المادة": "المواد",
+        "الشهادة": "الشهادات",
+        "بطاقة الهوية": "بطاقات الهوية",
+        "توقيت الحصص": "توقيتات الحصص",
+        "الجدول الدراسي": "الجداول الدراسية",
+        "مسؤول المرحلة": "مسؤولو المراحل",
+        "مسؤول الصف": "مسؤولو الصفوف",
+        "مسؤول الشعبة": "مسؤولو الشعب",
+        "مسؤول المادة": "مسؤولو المواد",
+        "مسؤول القسم": "مسؤولو الأقسام",
+        "مسؤول البرنامج": "مسؤولو البرامج"
+    };
+
+    const updateArabicSidebarLabels = () => {
+        const isRtl = document.documentElement.dir === "rtl" || document.documentElement.lang === "ar" || document.cookie.includes("admin_locale=ar");
+        if (!isRtl) return;
+
+        document.querySelectorAll("aside a, nav a, .app-sidebar-panel a").forEach((link) => {
+            const textNode = [...link.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+            if (textNode) {
+                const trimmed = textNode.textContent.trim();
+                if (arabicLabelMap[trimmed]) {
+                    textNode.textContent = textNode.textContent.replace(trimmed, arabicLabelMap[trimmed]);
+                }
+            } else if (arabicLabelMap[link.textContent.trim()]) {
+                link.textContent = arabicLabelMap[link.textContent.trim()];
+            }
+        });
+    };
+
     const enhance = () => {
         scheduled = false;
         removeRetiredSiteLinks();
+        updateArabicSidebarLabels();
 
         const shell = document.querySelector(".hidden.lg\\:flex.lg\\:shrink-0");
         const panel = shell?.firstElementChild;
