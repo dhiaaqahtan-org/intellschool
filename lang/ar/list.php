@@ -4,7 +4,6 @@ return [
     'genders' => [
         'male' => 'ذكر',
         'female' => 'أنثى',
-        'other' => 'آخر',
         'he' => 'هو',
         'he_in_small' => 'هو',
         'she' => 'هي',

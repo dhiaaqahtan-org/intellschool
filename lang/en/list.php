@@ -4,7 +4,6 @@ return [
     'genders' => [
         'male' => 'Male',
         'female' => 'Female',
-        'other' => 'Other',
         'he' => 'He',
         'he_in_small' => 'he',
         'she' => 'She',
