@@ -92,9 +92,14 @@ class OtpLogin
 
         activity('user')->log('logged_in');
 
+        $token = $request->device_name
+            ? $user->createToken($request->device_name)->plainTextToken
+            : null;
+
         return [
             'message' => __('auth.login.logged_in'),
             'user' => AuthUserResource::make($user),
+            'token' => $token,
             'two_factor_security' => false,
         ];
     }
