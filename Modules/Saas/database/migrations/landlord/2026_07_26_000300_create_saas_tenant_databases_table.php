@@ -39,7 +39,7 @@ return new class extends Migration
 
             // Schema version applied to THIS database. Drives batched
             // migration rollout and tells you which tenants are behind.
-            $table->string('schema_version', 40)->nullable()->index();
+            $table->string('schema_version', 255)->nullable()->index();
             $table->string('app_version', 40)->nullable();
 
             $table->string('health_status', 20)->default('unknown');

@@ -4,9 +4,9 @@ namespace Modules\Saas\Console\Commands;
 
 use Illuminate\Console\Command;
 use Modules\Saas\Models\Landlord\Tenant;
+use Modules\Saas\Services\TenantMigrationRunner;
 
 /**
-use Modules\Saas\Services\TenantMigrationRunner;
  * Run migrations across all tenant databases with batched rollout,
  * pause/resume, and per-tenant failure isolation (plan §Phase 4).
  *

@@ -32,7 +32,7 @@ return new class extends Migration
             $table->uuid('tenant_uuid')->unique();
             $table->string('tenant_slug', 63);
 
-            $table->string('schema_version', 40)->nullable();
+            $table->string('schema_version', 255)->nullable();
             $table->string('app_version', 40)->nullable();
 
             $table->timestamp('provisioned_at')->nullable();
