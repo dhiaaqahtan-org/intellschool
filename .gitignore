@@ -19,7 +19,6 @@ yarn-error.log
 /.vscode
 /.nova
 /.zed
-/.htaccess
 .codegpt
 /.qodo
 /bootstrap/cache/*.php
