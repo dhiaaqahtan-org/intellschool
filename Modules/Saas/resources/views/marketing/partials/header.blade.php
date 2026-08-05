@@ -46,7 +46,7 @@
 
             {{-- Sign-in goes to the platform host, never to the marketing host. --}}
             @if ($platformHost = config('saas.hosts.platform'))
-                <a class="btn btn--on-ink" href="{{ 'https://'.$platformHost.'/login' }}">
+                <a class="btn btn--on-ink" href="{{ route('saas.platform.login') }}">
                     {{ __('saas::marketing.nav.signin') }}
                 </a>
             @endif
@@ -72,7 +72,7 @@
                 <a href="{{ $href }}">{{ __("saas::marketing.nav.$key") }}</a>
             @endforeach
             @if ($platformHost)
-                <a href="{{ 'https://'.$platformHost.'/login' }}">
+                <a href="{{ route('saas.platform.login') }}">
                     {{ __('saas::marketing.nav.signin') }}
                 </a>
             @endif
