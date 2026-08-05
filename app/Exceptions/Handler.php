@@ -72,8 +72,17 @@ class Handler extends ExceptionHandler
 
     public function context()
     {
+        $userId = null;
+        try {
+            if ($this->container->bound('auth')) {
+                $userId = auth()?->user()?->id;
+            }
+        } catch (\Throwable $e) {
+            // Early boot exception when auth is not yet bound
+        }
+
         return [
-            'user' => auth()?->user()?->id,
+            'user' => $userId,
             'url' => request()->method().' '.request()->fullUrl(),
         ];
     }
