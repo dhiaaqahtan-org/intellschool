@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Saas\Bootstrappers\CacheBootstrapper;
 use Modules\Saas\Bootstrappers\FilesystemBootstrapper;
+use Modules\Saas\Bootstrappers\SessionBootstrapper;
 use Modules\Saas\Console\Commands\MigrateTenants;
 use Modules\Saas\Console\Commands\ProvisionTenant;
+use Modules\Saas\Console\Commands\ProvisionTenantDomain;
 use Modules\Saas\Console\Commands\PruneDemoRequests;
 use Modules\Saas\Console\Commands\ReconcileSubscriptions;
 use Modules\Saas\Console\Commands\VerifyTenantIsolation;
@@ -31,8 +33,8 @@ use Modules\Saas\Models\Landlord\Tenant;
 use Modules\Saas\Policies\PlatformPolicy;
 use Modules\Saas\Queue\QueueTenancy;
 use Modules\Saas\Services\Billing\NullBillingGateway;
+use Modules\Saas\Services\ClusterTenantCredentialResolver;
 use Modules\Saas\Services\DatabaseTenantConnectionManager;
-use Modules\Saas\Services\EnvTenantCredentialResolver;
 use Modules\Saas\Services\FeatureEntitlementService;
 use Modules\Saas\Services\Storage\FilesystemTenantStorage;
 use Modules\Saas\Services\Support\SupportAccessService;
@@ -94,9 +96,12 @@ class SaasServiceProvider extends ServiceProvider
         // Database connection swap.
         $this->app->singleton(TenantConnectionManager::class, DatabaseTenantConnectionManager::class);
 
-        // Credential resolution. Development uses env vars; production MUST
-        // bind a secret-manager-backed resolver instead.
-        $this->app->singleton(TenantCredentialResolver::class, EnvTenantCredentialResolver::class);
+        // Credential resolution. One resolver for every environment on purpose:
+        // a binding that differs between dev and production is how a tenant
+        // isolation path ends up untested in the only environment that matters.
+        // It follows the `secret_ref` pointer, so moving a cluster onto a secret
+        // manager later is a new scheme in that class, not a change here.
+        $this->app->singleton(TenantCredentialResolver::class, ClusterTenantCredentialResolver::class);
 
         // Entitlement checking.
         $this->app->singleton(EntitlementChecker::class, FeatureEntitlementService::class);
@@ -135,9 +140,17 @@ class SaasServiceProvider extends ServiceProvider
         // cache prefix and storage root stay applied to the next tenant served
         // by that worker.
         $this->app->singleton(CacheBootstrapper::class);
+        $this->app->singleton(SessionBootstrapper::class);
         $this->app->singleton(FilesystemBootstrapper::class);
 
-        $this->app->tag([CacheBootstrapper::class, FilesystemBootstrapper::class], 'saas.bootstrappers');
+        // Session after cache on purpose: the redis/cache session drivers read
+        // through the cache store, so the tenant prefix has to be in place
+        // before a session handler is built against it.
+        $this->app->tag([
+            CacheBootstrapper::class,
+            SessionBootstrapper::class,
+            FilesystemBootstrapper::class,
+        ], 'saas.bootstrappers');
     }
 
     protected function registerTranslations(): void
@@ -204,6 +217,7 @@ class SaasServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ProvisionTenant::class,
+                ProvisionTenantDomain::class,
                 MigrateTenants::class,
                 VerifyTenantIsolation::class,
                 ReconcileSubscriptions::class,

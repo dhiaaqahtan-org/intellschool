@@ -16,6 +16,7 @@ use Modules\Saas\Jobs\ProvisionTenantJob;
 use Modules\Saas\Models\Landlord\AuditEvent;
 use Modules\Saas\Models\Landlord\Tenant;
 use Modules\Saas\Models\Landlord\TenantDomain;
+use Modules\Saas\Services\DomainVerifier;
 use Modules\Saas\Services\TenantProvisioner;
 use Modules\Saas\Services\TenantResolver;
 
@@ -72,10 +73,53 @@ class TenantController extends Controller
             'timezone' => ['nullable', 'timezone'],
             'region' => ['nullable', 'string', 'max:32'],
             'tier' => ['nullable', 'string', 'max:32'],
+            'owner_name' => ['nullable', 'string', 'max:255'],
+            'owner_email' => ['nullable', 'email', 'max:255'],
+
+            // Only letters, digits and underscore: the name reaches a PDO DSN
+            // and, on the create path, a backtick-quoted SQL identifier. Neither
+            // can be parameterised, so the charset is the whole defence.
+            'database_name' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9_]+$/'],
+            'database_username' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9_]+$/', 'required_with:database_password'],
+            'database_password' => ['nullable', 'string', 'max:255', 'required_with:database_username'],
+
+            'hostname' => ['nullable', 'string', 'max:253'],
+            'domain_type' => ['nullable', Rule::in([TenantDomain::TYPE_SUBDOMAIN, TenantDomain::TYPE_CUSTOM])],
+        ], [
+            'database_name.regex' => 'Use only letters, digits and underscores — this is a MySQL identifier.',
+            'database_username.regex' => 'Use only letters, digits and underscores — this is a MySQL username.',
+            'database_username.required_with' => 'Enter the database username that goes with this password.',
+            'database_password.required_with' => 'Enter the password for this database user.',
         ]);
+
+        // A username with no database name has nothing to apply to, and would
+        // be silently discarded — which looks like the form worked.
+        if (! empty($validated['database_username']) && empty($validated['database_name'])) {
+            return back()
+                ->withErrors(['database_name' => 'Enter the database name these credentials belong to.'])
+                ->withInput();
+        }
+
+        $hostname = null;
+
+        if (! empty($validated['hostname'])) {
+            $hostname = HostNormalizer::normalize($validated['hostname']);
+
+            if ($hostname === null) {
+                return back()->withErrors(['hostname' => 'Enter a valid hostname, with no scheme or path.'])->withInput();
+            }
+
+            if (TenantDomain::where('hostname', $hostname)->exists()) {
+                return back()->withErrors(['hostname' => 'That hostname is already registered to a tenant.'])->withInput();
+            }
+        }
 
         try {
             $result = $provisioner->createTenant($validated);
+
+            if ($hostname !== null) {
+                $this->attachDomain($result['tenant'], $hostname, $validated['domain_type'] ?? TenantDomain::TYPE_SUBDOMAIN);
+            }
 
             try {
                 ProvisionTenantJob::dispatch($result['run']->uuid)->afterCommit();
@@ -87,11 +131,32 @@ class TenantController extends Controller
                 ->route('saas.platform.tenants.show', $result['tenant'])
                 ->with('success', 'Tenant created and provisioning queued.');
         } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['slug' => $e->getMessage()])->withInput();
+            return back()->withErrors(['display_name' => $e->getMessage()])->withInput();
         }
     }
 
-    public function show(Tenant $tenant): View
+    /**
+     * Register the school's first hostname.
+     *
+     * A subdomain we issue is trusted immediately. A school's own domain gets a
+     * token and stays unroutable until the DNS check passes — the same gate as
+     * adding one later, because "it was entered at creation time" proves nothing
+     * about who controls the DNS.
+     */
+    private function attachDomain(Tenant $tenant, string $hostname, string $type): void
+    {
+        TenantDomain::create([
+            'tenant_uuid' => $tenant->uuid,
+            'hostname' => $hostname,
+            'type' => $type,
+            'is_primary' => true,
+            'verification_token' => $type === TenantDomain::TYPE_CUSTOM
+                ? bin2hex(random_bytes(32))
+                : null,
+        ]);
+    }
+
+    public function show(Tenant $tenant, DomainVerifier $verifier): View
     {
         Gate::forUser(auth('platform')->user())->authorize('viewTenant', $tenant);
 
@@ -102,7 +167,19 @@ class TenantController extends Controller
             ->limit(15)
             ->get();
 
-        return view('saas::platform.tenants.show', compact('tenant', 'recentAuditEvents'));
+        // The exact TXT record each unverified custom domain is waiting on.
+        // Built here rather than in the view so the record name stays defined
+        // in one place — an operator reads these off the screen and gives them
+        // to a school, so a mismatch means a verification that never passes.
+        $verificationRecords = $tenant->domains
+            ->filter(fn (TenantDomain $d) => $d->type === TenantDomain::TYPE_CUSTOM && $d->verified_at === null)
+            ->mapWithKeys(fn (TenantDomain $d) => [$d->id => [
+                'name' => $verifier->recordName($d),
+                'value' => $verifier->expectedValue($d),
+            ]])
+            ->all();
+
+        return view('saas::platform.tenants.show', compact('tenant', 'recentAuditEvents', 'verificationRecords'));
     }
 
     public function update(Request $request, Tenant $tenant): RedirectResponse
@@ -304,6 +381,86 @@ class TenantController extends Controller
         );
 
         return back()->with('success', "Domain {$domain->hostname} added.");
+    }
+
+    /**
+     * Re-check the DNS TXT record for a custom domain.
+     *
+     * Operator-triggered rather than scheduled: DNS propagation is measured in
+     * minutes to hours, and a school watching the panel wants to press a button
+     * when their registrar says the record is live, not wait for a poller.
+     */
+    public function verifyDomain(
+        Request $request,
+        Tenant $tenant,
+        TenantDomain $domain,
+        DomainVerifier $verifier,
+    ): RedirectResponse {
+        Gate::forUser(auth('platform')->user())->authorize('manageDomains', $tenant);
+
+        if ($domain->tenant_uuid !== $tenant->uuid) {
+            return back()->with('error', 'Domain does not belong to this tenant.');
+        }
+
+        $result = $verifier->verify($domain);
+
+        AuditEvent::record(
+            action: $result['verified'] ? 'domain.verified' : 'domain.verification_failed',
+            tenantUuid: $tenant->uuid,
+            context: ['hostname' => $domain->hostname, 'reason' => $result['reason']],
+            actorType: 'platform',
+            ip: $request->ip(),
+        );
+
+        return $result['verified']
+            ? back()->with('success', "{$domain->hostname} verified and now routing.")
+            : back()->with('error', $result['reason']);
+    }
+
+    /**
+     * Promote a domain to primary.
+     *
+     * This is not cosmetic: DomainTenantUrlGenerator builds every absolute URL
+     * the school sends out — password resets, invitations, export and report
+     * links — from the primary hostname. Pointing it at a host that does not
+     * route would send working mail containing dead links.
+     */
+    public function setPrimaryDomain(
+        Request $request,
+        Tenant $tenant,
+        TenantDomain $domain,
+        TenantResolver $resolver,
+    ): RedirectResponse {
+        Gate::forUser(auth('platform')->user())->authorize('manageDomains', $tenant);
+
+        if ($domain->tenant_uuid !== $tenant->uuid) {
+            return back()->with('error', 'Domain does not belong to this tenant.');
+        }
+
+        if (! $domain->isRoutable()) {
+            return back()->with('error', 'Verify this domain before making it primary.');
+        }
+
+        $tenant->domains()->where('is_primary', true)->update(['is_primary' => false]);
+        $domain->forceFill(['is_primary' => true])->save();
+
+        $resolver->forget($domain->hostname);
+
+        AuditEvent::record(
+            action: 'domain.primary_changed',
+            tenantUuid: $tenant->uuid,
+            context: ['hostname' => $domain->hostname],
+            actorType: 'platform',
+            ip: $request->ip(),
+        );
+
+        // The URL generator caches the primary host per tenant, under that
+        // tenant's own cache prefix, which the control plane cannot reach. Mail
+        // sent in the next few minutes may still carry the old hostname.
+        return back()->with(
+            'success',
+            "{$domain->hostname} is now the primary domain. Outgoing links switch over within a few minutes."
+        );
     }
 
     public function removeDomain(Request $request, Tenant $tenant, TenantDomain $domain, TenantResolver $resolver): RedirectResponse

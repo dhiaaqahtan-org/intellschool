@@ -15,6 +15,7 @@ class TenantDatabase extends LandlordModel
 
     protected $fillable = [
         'tenant_uuid', 'cluster', 'database_name', 'secret_ref',
+        'db_username', 'db_password',
         'schema_version', 'app_version', 'health_status',
         'last_checked_at', 'last_migrated_at',
     ];
@@ -22,13 +23,28 @@ class TenantDatabase extends LandlordModel
     protected $casts = [
         'last_checked_at' => 'datetime',
         'last_migrated_at' => 'datetime',
+        // Encrypted at rest. Set only when the host issues one user per
+        // database and there is no secret manager to point at; see the
+        // migration that adds these columns for the trade-off.
+        'db_password' => 'encrypted',
     ];
 
     /**
      * `secret_ref` is a pointer, but it still identifies infrastructure, so
-     * keep it out of arrays, API resources, logs and exception payloads.
+     * keep it out of arrays, API resources, logs and exception payloads. The
+     * credentials are hidden for the more obvious reason.
      */
-    protected $hidden = ['secret_ref'];
+    protected $hidden = ['secret_ref', 'db_username', 'db_password'];
+
+    /** Pointer value meaning "the credentials are on this row". */
+    public const SECRET_REF_ROW = 'row:self';
+
+    public function hasOwnCredentials(): bool
+    {
+        return $this->secret_ref === self::SECRET_REF_ROW
+            && is_string($this->db_username)
+            && $this->db_username !== '';
+    }
 
     public function tenant(): BelongsTo
     {

@@ -1,0 +1,219 @@
+#!/usr/bin/env bash
+# Per-domain vhost + TLS for a school on its own domain (tamjeed.com).
+#
+# WHY THIS EXISTS — a wildcard certificate for *.intellschool.com does not cover
+# a school's own domain. Every custom domain needs its own certificate, and
+# issuing one by hand per school does not scale past the first few.
+#
+# VPS ONLY. It writes nginx config and runs certbot as root, neither of which
+# exists on shared hosting — there you add the domain and its certificate in
+# hPanel instead, and never call this.
+#
+# INSTALL (once, as root):
+#   install -m 0755 tenant-domain-provision /usr/local/sbin/tenant-domain-provision
+#   # let the web user run only this, without a password:
+#   echo 'www-data ALL=(root) NOPASSWD: /usr/local/sbin/tenant-domain-provision' \
+#     > /etc/sudoers.d/tenant-domain-provision
+#   chmod 0440 /etc/sudoers.d/tenant-domain-provision
+#   # nginx.conf must contain, inside http{}:
+#   #   include /etc/nginx/tenants/*.conf;
+#
+# The sudoers entry is deliberately one exact path with no wildcard. A rule like
+# NOPASSWD: /usr/local/sbin/* would let anything dropped in that directory run
+# as root.
+
+set -Eeuo pipefail
+umask 022
+trap 'echo "[ERROR] line $LINENO failed" >&2' ERR
+
+WEBROOT="${SAAS_WEBROOT:-/var/www/intellschool/public}"
+FPM_SOCK="${SAAS_FPM_SOCK:-unix:/run/php/php8.3-fpm.sock}"
+TENANTS_DIR="${SAAS_NGINX_TENANTS_DIR:-/etc/nginx/tenants}"
+
+NGINX_BIN="$(command -v nginx || true)"
+CERTBOT_BIN="$(command -v certbot || true)"
+SYSTEMCTL_BIN="$(command -v systemctl || true)"
+
+usage() {
+  cat <<'USAGE'
+Usage: sudo tenant-domain-provision <domain> [options]
+
+  --email=ADDRESS   Let's Encrypt contact (or set SAAS_SSL_EMAIL)
+  --rewrite         Replace an existing vhost (a backup is kept)
+  --force           Force certificate renewal
+  --staging         Use the Let's Encrypt staging CA — untrusted certs, but no
+                    rate limits. Use this while testing; five failed real
+                    attempts per domain per week locks you out.
+USAGE
+}
+
+DOMAIN=""
+EMAIL="${SAAS_SSL_EMAIL:-}"
+FORCE_RENEW=false
+REWRITE=false
+STAGING=false
+
+for arg in "$@"; do
+  case "$arg" in
+    --email=*) EMAIL="${arg#*=}" ;;
+    --rewrite) REWRITE=true ;;
+    --force)   FORCE_RENEW=true ;;
+    --staging) STAGING=true ;;
+    -*) echo "Unknown option: $arg" >&2; usage; exit 2 ;;
+    *)  [[ -z "$DOMAIN" ]] && DOMAIN="$arg" || { echo "Unexpected argument: $arg" >&2; exit 2; } ;;
+  esac
+done
+
+[[ -n "$DOMAIN" ]] || { usage; exit 2; }
+[[ $EUID -eq 0 ]] || { echo "Run as root (sudo)." >&2; exit 1; }
+[[ -n "$NGINX_BIN" ]]   || { echo "nginx not found" >&2; exit 127; }
+[[ -n "$CERTBOT_BIN" ]] || { echo "certbot not found" >&2; exit 127; }
+[[ -d "$WEBROOT" ]]     || { echo "Webroot not found: $WEBROOT" >&2; exit 4; }
+
+# Revalidated here even though the calling command already checked. This script
+# is root-owned and sudo-reachable, so it must not assume it was reached through
+# the application — anything that can invoke it must pass the same gate.
+if ! [[ "$DOMAIN" =~ ^[a-z0-9.-]+$ ]] || [[ "$DOMAIN" != *.* ]] || [[ "$DOMAIN" =~ (^-|^\.|-$|\.$|\.\.) ]]; then
+  echo "Invalid domain: $DOMAIN" >&2; exit 3
+fi
+[[ ${#DOMAIN} -le 253 ]] || { echo "Domain too long" >&2; exit 3; }
+IFS='.' read -r -a _labels <<< "$DOMAIN"
+for l in "${_labels[@]}"; do
+  [[ -n "$l" && ${#l} -le 63 ]] || { echo "Invalid label: '$l'" >&2; exit 3; }
+done
+if [[ -n "$EMAIL" ]] && ! [[ "$EMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}$ ]]; then
+  echo "Invalid email: $EMAIL" >&2; exit 3
+fi
+
+mkdir -p "$TENANTS_DIR"
+CONF_PATH="$TENANTS_DIR/${DOMAIN}.conf"
+
+nginx_test()   { "$NGINX_BIN" -t; }
+nginx_reload() { if [[ -n "$SYSTEMCTL_BIN" ]]; then "$SYSTEMCTL_BIN" reload nginx; else "$NGINX_BIN" -s reload; fi; }
+
+# Written to a temp file and moved into place, so nginx can never read a config
+# that is half-written — a reload racing a partial file fails the whole server,
+# taking down every other school with it.
+write_atomic() {
+  local tmp
+  tmp="$(mktemp "${CONF_PATH}.tmp.XXXXXX")"
+  cat >"$tmp"
+  chmod 0644 "$tmp"
+  chown root:root "$tmp"
+  mv -f "$tmp" "$CONF_PATH"
+}
+
+php_location() {
+  cat <<NGX
+    location ~ \\.php\$ {
+        include fastcgi_params;
+        fastcgi_split_path_info ^(.+\\.php)(/.+)\$;
+        fastcgi_pass ${FPM_SOCK};
+        fastcgi_param SCRIPT_FILENAME \\\$document_root/index.php;
+        fastcgi_param PATH_INFO \\\$fastcgi_path_info;
+        # The Host header is how the application picks the tenant. Passing the
+        # real one through is what makes this vhost resolve to its school.
+        fastcgi_param HTTP_HOST \\\$host;
+        fastcgi_read_timeout 300;
+    }
+NGX
+}
+
+# Phase 1 — HTTP only, so the ACME challenge is reachable. Certbot cannot issue
+# a certificate for a vhost that already references the certificate it has not
+# issued yet; nginx would fail to start on the missing file.
+write_http_only() {
+  write_atomic <<NGX
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    root ${WEBROOT};
+    index index.php;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root ${WEBROOT};
+        default_type "text/plain";
+    }
+
+    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
+
+$(php_location)
+
+    client_max_body_size 64m;
+    access_log /var/log/nginx/${DOMAIN}.access.log;
+    error_log  /var/log/nginx/${DOMAIN}.error.log warn;
+}
+NGX
+}
+
+# Phase 2 — the real vhost, now that the certificate exists on disk.
+write_https() {
+  write_atomic <<NGX
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN} www.${DOMAIN};
+    root ${WEBROOT};
+
+    location ^~ /.well-known/acme-challenge/ {
+        root ${WEBROOT};
+        default_type "text/plain";
+    }
+
+    location / { return 301 https://\$host\$request_uri; }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    root ${WEBROOT};
+    index index.php;
+
+    ssl_certificate         /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/${DOMAIN}/chain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_stapling on;
+    ssl_stapling_verify on;
+
+    location / { try_files \$uri \$uri/ /index.php?\$query_string; }
+
+$(php_location)
+
+    client_max_body_size 64m;
+    access_log /var/log/nginx/${DOMAIN}.ssl.access.log;
+    error_log  /var/log/nginx/${DOMAIN}.ssl.error.log warn;
+}
+NGX
+}
+
+if [[ -f "$CONF_PATH" && "$REWRITE" != true ]]; then
+  echo "Config already exists: $CONF_PATH (pass --rewrite to replace)"
+  exit 0
+fi
+[[ -f "$CONF_PATH" ]] && cp -a "$CONF_PATH" "${CONF_PATH}.bak.$(date +%s)"
+
+write_http_only
+nginx_test && nginx_reload
+
+CERTBOT_ARGS=(certonly --webroot -w "$WEBROOT" -d "$DOMAIN" -d "www.$DOMAIN"
+              --agree-tos --non-interactive --keep-until-expiring)
+[[ -n "$EMAIL" ]] && CERTBOT_ARGS+=(--email "$EMAIL") || CERTBOT_ARGS+=(--register-unsafely-without-email)
+$FORCE_RENEW && CERTBOT_ARGS+=(--force-renewal)
+$STAGING     && CERTBOT_ARGS+=(--staging)
+
+"$CERTBOT_BIN" "${CERTBOT_ARGS[@]}"
+
+write_https
+nginx_test && nginx_reload
+
+echo "OK: ${DOMAIN} is serving over HTTPS."

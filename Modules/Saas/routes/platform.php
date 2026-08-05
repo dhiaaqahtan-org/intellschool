@@ -55,6 +55,8 @@ Route::name('saas.platform.')->prefix('platform')->group(function () {
 
         // Domains.
         Route::post('/tenants/{tenant:uuid}/domains', [TenantController::class, 'addDomain'])->name('tenants.domains.store');
+        Route::post('/tenants/{tenant:uuid}/domains/{domain}/verify', [TenantController::class, 'verifyDomain'])->name('tenants.domains.verify');
+        Route::post('/tenants/{tenant:uuid}/domains/{domain}/primary', [TenantController::class, 'setPrimaryDomain'])->name('tenants.domains.primary');
         Route::delete('/tenants/{tenant:uuid}/domains/{domain}', [TenantController::class, 'removeDomain'])->name('tenants.domains.destroy');
 
         // Per-tenant entitlement overrides (plan §8). Sit above plan features.

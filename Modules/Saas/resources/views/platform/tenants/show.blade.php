@@ -219,17 +219,53 @@
                     </td>
                     <td>
                         @if($canManageDomains)
-                        <form method="POST" action="{{ route('saas.platform.tenants.domains.destroy', [$tenant, $domain]) }}"
-                              onsubmit="return confirm('Remove this domain?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn" style="background: var(--color-danger); color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Remove</button>
-                        </form>
+                        <div style="display:flex; gap:0.375rem; flex-wrap:wrap;">
+                            @if($domain->type === 'custom' && ! $domain->verified_at)
+                            <form method="POST" action="{{ route('saas.platform.tenants.domains.verify', [$tenant, $domain]) }}">
+                                @csrf
+                                <button type="submit" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Check DNS</button>
+                            </form>
+                            @endif
+
+                            @if(! $domain->is_primary && $domain->isRoutable())
+                            <form method="POST" action="{{ route('saas.platform.tenants.domains.primary', [$tenant, $domain]) }}">
+                                @csrf
+                                <button type="submit" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Make primary</button>
+                            </form>
+                            @endif
+
+                            <form method="POST" action="{{ route('saas.platform.tenants.domains.destroy', [$tenant, $domain]) }}"
+                                  onsubmit="return confirm('Remove this domain?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn" style="background: var(--color-danger); color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem;">Remove</button>
+                            </form>
+                        </div>
                         @else
                             <span class="muted">Read only</span>
                         @endif
                     </td>
                 </tr>
+
+                @if($domain->type === 'custom' && ! $domain->verified_at && $canManageDomains)
+                    {{-- The school cannot act without these exact two values, so
+                         they are shown in full rather than behind a dialog. --}}
+                    <tr>
+                        <td colspan="5" style="background: var(--color-gray-50); font-size: 0.8125rem;">
+                            <strong>{{ $domain->hostname }} is not routing yet.</strong>
+                            Ask the school to add this DNS record at their registrar, then press <em>Check DNS</em>.
+                            <table style="margin-top: 0.5rem;">
+                                <tr><th style="text-align:left; padding-right:1rem;">Type</th><td><code>TXT</code></td></tr>
+                                <tr><th style="text-align:left; padding-right:1rem;">Name</th><td><code>{{ $verificationRecords[$domain->id]['name'] ?? '' }}</code></td></tr>
+                                <tr><th style="text-align:left; padding-right:1rem;">Value</th><td><code style="word-break:break-all;">{{ $verificationRecords[$domain->id]['value'] ?? '' }}</code></td></tr>
+                            </table>
+                            <p style="margin-top:0.5rem; color: var(--color-gray-500);">
+                                They must also point <code>{{ $domain->hostname }}</code> at this server with an A or CNAME record,
+                                and the domain needs its own TLS certificate — a wildcard for the platform domain does not cover it.
+                            </p>
+                        </td>
+                    </tr>
+                @endif
             @empty
                 <tr>
                     <td colspan="5" style="text-align: center; color: var(--color-gray-500);">No domains configured.</td>

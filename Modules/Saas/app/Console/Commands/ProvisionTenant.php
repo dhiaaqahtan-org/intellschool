@@ -24,6 +24,7 @@ class ProvisionTenant extends Command
         {--timezone=UTC : Default timezone}
         {--region= : Deployment region}
         {--tier=standard : Plan tier}
+        {--database= : Adopt an existing, already-created database instead of creating one (shared hosting)}
         {--resume= : Resume a specific failed provisioning run by UUID}
         {--pending : Process all queued/pending provisioning runs}
         {--dry-run : Show what would happen without executing}';
@@ -78,6 +79,7 @@ class ProvisionTenant extends Command
                 'timezone' => $this->option('timezone'),
                 'region' => $this->option('region'),
                 'tier' => $this->option('tier'),
+                'database_name' => $this->option('database') ?: null,
             ]);
 
             $tenant = $result['tenant'];
@@ -94,7 +96,18 @@ class ProvisionTenant extends Command
             $this->newLine();
             $this->info("✓ Tenant [{$tenant->slug}] provisioned successfully.");
             $this->info("  UUID: {$tenant->uuid}");
-            $this->info("  Domain: {$tenant->slug}.localhost (development)");
+
+            // Read the suffix rather than hardcoding a development host — this
+            // line is what an operator copies into DNS and hands to a school.
+            $suffix = config('saas.hosts.tenant_suffix');
+            $this->info($suffix
+                ? "  Domain: {$tenant->slug}{$suffix}"
+                : '  Domain: none — SAAS_TENANT_SUFFIX is unset, so add a domain in the platform panel.');
+
+            $this->info('  Database: '.($tenant->fresh()->database?->database_name ?? 'unknown'));
+            $this->newLine();
+            $this->line('  For a school on its own domain, add it in the platform panel and');
+            $this->line('  have them publish the TXT record shown there before it will route.');
 
             return self::SUCCESS;
         } catch (\Throwable $e) {

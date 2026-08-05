@@ -108,6 +108,96 @@
             </div>
         </div>
 
+        @php($fieldStyle = 'width: 100%; padding: 0.625rem 1rem; border: 1px solid var(--color-gray-300); border-radius: 0.375rem; font-size: 0.875rem;')
+        @php($errStyle = 'color: var(--color-danger); font-size: 0.75rem; margin-top: 0.25rem;')
+        @php($hintStyle = 'color: var(--color-gray-500); font-size: 0.75rem; margin-top: 0.25rem;')
+
+        {{-- Address --}}
+        <hr style="margin: 1.75rem 0; border: none; border-top: 1px solid var(--color-gray-200);">
+        <h2 style="font-size: 1rem; margin-bottom: 0.25rem;">Address</h2>
+        <p style="{{ $hintStyle }} margin-bottom: 1rem;">
+            Leave blank to use the subdomain built from the slug above.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+            <div>
+                <label for="hostname" style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">Hostname</label>
+                <input id="hostname" type="text" name="hostname" value="{{ old('hostname') }}"
+                       placeholder="tamjeed{{ config('saas.hosts.tenant_suffix', '.example.com') }} or tamjeed.com"
+                       style="{{ $fieldStyle }}">
+                @error('hostname') <p style="{{ $errStyle }}">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="domain_type" style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">Type</label>
+                <select id="domain_type" name="domain_type" style="{{ $fieldStyle }}">
+                    <option value="subdomain" {{ old('domain_type', 'subdomain') === 'subdomain' ? 'selected' : '' }}>Subdomain</option>
+                    <option value="custom" {{ old('domain_type') === 'custom' ? 'selected' : '' }}>Their own domain</option>
+                </select>
+            </div>
+        </div>
+        <p style="{{ $hintStyle }} margin-bottom: 1.25rem;">
+            A subdomain routes immediately. Their own domain gets a verification
+            token and stays unroutable until the school publishes the DNS record
+            shown on the tenant page — entering it here proves nothing about who
+            controls that domain.
+        </p>
+
+        {{-- Database --}}
+        <hr style="margin: 1.75rem 0; border: none; border-top: 1px solid var(--color-gray-200);">
+        <h2 style="font-size: 1rem; margin-bottom: 0.25rem;">Database</h2>
+        <p style="{{ $hintStyle }} margin-bottom: 1rem;">
+            Leave all three blank on a VPS — the database is created for you.
+            On shared hosting create it in hPanel first, then copy the exact
+            names here; they carry a forced <code>u000000000_</code> prefix that
+            cannot be changed.
+        </p>
+
+        <div style="margin-bottom: 1.25rem;">
+            <label for="database_name" style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">Database name</label>
+            <input id="database_name" type="text" name="database_name" value="{{ old('database_name') }}"
+                   autocomplete="off" placeholder="u123456789_tamjeed" style="{{ $fieldStyle }}">
+            @error('database_name') <p style="{{ $errStyle }}">{{ $message }}</p> @enderror
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem;">
+            <div>
+                <label for="database_username" style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">Database username</label>
+                <input id="database_username" type="text" name="database_username" value="{{ old('database_username') }}"
+                       autocomplete="off" placeholder="u123456789_tamjeed" style="{{ $fieldStyle }}">
+                @error('database_username') <p style="{{ $errStyle }}">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label for="database_password" style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">Database password</label>
+                {{-- Never re-filled from old() on a validation error: a password
+                     echoed back into HTML ends up in caches and page sources. --}}
+                <input id="database_password" type="password" name="database_password"
+                       autocomplete="new-password" style="{{ $fieldStyle }}">
+                @error('database_password') <p style="{{ $errStyle }}">{{ $message }}</p> @enderror
+            </div>
+        </div>
+        <p style="{{ $hintStyle }} margin-bottom: 1.25rem;">
+            Fill the username and password only if this database has its own
+            MySQL user, which is how hPanel issues them. They are stored
+            encrypted and re-entered here if they ever change. Leave both blank
+            and the school opens through the shared cluster user instead.
+        </p>
+
+        {{-- Owner --}}
+        <hr style="margin: 1.75rem 0; border: none; border-top: 1px solid var(--color-gray-200);">
+        <h2 style="font-size: 1rem; margin-bottom: 1rem;">School contact <span style="font-weight: 400; color: var(--color-gray-500); font-size: 0.875rem;">(optional)</span></h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+            <div>
+                <label for="owner_name" style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">Name</label>
+                <input id="owner_name" type="text" name="owner_name" value="{{ old('owner_name') }}" style="{{ $fieldStyle }}">
+            </div>
+            <div>
+                <label for="owner_email" style="display: block; font-weight: 600; margin-bottom: 0.375rem; font-size: 0.875rem;">Email</label>
+                <input id="owner_email" type="email" name="owner_email" value="{{ old('owner_email') }}" style="{{ $fieldStyle }}">
+                @error('owner_email') <p style="{{ $errStyle }}">{{ $message }}</p> @enderror
+            </div>
+        </div>
+
         <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
             <button type="submit" class="btn btn-primary">Create & Provision Tenant</button>
             <a href="{{ route('saas.platform.tenants.index') }}" class="btn" style="background: var(--color-gray-200); color: var(--color-gray-700);">Cancel</a>

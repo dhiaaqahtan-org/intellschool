@@ -200,7 +200,7 @@ class TenantMigrationRunner
     }
 
     /** Enter the standard tenant context so credentials always pass through
-     * the configured TenantCredentialResolver (secret manager in production).
+     * the configured TenantCredentialResolver rather than being assembled here.
      */
     private function configureConnection(Tenant $tenant): string
     {

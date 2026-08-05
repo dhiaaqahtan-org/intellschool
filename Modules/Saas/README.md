@@ -66,7 +66,11 @@ SAAS_TENANT_SUFFIX=.product.example
 SAAS_LANDLORD_DB_DATABASE=instikit_landlord
 ```
 
-`SAAS_TENANCY_ENABLED` must stay false until landlord migrations, tenant credentials, wildcard DNS/TLS, and at least one verified tenant are ready. In production, `EnvTenantCredentialResolver` deliberately refuses to run; bind a real secret-manager-backed implementation of `TenantCredentialResolver`.
+`SAAS_TENANCY_ENABLED` must stay false until landlord migrations, tenant credentials, wildcard DNS/TLS, and at least one verified tenant are ready — with it on and none of those present, every request 404s.
+
+Tenant database credentials are resolved by `ClusterTenantCredentialResolver`, which follows the `secret_ref` pointer on `saas_tenant_databases` (`env:SAAS_CLUSTER_<NAME>` or `cluster:<name>`) to an entry in `config('saas.clusters')`. It refuses an empty password in production, and never falls back to the application's own credentials. Moving a cluster onto a secret manager means adding a scheme there and rewriting the affected pointers.
+
+A school may be reached at an issued subdomain or its own domain. Custom domains route only after DNS ownership is proven — see `docs/DEPLOY-intellschool.md`.
 
 Run landlord migrations and workers with explicit operational ownership:
 

@@ -58,10 +58,18 @@ return [
     /*
      * Tenant database clusters.
      *
-     * Development only — these are read by EnvTenantCredentialResolver, which
-     * refuses to run in production. In production, `secret_ref` on
-     * saas_tenant_databases points at a secret manager entry and a different
-     * resolver implementation fetches it.
+     * Read by ClusterTenantCredentialResolver, which follows the `secret_ref`
+     * pointer on saas_tenant_databases: `env:SAAS_CLUSTER_<NAME>` and
+     * `cluster:<name>` both land on an entry here.
+     *
+     * Values are resolved through config rather than env() at request time,
+     * because `config:cache` stops Laravel reading .env — an env() call from a
+     * service would return null on a cached-config deploy and only there.
+     *
+     * One database user per cluster, one database per tenant: isolation comes
+     * from the separate database, not from per-tenant credentials. To move a
+     * cluster onto a secret manager, add a scheme to that resolver and rewrite
+     * the affected `secret_ref` values; nothing else changes.
      */
     'clusters' => [
         'default' => [
@@ -70,6 +78,23 @@ return [
             'username' => env('SAAS_CLUSTER_DEFAULT_USERNAME', env('DB_USERNAME', 'root')),
             'password' => env('SAAS_CLUSTER_DEFAULT_PASSWORD', env('DB_PASSWORD', '')),
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom domains
+    |--------------------------------------------------------------------------
+    | A school may be reached at a subdomain we issue (tamjeed.intellschool.com)
+    | or at its own domain (tamjeed.com). The second kind routes only after the
+    | school proves it controls the DNS, by publishing a TXT record at
+    | <prefix>.<their domain> containing the token we generated.
+    |
+    | Changing the prefix invalidates instructions already given to schools
+    | mid-verification, so treat it as fixed once the first custom domain is
+    | live.
+    */
+    'domains' => [
+        'verification_prefix' => env('SAAS_DOMAIN_VERIFY_PREFIX', '_saas-verify'),
     ],
 
     'storage' => [

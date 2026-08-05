@@ -70,7 +70,21 @@ class TenantProvisioner
             'locale' => $locale,
             'timezone' => $attributes['timezone'] ?? 'UTC',
             'provisioning_state' => ProvisioningState::Queued->value,
-            'meta' => $attributes['meta'] ?? null,
+            // A supplied database name rides in meta so allocateDatabase can
+            // adopt it instead of creating one. Kept out of the tenant's own
+            // columns because it describes where the tenant lives, not what it
+            // is, and only some deployments need it.
+            //
+            // The password is NOT put here — meta is a plain JSON column that
+            // ends up in tenant listings and API resources. It is handed to
+            // allocateDatabase separately and stored encrypted.
+            'meta' => array_filter(array_merge(
+                (array) ($attributes['meta'] ?? []),
+                [
+                    'database_name' => $attributes['database_name'] ?? null,
+                    'database_username' => $attributes['database_username'] ?? null,
+                ],
+            ), static fn ($v) => $v !== null) ?: null,
         ]);
 
         if (isset($attributes['owner_email']) && trim((string) $attributes['owner_email']) !== '') {
@@ -83,6 +97,12 @@ class TenantProvisioner
                 'invited_at' => now(),
             ]);
         }
+
+        // Recorded now, not during the provisioning run. createTenant and
+        // provision() routinely execute in different processes — the run is
+        // dispatched to a queue — so a password held in memory here would not
+        // exist by the time the database row is written.
+        $this->recordSuppliedDatabase($tenant, $attributes);
 
         $idempotencyKey = "provision:{$tenant->uuid}";
 
@@ -146,20 +166,35 @@ class TenantProvisioner
      */
     private function allocateDatabase(Tenant $tenant): void
     {
-        // Idempotent: skip if the database record already exists.
-        if ($tenant->database()->exists()) {
+        // ADOPTION PATH — shared hosting.
+        //
+        // Creating a database requires the CREATE privilege, which shared hosts
+        // do not grant: databases are made through their control panel and get
+        // a forced account prefix (u123456789_name), so a derived `tnt_<hash>`
+        // name cannot exist there either. Both halves of the default path are
+        // unavailable, not just one.
+        //
+        // createTenant has already written the row for that path, so the work
+        // left here is proving the database is actually usable before the
+        // migrator is pointed at it. The isolation guarantee is unchanged — it
+        // comes from the tenant having its own database, not from who made it.
+        $existing = $tenant->database()->first();
+
+        if ($existing !== null) {
+            $this->assertDatabaseUsable($tenant, $existing);
+
             return;
         }
 
-        $databaseName = TenantDatabase::nameFor($tenant->uuid);
         $connection = config('saas.database.landlord_connection', 'landlord');
+        $templateConnection = config('saas.database.tenant_template', 'mysql');
+        $driver = config("database.connections.{$templateConnection}.driver", 'mysql');
+
+        $databaseName = TenantDatabase::nameFor($tenant->uuid);
 
         // Use the landlord connection to CREATE the tenant database.
         // In production this would go through an infrastructure adapter
         // (RDS API, Cloud SQL Admin, etc.) rather than raw SQL.
-        $templateConnection = config('saas.database.tenant_template', 'mysql');
-        $driver = config("database.connections.{$templateConnection}.driver", 'mysql');
-
         if ($driver === 'mysql') {
             DB::connection($connection)->statement(
                 "CREATE DATABASE IF NOT EXISTS `{$databaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
@@ -170,9 +205,129 @@ class TenantProvisioner
             'tenant_uuid' => $tenant->uuid,
             'cluster' => 'default',
             'database_name' => $databaseName,
-            'secret_ref' => 'env:SAAS_CLUSTER_DEFAULT', // dev only; production uses secret manager
+            // Pointer, never the credential. ClusterTenantCredentialResolver
+            // maps it onto config('saas.clusters.default'); a tenant moved to a
+            // secret manager gets its pointer rewritten, nothing else changes.
+            'secret_ref' => 'env:SAAS_CLUSTER_DEFAULT',
             'health_status' => 'creating',
         ]);
+    }
+
+    /**
+     * Persist an operator-supplied database up front.
+     *
+     * Writing the row here also means allocateDatabase finds it already present
+     * and skips creation, which is exactly right: on the adoption path the
+     * database was made in the hosting control panel and there is nothing for
+     * the provisioner to create.
+     */
+    private function recordSuppliedDatabase(Tenant $tenant, array $attributes): void
+    {
+        $name = $this->adoptedDatabaseName($tenant);
+
+        if ($name === null) {
+            return;
+        }
+
+        $username = trim((string) ($attributes['database_username'] ?? ''));
+        $password = (string) ($attributes['database_password'] ?? '');
+
+        if ($username !== '' && ! preg_match('/^[A-Za-z0-9_]{1,64}$/', $username)) {
+            throw new \InvalidArgumentException(
+                "Database username [{$username}] is not a valid MySQL identifier."
+            );
+        }
+
+        // A username with no password is almost always a half-filled form
+        // rather than a passwordless account, and it would fail at connect time
+        // with a much less obvious message.
+        if ($username !== '' && $password === '' && app()->environment('production')) {
+            throw new \InvalidArgumentException(
+                'A database password is required when a database username is given.'
+            );
+        }
+
+        $ownCredentials = $username !== '';
+
+        TenantDatabase::create([
+            'tenant_uuid' => $tenant->uuid,
+            'cluster' => 'default',
+            'database_name' => $name,
+            'db_username' => $ownCredentials ? $username : null,
+            'db_password' => $ownCredentials ? $password : null,
+            // The pointer records WHICH resolution path applies. Without its
+            // own user the tenant still opens through the cluster credential.
+            'secret_ref' => $ownCredentials
+                ? TenantDatabase::SECRET_REF_ROW
+                : 'env:SAAS_CLUSTER_DEFAULT',
+            'health_status' => 'creating',
+        ]);
+    }
+
+    /**
+     * The pre-created database name an operator supplied, if any.
+     *
+     * Validated strictly rather than trusted. The value reaches a PDO DSN and,
+     * on the create path, a backtick-quoted SQL identifier — neither of which
+     * can be parameterised — so anything outside the MySQL identifier charset
+     * is refused here rather than escaped later.
+     */
+    private function adoptedDatabaseName(Tenant $tenant): ?string
+    {
+        $name = $tenant->meta['database_name'] ?? null;
+
+        if (! is_string($name) || trim($name) === '') {
+            return null;
+        }
+
+        $name = trim($name);
+
+        if (! preg_match('/^[A-Za-z0-9_]{1,64}$/', $name)) {
+            throw new \InvalidArgumentException(
+                "Database name [{$name}] is not a valid MySQL identifier. "
+                .'Use only letters, digits and underscores, up to 64 characters.'
+            );
+        }
+
+        return $name;
+    }
+
+    /**
+     * Prove the tenant's database opens with the credentials it will actually
+     * run on, before the migrator is pointed at it.
+     *
+     * Tested by connecting, not by reading information_schema. With one MySQL
+     * user per database — the shared-hosting shape — a schema listing read as
+     * some other user simply omits databases that user has no rights on, so it
+     * reports "missing" for a database that is present and perfectly usable.
+     * Opening the connection is both the stricter check and the one that
+     * matches what every later request does.
+     */
+    private function assertDatabaseUsable(Tenant $tenant, TenantDatabase $database): void
+    {
+        $templateConnection = config('saas.database.tenant_template', 'mysql');
+
+        if (config("database.connections.{$templateConnection}.driver", 'mysql') !== 'mysql') {
+            return;
+        }
+
+        try {
+            $this->currentTenant->runFor($tenant->toContext(''), function () {
+                DB::connection(config('saas.database.tenant_connection', 'tenant'))
+                    ->select('SELECT 1');
+            });
+        } catch (Throwable $e) {
+            // The driver's message names the host and user and is the single
+            // most useful thing an operator can see here, but it can also carry
+            // the DSN — so it is summarised through the same scrubber used for
+            // provisioning-run errors rather than passed through raw.
+            throw new \RuntimeException(
+                "Cannot open database [{$database->database_name}] for this tenant: "
+                .$this->safeError($e)
+                .' Check the database name, username and password against your hosting control panel.',
+                previous: $e,
+            );
+        }
     }
 
     /**
