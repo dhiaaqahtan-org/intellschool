@@ -30,7 +30,13 @@ use Illuminate\Support\Facades\Broadcast;
 // tenant connection is live and skipping control-plane hosts, so there is
 // nothing to replace it with — the boot-time call is a single-tenant shortcut.
 if (! app()->environment('testing') && ! config('saas.tenancy.enabled', false)) {
-    (new SetConfig)->set();
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasTable('configs')) {
+            (new SetConfig)->set();
+        }
+    } catch (\Throwable $e) {
+        // Table not migrated yet
+    }
 }
 
 Broadcast::channel('chats.{chatUuid}', function ($user, $chatUuid) {
