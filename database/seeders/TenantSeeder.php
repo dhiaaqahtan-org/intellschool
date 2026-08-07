@@ -290,14 +290,32 @@ class TenantSeeder extends Seeder
         }
 
         try {
-            DB::connection(config('saas.database.landlord_connection', 'landlord'))
+            $now = now();
+
+            $owners = DB::connection(config('saas.database.landlord_connection', 'landlord'))
                 ->table('saas_tenant_owners')
                 ->where('tenant_uuid', $this->tenantUuid)
                 ->where('email', $this->ownerEmail)
-                ->update([
-                    'tenant_user_uuid' => $user->uuid,
-                    'updated_at' => now(),
-                ]);
+                // Do not resurrect an owner that was deliberately removed.
+                ->whereNull('removed_at');
+
+            // Provisioning has just created (or confirmed) this owner's real
+            // account inside the tenant database, so the invitation is already
+            // fulfilled — there is nothing left for them to accept. Leaving the
+            // row 'invited' hides the school from /api/v1/auth/lookup, which
+            // returns active owners only, so the Flutter school picker would
+            // never list this tenant.
+            (clone $owners)->update([
+                'tenant_user_uuid' => $user->uuid,
+                'status' => 'active',
+                'updated_at' => $now,
+            ]);
+
+            // Preserve the original acceptance time if the owner had already
+            // accepted through the invitation link.
+            (clone $owners)->whereNull('accepted_at')->update([
+                'accepted_at' => $now,
+            ]);
         } catch (\Throwable $e) {
             report($e);
         }
