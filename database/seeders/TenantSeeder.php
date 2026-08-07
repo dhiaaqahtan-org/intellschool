@@ -266,7 +266,7 @@ class TenantSeeder extends Seeder
             'name' => $name,
             'username' => Str::slug($this->tenantSlug, '_').'_admin',
             'email' => $email,
-            'password' => bcrypt(Str::random(16)), // Owner sets password via invitation
+            'password' => bcrypt('12345678'), // Default admin password (12345678)
             'email_verified_at' => now(),
             'status' => UserStatus::ACTIVATED->value,
             'meta' => [

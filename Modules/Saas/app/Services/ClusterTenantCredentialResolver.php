@@ -92,7 +92,14 @@ class ClusterTenantCredentialResolver implements TenantCredentialResolver
 
     private function pointsAtOwnRow(TenantContext $context): bool
     {
-        return trim($context->secretRef) === TenantDatabase::SECRET_REF_ROW;
+        $ref = trim($context->secretRef);
+        if ($ref === TenantDatabase::SECRET_REF_ROW || $ref === 'row:self' || $ref === 'row') {
+            return true;
+        }
+
+        $row = TenantDatabase::query()->where('tenant_uuid', $context->uuid)->first();
+
+        return $row !== null && is_string($row->db_username) && $row->db_username !== '';
     }
 
     /**
