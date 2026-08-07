@@ -294,13 +294,18 @@
 
 {{-- Subscription --}}
 <div class="card">
-    <h2 class="card-title">Subscription</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 class="card-title" style="margin:0;">Subscription & Plan</h2>
+        <button type="button" class="btn btn-primary" onclick="openAssignPlanModal()">
+            Assign / Change Plan
+        </button>
+    </div>
     @if($tenant->subscription)
         <table>
             <tbody>
                 <tr>
                     <th style="width: 200px;">Plan</th>
-                    <td>{{ $tenant->subscription->plan?->display_name ?? '—' }}</td>
+                    <td><strong>{{ $tenant->subscription->plan?->display_name ?? '—' }}</strong> @if($tenant->subscription->plan) <code>({{ $tenant->subscription->plan->plan_code }} v{{ $tenant->subscription->plan->version }})</code> @endif</td>
                 </tr>
                 <tr>
                     <th>Status</th>
@@ -316,7 +321,7 @@
                 </tr>
                 <tr>
                     <th>Provider</th>
-                    <td>{{ $tenant->subscription->provider ?? '—' }}</td>
+                    <td>{{ $tenant->subscription->provider ?? 'manual' }}</td>
                 </tr>
                 @if($tenant->subscription->current_period_end)
                     <tr>
@@ -333,9 +338,72 @@
             </tbody>
         </table>
     @else
-        <p style="color: var(--color-gray-500);">No subscription record.</p>
+        <p style="color: var(--color-gray-500); margin-bottom: 1rem;">No subscription record currently assigned to this tenant.</p>
     @endif
 </div>
+
+<!-- Assign / Change Plan Modal -->
+<div id="assignPlanModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
+    <div class="modal-card" style="background:#fff; border-radius:0.5rem; width:100%; max-width:520px; padding:1.5rem; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid #e5e7eb; padding-bottom:0.75rem;">
+            <h3 style="margin:0; font-size:1.15rem; font-weight:600; color:#111827;">Assign / Change Plan for {{ $tenant->display_name }}</h3>
+            <button type="button" onclick="closeAssignPlanModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#6b7280;">&times;</button>
+        </div>
+        
+        <form method="POST" action="{{ route('saas.platform.subscriptions.store') }}">
+            @csrf
+            <input type="hidden" name="tenant_uuid" value="{{ $tenant->uuid }}">
+            
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:#374151;">Select Plan *</label>
+                <select name="plan_id" required style="width:100%; padding:0.625rem 0.875rem; border:1px solid #d1d5db; border-radius:0.375rem; font-size:0.9rem; background:#fff; box-sizing:border-box;">
+                    @forelse($plans as $planOption)
+                        <option value="{{ $planOption->id }}" {{ $tenant->subscription?->plan_id == $planOption->id ? 'selected' : '' }}>
+                            {{ $planOption->display_name }} ({{ $planOption->plan_code }} v{{ $planOption->version }}) — {{ $planOption->currency }} {{ number_format($planOption->price_cents / 100, 2) }}/{{ $planOption->billing_interval }}
+                        </option>
+                    @empty
+                        <option value="">No active plans found</option>
+                    @endforelse
+                </select>
+            </div>
+
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:#374151;">Subscription Status *</label>
+                <select name="status" required style="width:100%; padding:0.625rem 0.875rem; border:1px solid #d1d5db; border-radius:0.375rem; font-size:0.9rem; background:#fff; box-sizing:border-box;">
+                    @foreach(\Modules\Saas\Http\Controllers\Platform\SubscriptionController::MANUAL_STATUSES as $statusCode => $statusLabel)
+                        <option value="{{ $statusCode }}" {{ ($tenant->subscription?->status ?? 'active') === $statusCode ? 'selected' : '' }}>
+                            {{ $statusLabel }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="margin-bottom:1.5rem;">
+                <label style="display:block; font-size:0.875rem; font-weight:600; margin-bottom:0.375rem; color:#374151;">Reason / Reference *</label>
+                <textarea name="reason" required placeholder="e.g. Manually assigned plan by Platform Admin" style="width:100%; padding:0.625rem 0.875rem; border:1px solid #d1d5db; border-radius:0.375rem; font-size:0.9rem; min-height:80px; box-sizing:border-box;">Assigned plan via Platform Control Center</textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem; border-top:1px solid #e5e7eb; padding-top:1rem;">
+                <button type="button" onclick="closeAssignPlanModal()" class="btn" style="padding:0.5rem 1rem; border:1px solid #d1d5db; background:#fff; border-radius:0.375rem; cursor:pointer;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="padding:0.5rem 1rem; border-radius:0.375rem; cursor:pointer; font-weight:600;">Assign Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAssignPlanModal() {
+        document.getElementById('assignPlanModal').style.display = 'flex';
+    }
+    function closeAssignPlanModal() {
+        document.getElementById('assignPlanModal').style.display = 'none';
+    }
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAssignPlanModal();
+        }
+    });
+</script>
 
 {{-- Owners --}}
 <div class="card">

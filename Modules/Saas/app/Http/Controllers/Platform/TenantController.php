@@ -175,11 +175,12 @@ class TenantController extends Controller
             ->filter(fn (TenantDomain $d) => $d->type === TenantDomain::TYPE_CUSTOM && $d->verified_at === null)
             ->mapWithKeys(fn (TenantDomain $d) => [$d->id => [
                 'name' => $verifier->recordName($d),
-                'value' => $verifier->expectedValue($d),
             ]])
             ->all();
 
-        return view('saas::platform.tenants.show', compact('tenant', 'recentAuditEvents', 'verificationRecords'));
+        $plans = Plan::all();
+
+        return view('saas::platform.tenants.show', compact('tenant', 'recentAuditEvents', 'verificationRecords', 'plans'));
     }
 
     public function update(Request $request, Tenant $tenant): RedirectResponse
