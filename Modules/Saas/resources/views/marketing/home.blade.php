@@ -116,6 +116,9 @@
     </div>
 </section>
 
+{{-- ============================ SCREENSHOTS ============================ --}}
+@include('saas::marketing.partials.showcase')
+
 {{-- ============================ ADMISSIONS ============================ --}}
 <section class="section section--alt">
     <div class="wrap">
@@ -341,6 +344,9 @@
 
             @include('saas::marketing.partials.stage-guardian')
         </div>
+
+        {{-- Empty phone-frame slots for real app captures (user-supplied). --}}
+        @include('saas::marketing.partials.app-shots')
     </div>
 </section>
 

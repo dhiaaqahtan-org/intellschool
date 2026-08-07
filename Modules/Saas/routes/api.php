@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Saas\Http\Controllers\Api\AccountLookupController;
 use Modules\Saas\Http\Controllers\Api\EntitlementController;
 use Modules\Saas\Http\Controllers\Api\PlatformPlanController;
 use Modules\Saas\Http\Controllers\Api\PlatformSubscriptionController;
@@ -117,4 +118,21 @@ Route::prefix('api/saas')
                 Route::post('/plans', [PlatformPlanController::class, 'store'])
                     ->name('plans.store');
             });
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Control-plane auth: pre-login account discovery
+|--------------------------------------------------------------------------
+| Lives at /api/v1/auth/lookup (NOT under the api/saas prefix) so the Flutter
+| client's control-plane Dio — baseUrl https://app.<domain>/api/v1 — reaches it
+| as `/auth/lookup`. Landlord host only; the tenant ERP owns /api/v1/auth/* on
+| its own subdomains. Unauthenticated by design (it precedes any tenant token)
+| and rate limited against enumeration.
+*/
+Route::prefix('api/v1/auth')
+    ->middleware(['api', 'saas.landlord-host', 'throttle:10,1'])
+    ->name('saas.auth.')
+    ->group(function () {
+        Route::post('/lookup', AccountLookupController::class)->name('lookup');
     });

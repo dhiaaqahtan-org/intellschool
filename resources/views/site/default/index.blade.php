@@ -1,171 +1,285 @@
-@php($school = config('config.general.app_name', config('app.name', 'Our School')))
+@php($school = config('config.general.app_name', config('app.name', 'InstiKit School ERP')))
 @php($hero = '/images/site-background.jpg')
 <x-site.default.layout
-    :meta-title="$school"
-    :meta-description="$school . ' — an inspiring curriculum that develops knowledge, character, creativity and global confidence.'"
-    :meta-keywords="'school, education, admission, academics, ' . $school">
+    :meta-title="$school . ' — Enterprise School ERP & Flutter Mobile Platform'"
+    :meta-description="$school . ' — Next-generation multi-tenant school management ERP with native Flutter mobile and desktop apps for iOS, Android, Windows, and Linux.'"
+    :meta-keywords="'school erp, flutter school app, multi tenant school software, education management system, instikit'">
 
-    {{-- ================= HERO ================= --}}
-    <section class="hero">
-        <div class="hero__bg" style="background-image:url('{{ $hero }}')"></div>
-        <div class="wrap hero__inner">
-            <div class="hero__crumb"><span>{{ __('website.home') ?? 'Home' }}</span> / <b>Academics</b></div>
-            <h1>Academic Excellence,<br>Built for the Future</h1>
-            <p>An inspiring curriculum that develops knowledge, character, creativity and global confidence.</p>
-            <div class="hero__cta">
-                <a href="/pages/admissions" class="btn btn-gold"><i class="fa-solid fa-paper-plane"></i> Apply for Admission</a>
-                <a href="/pages/about" class="btn btn-ghost">Book a Tour</a>
+    {{-- ================= HERO SECTION ================= --}}
+    <section class="hero-showcase">
+        <div class="hero-showcase__bg"></div>
+        <div class="wrap hero-showcase__inner">
+            <div class="hero-badge">
+                <span class="pulse-dot"></span>
+                <span>InstiKit Enterprise v5.5 • Multi-Tenant SaaS & Flutter Client</span>
             </div>
-        </div>
-    </section>
+            
+            <h1>Smart School ERP &<br><span class="text-gradient">Native Mobile Platform</span></h1>
+            
+            <p class="hero-desc">
+                An all-in-one education ecosystem empowering administrators, teachers, students, and parents.
+                Featuring 34+ integrated modules, biometrics, online exams, 6+ payment gateways, and native Flutter apps.
+            </p>
 
-    {{-- ================= LEARNING JOURNEY (split) ================= --}}
-    <section class="sec">
-        <div class="wrap split">
-            <div class="split__aside">
-                <span class="eyebrow">Welcome to our Academics</span>
-                <h2 class="h-sec">A Learning Journey for Every Stage</h2>
-                <p>At {{ $school }}, our academic programs are thoughtfully designed to nurture curiosity,
-                   build strong foundations, and challenge students to reach their full potential — every step of the way.</p>
-                <a href="/pages/academics" class="btn btn-navy">Curriculum Overview <i class="fa-solid fa-arrow-right"></i></a>
+            <div class="hero-actions">
+                <a href="/app/login" class="btn btn-gold btn-lg">
+                    <i class="fa-solid fa-gauge-high"></i> Launch ERP Web System
+                </a>
+                <a href="#showcase" class="btn btn-ghost btn-lg">
+                    <i class="fa-solid fa-mobile-screen-button"></i> View App & Screenshots
+                </a>
             </div>
-            <div class="cards-3">
-                @foreach ([
-                    ['fa-child-reaching','Early Years','Ages 3–5','Play-based learning that sparks curiosity, creativity, and social growth in a nurturing environment.'],
-                    ['fa-book-open','Primary School','Ages 6–11','A strong academic foundation built on inquiry, collaboration, and global perspectives.'],
-                    ['fa-graduation-cap','Secondary School','Ages 12–18','Rigorous academics, leadership opportunities, and preparation for a bright future.'],
-                ] as $p)
-                    <article class="pcard">
-                        <div class="pcard__media">
-                            <div class="pcard__badge"><i class="fa-solid {{ $p[0] }}"></i></div>
-                        </div>
-                        <div class="pcard__body">
-                            <h3>{{ $p[1] }}</h3>
-                            <div class="pcard__age">{{ $p[2] }}</div>
-                            <p>{{ $p[3] }}</p>
-                            <a href="/pages/academics" class="btn-text">Learn More <i class="fa-solid fa-arrow-right"></i></a>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </div>
-    </section>
 
-    {{-- ================= CURRICULUM (subject grid) ================= --}}
-    <section class="sec sec--paper2">
-        <div class="wrap">
-            <div class="center">
-                <span class="eyebrow">Our Curriculum</span>
-                <h2 class="h-sec">A Balanced, Future-Ready Curriculum</h2>
-                <p class="sub">A dynamic curriculum that blends academic rigor with real-world relevance.</p>
-            </div>
-            <div class="subjects">
-                @foreach ([
-                    ['fa-comments','Languages','Develop strong communication skills in multiple languages to thrive in a global world.'],
-                    ['fa-square-root-variable','Mathematics','Build problem-solving skills and numerical fluency through hands-on, conceptual learning.'],
-                    ['fa-flask','Science','Foster curiosity and critical thinking through inquiry-based experiments and discovery.'],
-                    ['fa-laptop-code','Technology','Equip students with digital literacy, coding, and innovation skills for the future.'],
-                    ['fa-globe','Humanities','Explore cultures, history, and societies to build empathy and global awareness.'],
-                    ['fa-palette','Creative Arts','Encourage imagination and self-expression through visual arts, music, and drama.'],
-                    ['fa-person-running','Physical Education','Promote health, teamwork, and discipline through sport and active living.'],
-                    ['fa-heart','Wellbeing','Support mental, emotional, and social wellbeing to help students thrive every day.'],
-                ] as $s)
-                    <div class="subject">
-                        <div class="subject__ic"><i class="fa-solid {{ $s[0] }}"></i></div>
-                        <h3>{{ $s[1] }}</h3>
-                        <p>{{ $s[2] }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- ================= INNOVATION (split) ================= --}}
-    <section class="sec">
-        <div class="wrap split">
-            <div class="split__aside">
-                <span class="eyebrow">Teaching that Inspires</span>
-                <h2 class="h-sec">Innovation in Every Classroom</h2>
-                <p>Learning is active, engaging, and connected to the real world — where every lesson
-                   builds confidence, curiosity, and a lifelong love of discovery.</p>
-                <a href="/pages/about" class="btn btn-navy">Learn More About Teaching <i class="fa-solid fa-arrow-right"></i></a>
-            </div>
-            <div class="cards-3">
-                @foreach ([
-                    ['fa-cubes','Hands-On Learning','Students explore, build, and create through practical, project-based work.'],
-                    ['fa-magnifying-glass','Inquiry & Discovery','We encourage questions, research, and a genuine love of discovery.'],
-                    ['fa-people-group','Collaborative Thinking','Teamwork and communication are at the heart of how we learn.'],
-                ] as $c)
-                    <article class="pcard">
-                        <div class="pcard__media">
-                            <div class="pcard__badge"><i class="fa-solid {{ $c[0] }}"></i></div>
-                        </div>
-                        <div class="pcard__body">
-                            <h3>{{ $c[1] }}</h3>
-                            <p style="margin-top:.5rem;">{{ $c[2] }}</p>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- ================= CAMPUS FACILITIES ================= --}}
-    <section class="sec sec--paper2">
-        <div class="wrap">
-            <div class="center">
-                <span class="eyebrow">State-of-the-Art Facilities</span>
-                <h2 class="h-sec">Explore Our Campus</h2>
-            </div>
-            <div class="facilities">
-                @foreach ([
-                    ['fa-book-open-reader','Library','A space to read, research, and be inspired.'],
-                    ['fa-microchip','Innovation Lab','Designed for creativity, coding, and exploration.'],
-                    ['fa-futbol','Sports Facilities','Modern facilities for a wide range of sports.'],
-                    ['fa-music','Performing Arts','Stage, music, and drama that bring talent to life.'],
-                    ['fa-users','Student Commons','A vibrant hub to connect, relax, and collaborate.'],
-                ] as $f)
-                    <article class="fcard">
-                        <div class="fcard__media"></div>
-                        <div class="fcard__body">
-                            <div class="fcard__ic"><i class="fa-solid {{ $f[0] }}"></i></div>
-                            <h3>{{ $f[1] }}</h3>
-                            <p>{{ $f[2] }}</p>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- ================= OUTCOMES + QUOTE ================= --}}
-    <section class="sec">
-        <div class="wrap outcomes">
-            <div>
-                <span class="eyebrow">Achieving Together</span>
-                <h2 class="h-sec" style="font-size:clamp(1.7rem,2.6vw,2.2rem);">Outcomes That Open Doors</h2>
-            </div>
-            <div class="stats4">
-                @foreach ([
-                    ['fa-graduation-cap','98%','University Placement'],
-                    ['fa-earth-americas','40+','Nationalities Represented'],
-                    ['fa-trophy','25+','Years of Excellence'],
-                    ['fa-user-group','18:1','Student–Teacher Ratio'],
-                ] as $st)
-                    <div class="stat">
-                        <div class="stat__ic"><i class="fa-solid {{ $st[0] }}"></i></div>
-                        <div class="stat__num">{{ $st[1] }}</div>
-                        <div class="stat__lbl">{{ $st[2] }}</div>
-                    </div>
-                @endforeach
-            </div>
-            <div class="quote-card">
-                <div class="qm">&ldquo;</div>
-                <p>{{ $school }} challenges me to think bigger and do my best every day. The teachers truly care and help me grow.</p>
-                <div class="quote-card__who">
-                    <span class="av">A</span>
-                    <div><b>Ananya S.</b><br><small>Grade 11 Student</small></div>
+            <div class="hero-metrics">
+                <div class="metric-item">
+                    <span class="metric-value">34+</span>
+                    <span class="metric-label">ERP Modules</span>
                 </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <span class="metric-value">100%</span>
+                    <span class="metric-label">Cross-Platform (Web/iOS/Android/Desktop)</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <span class="metric-value">6+</span>
+                    <span class="metric-label">Payment Gateways</span>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <span class="metric-value">RTL & LTR</span>
+                    <span class="metric-label">Native Arabic/English</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================= SCREENSHOTS SHOWCASE (SYSTEM & FLUTTER WSL) ================= --}}
+    <section id="showcase" class="sec showcase-sec">
+        <div class="wrap">
+            <div class="center">
+                <span class="eyebrow"><i class="fa-solid fa-desktop"></i> Live Platform Showcase</span>
+                <h2 class="h-sec">Experience the ERP & WSL Flutter Ecosystem</h2>
+                <p class="sub">Direct captured live previews of our Tenant Web ERP and WSL-rendered Flutter Client application.</p>
+            </div>
+
+            {{-- Dual Preview Grid --}}
+            <div class="showcase-grid">
+                {{-- Web ERP System Mockup --}}
+                <div class="showcase-card showcase-card--web">
+                    <div class="showcase-header">
+                        <div class="window-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <div class="window-address">
+                            <i class="fa-solid fa-lock text-green"></i> https://tenant.instikit.com/app/login
+                        </div>
+                        <div class="window-badge"><i class="fa-solid fa-globe"></i> Web Tenant ERP</div>
+                    </div>
+                    <div class="showcase-media">
+                        <img src="/images/showcase/web-erp-login.png" 
+                             alt="InstiKit Web Tenant ERP System Screenshot" 
+                             onerror="this.onerror=null; this.src='/images/site-background.jpg';"
+                             class="showcase-img" />
+                        <div class="showcase-overlay">
+                            <div class="overlay-tags">
+                                <span class="tag"><i class="fa-solid fa-server"></i> Laravel 12</span>
+                                <span class="tag"><i class="fa-solid fa-layer-group"></i> Multi-Tenancy</span>
+                                <span class="tag"><i class="fa-solid fa-shield-halved"></i> Spatie RBAC</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="showcase-footer">
+                        <h3><i class="fa-solid fa-laptop-code text-gold"></i> Web Tenant ERP Portal</h3>
+                        <p>Complete web administrative portal with real-time dashboards, financial reporting, payroll engine, and fee management.</p>
+                    </div>
+                </div>
+
+                {{-- Flutter Client App WSL Mockup --}}
+                <div class="showcase-card showcase-card--flutter">
+                    <div class="showcase-header">
+                        <div class="window-dots">
+                            <span class="dot dot-blue"></span>
+                            <span class="dot dot-blue"></span>
+                            <span class="dot dot-blue"></span>
+                        </div>
+                        <div class="window-address">
+                            <i class="fa-solid fa-terminal text-gold"></i> WSL2 • Flutter Web & Desktop Client
+                        </div>
+                        <div class="window-badge badge-flutter"><i class="fa-brands fa-flutter"></i> Flutter App (WSL)</div>
+                    </div>
+                    <div class="showcase-media showcase-media--dual">
+                        {{-- Desktop Flutter --}}
+                        <div class="flutter-desk-frame">
+                            <img src="/images/showcase/flutter-client-desktop.png" 
+                                 alt="Flutter App Running in WSL Desktop View" 
+                                 onerror="this.onerror=null; this.src='/images/site-background.jpg';"
+                                 class="showcase-img" />
+                        </div>
+                        {{-- Mobile Flutter Overlay --}}
+                        <div class="flutter-mobile-frame">
+                            <img src="/images/showcase/flutter-client-mobile.png" 
+                                 alt="Flutter App Mobile Viewport" 
+                                 onerror="this.onerror=null; this.src='/images/site-background.jpg';"
+                                 class="showcase-img-mobile" />
+                        </div>
+                    </div>
+                    <div class="showcase-footer">
+                        <h3><i class="fa-brands fa-flutter text-blue"></i> Cross-Platform Flutter Client (WSL)</h3>
+                        <p>High-performance native Flutter app compiled for iOS, Android, Windows, and Linux with offline Drift database and push alerts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================= FULL FEATURE MATRIX ================= --}}
+    <section class="sec sec--paper2">
+        <div class="wrap">
+            <div class="center">
+                <span class="eyebrow"><i class="fa-solid fa-cubes"></i> System Capabilities</span>
+                <h2 class="h-sec">Deep Step-by-Step Feature Breakdown</h2>
+                <p class="sub">Built for seamless institution administration from student admissions to staff payroll.</p>
+            </div>
+
+            <div class="feature-grid">
+                {{-- Feature 1 --}}
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon--navy">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <h3>Academic & Curriculum</h3>
+                    <p>Manage program types, academic sessions, course & batch structures, subject incharge assignments, timetable engine, and digital booklists.</p>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-check text-gold"></i> Dynamic Timetable Builder</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Batch & Course Promotions</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Subject Incharge Mapping</li>
+                    </ul>
+                </div>
+
+                {{-- Feature 2 --}}
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon--gold">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <h3>Student & Guardian Lifecycle</h3>
+                    <p>Enquiry wizard, registration verification, provisional admissions, seat allocation, mentor assignment, digital ID cards, and student documents.</p>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-check text-gold"></i> QR Code & Biometric Attendance</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Student Clock In / Clock Out</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Parent & Guardian Portals</li>
+                    </ul>
+                </div>
+
+                {{-- Feature 3 --}}
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon--navy">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <h3>Financials & Fee Engine</h3>
+                    <p>Multi-installment payments, fee concessions, head-wise collection reports, cashier day book closure, QR payment links, and receipt printouts.</p>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-check text-gold"></i> 6+ Payment Gateways</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Cashier Day Book & Closure</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Auto Round-Off & Concessions</li>
+                    </ul>
+                </div>
+
+                {{-- Feature 4 --}}
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon--gold">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                    <h3>HR, Leave & Payroll</h3>
+                    <p>Staff recruitment pipeline, biometrics, department-level permissions, half-day leave tracking, dynamic payroll formulas, and payment advice.</p>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-check text-gold"></i> Bulk Payroll Processing</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Half-Day & Full-Day Leaves</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Custom Payhead Formulas</li>
+                    </ul>
+                </div>
+
+                {{-- Feature 5 --}}
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon--navy">
+                        <i class="fa-solid fa-file-pen"></i>
+                    </div>
+                    <h3>Exams & Marksheets</h3>
+                    <p>Online examination module, competency-based evaluation, auto-locking exam marks, weightage calculation, attempt tracking, and report cards.</p>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-check text-gold"></i> Online Exam Simulator</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Auto Marks Locking</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Custom Marksheet Templates</li>
+                    </ul>
+                </div>
+
+                {{-- Feature 6 --}}
+                <div class="feature-card feature-card--highlight">
+                    <div class="feature-icon feature-icon--flutter">
+                        <i class="fa-brands fa-flutter"></i>
+                    </div>
+                    <h3>Flutter Mobile & Desktop Apps</h3>
+                    <p>Offline-first cross-platform client built with Riverpod, Drift DB, and GoRouter for iOS, Android, Windows, Linux, and Web.</p>
+                    <ul class="feature-list">
+                        <li><i class="fa-solid fa-check text-gold"></i> Mobile Push Notifications</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Biometric Auth (Fingerprint/FaceID)</li>
+                        <li><i class="fa-solid fa-check text-gold"></i> Offline Local Data Sync</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ================= ECOSYSTEM CROSS PLATFORM ================= --}}
+    <section class="sec ecosystem-sec">
+        <div class="wrap split">
+            <div class="split__aside">
+                <span class="eyebrow"><i class="fa-solid fa-mobile-retro"></i> Unified Ecosystem</span>
+                <h2 class="h-sec">One Codebase,<br>Every Device</h2>
+                <p>
+                    Whether your staff operates on desktop web browsers, administrators access from Windows/Linux workstations, 
+                    or parents check student progress on mobile phones, InstiKit delivers a consistent, high-performance experience.
+                </p>
+                <div class="platform-badges">
+                    <span class="p-badge"><i class="fa-brands fa-chrome"></i> Web</span>
+                    <span class="p-badge"><i class="fa-brands fa-apple"></i> iOS</span>
+                    <span class="p-badge"><i class="fa-brands fa-android"></i> Android</span>
+                    <span class="p-badge"><i class="fa-brands fa-windows"></i> Windows</span>
+                    <span class="p-badge"><i class="fa-brands fa-linux"></i> Linux (WSL)</span>
+                </div>
+            </div>
+            <div class="cards-3">
+                <article class="pcard">
+                    <div class="pcard__media">
+                        <div class="pcard__badge"><i class="fa-solid fa-shield-cat"></i></div>
+                    </div>
+                    <div class="pcard__body">
+                        <h3>Multi-Tenant Architecture</h3>
+                        <p>Isolated tenant spaces, customizable domain routing, and enterprise-grade security per school site.</p>
+                    </div>
+                </article>
+
+                <article class="pcard">
+                    <div class="pcard__media">
+                        <div class="pcard__badge"><i class="fa-solid fa-language"></i></div>
+                    </div>
+                    <div class="pcard__body">
+                        <h3>First-Class RTL Arabic</h3>
+                        <p>Fully localized in English & Arabic with complete right-to-left layout reflow across Web and Flutter.</p>
+                    </div>
+                </article>
+
+                <article class="pcard">
+                    <div class="pcard__media">
+                        <div class="pcard__badge"><i class="fa-solid fa-comments"></i></div>
+                    </div>
+                    <div class="pcard__body">
+                        <h3>Omnichannel Messaging</h3>
+                        <p>Integrated WhatsApp, SMS, Email notifications, and Pusher-powered real-time chat between users.</p>
+                    </div>
+                </article>
             </div>
         </div>
     </section>
@@ -174,23 +288,22 @@
     <section class="sec sec--paper2">
         <div class="wrap">
             <div class="center">
-                <span class="eyebrow">Frequently Asked Questions</span>
-                <h2 class="h-sec">Everything You Need to Know</h2>
+                <span class="eyebrow">FAQ</span>
+                <h2 class="h-sec">Frequently Asked Questions</h2>
             </div>
             <div class="faq">
-                @foreach ([
-                    ['What curriculum does '.$school.' follow?','A balanced, inquiry-led curriculum that blends academic rigor with real-world skills, aligned to international standards.'],
-                    ['How do you prepare students for university?','Through dedicated academic guidance, exam preparation, and university counselling from the secondary years onward.'],
-                    ['How do you support students with different learning needs?','A learning-support team provides personalised plans so every student can access the curriculum and thrive.'],
-                    ['What are the class sizes?','We keep an 18:1 student–teacher ratio so every child receives individual attention and mentorship.'],
-                    ['What languages are offered?','A strong multilingual program, with additional languages introduced progressively across the year groups.'],
-                    ['How do you ensure student wellbeing?','Dedicated counselling, pastoral care, and a safe, respectful campus keep wellbeing at the centre of school life.'],
-                ] as $q)
-                    <details>
-                        <summary>{{ $q[0] }}</summary>
-                        <p>{{ $q[1] }}</p>
-                    </details>
-                @endforeach
+                <details>
+                    <summary>What platforms are supported by the InstiKit Flutter Client?</summary>
+                    <p>The Flutter client supports Android, iOS, Windows, Linux (including WSL2 environments), and Web platforms from a single codebase.</p>
+                </details>
+                <details>
+                    <summary>How does multi-tenancy work in the Web ERP?</summary>
+                    <p>Each tenant institution gets isolated database scoping, customized domain branding, fee structures, and administrative controls.</p>
+                </details>
+                <details>
+                    <summary>Which payment gateways are integrated?</summary>
+                    <p>Out-of-the-box integrations include Hubtel, Billdesk, CCAvenue, Amwalpay, Paystack, and Billplz, with automatic receipt generation and day book log.</p>
+                </details>
             </div>
         </div>
     </section>
@@ -202,12 +315,12 @@
                 <div class="cta__bg" style="background-image:url('{{ $hero }}')"></div>
                 <div class="cta__inner">
                     <div>
-                        <h2>Discover What Your Child Can Become</h2>
-                        <p>Join a community that inspires excellence and shapes futures.</p>
+                        <h2>Transform Your Educational Institution Today</h2>
+                        <p>Get started with InstiKit Web ERP System and Cross-Platform Flutter Mobile Apps.</p>
                     </div>
                     <div class="cta__btns">
-                        <a href="/pages/admissions" class="btn btn-gold" style="justify-content:center;"><i class="fa-solid fa-paper-plane"></i> Apply Now</a>
-                        <a href="/pages/contact" class="btn btn-ghost" style="justify-content:center;">Book a Tour</a>
+                        <a href="/app/login" class="btn btn-gold"><i class="fa-solid fa-right-to-bracket"></i> ERP Web Portal</a>
+                        <a href="/pages/contact" class="btn btn-ghost">Contact Sales</a>
                     </div>
                 </div>
             </div>

@@ -162,6 +162,26 @@ return [
         'caveat'  => 'We are not publishing store links, screenshots or offline guarantees until the client builds cleanly, passes its two-school isolation tests and completes a field trial. This section will state a release date once it exists.',
     ],
 
+    'showcase' => [
+        'eyebrow'    => 'Product tour',
+        'title'      => 'The actual system, screen by screen',
+        'lede'       => 'Real captures from the web admin console and the mobile companion app. Each framed slot below is an empty placeholder — drop the matching image into public/images/saas-showcase/ and it appears here automatically.',
+        'web_label'  => 'Web admin console',
+        'empty'      => 'Screenshot slot',
+        'empty_hint' => 'Drop image:',
+        'web' => [
+            'dashboard' => 'Dashboard & analytics',
+            'students'  => 'Student records',
+            'finance'   => 'Fees & finance',
+            'exams'     => 'Exams & marksheets',
+        ],
+        'app' => [
+            'home'       => 'Home',
+            'attendance' => 'Attendance',
+            'timetable'  => 'Timetable',
+        ],
+    ],
+
     'pricing' => [
         'eyebrow'     => 'Pricing',
         'title'       => 'Priced per school, by size',
