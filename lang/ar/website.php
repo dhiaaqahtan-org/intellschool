@@ -12,5 +12,5 @@ return [
     'back_to_top' => 'العودة إلى أعلى الصفحة',
     'site_logo' => 'شعار الموقع',
     'skip_to_content' => 'انتقل إلى المحتوى الرئيسي',
-    'powered_by' => 'تصميم وتطوير ScriptMint',
+    'powered_by' => 'تصميم وتطوير IntellSchool',
 ];

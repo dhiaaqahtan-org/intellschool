@@ -132,6 +132,17 @@ class TenantSeeder extends Seeder
         try {
             $configData = Arr::getVar('config');
 
+            if (isset($configData['general']) && is_array($configData['general'])) {
+                foreach ($configData['general'] as &$item) {
+                    if (isset($item['name']) && $item['name'] === 'app_name') {
+                        $item['value'] = $this->tenantDisplayName;
+                    }
+                    if (isset($item['name']) && $item['name'] === 'meta_author') {
+                        $item['value'] = $this->tenantDisplayName;
+                    }
+                }
+            }
+
             foreach ($configData as $section => $items) {
                 $value = collect($items)
                     ->filter(fn ($item) => Arr::has($item, 'name'))

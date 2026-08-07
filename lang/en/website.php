@@ -12,5 +12,5 @@ return [
     'back_to_top' => 'Back to top',
     'site_logo' => 'Site logo',
     'skip_to_content' => 'Skip to main content',
-    'powered_by' => 'Designed and developed by ScriptMint',
+    'powered_by' => 'Designed and developed by IntellSchool',
 ];

@@ -10,7 +10,7 @@
     <meta name="description" content="{{ $metaDescription }}">
     <meta name="keywords" content="{{ $metaKeywords }}">
     <meta name="author" content="{{ config('config.general.meta_author', config('app.name')) }}">
-    <title>{{ $metaTitle ?? config('config.general.app_name', config('app.name', 'ScriptMint')) }}</title>
+    <title>{{ $metaTitle ?? config('config.general.app_name', config('app.name', 'IntellSchool')) }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <link rel="icon" href="{{ config('config.assets.favicon') }}" type="image/png">
 

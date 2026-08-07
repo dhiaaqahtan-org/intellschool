@@ -51,7 +51,7 @@
         },
         {
             "name": "footer_credit",
-            "value": "Designed with ❤️ by ScriptMint",
+            "value": "Designed with ❤️ by IntellSchool",
             "is_public": true
         },
         {
@@ -257,22 +257,22 @@
     "general": [
         {
             "name": "app_name",
-            "value": "ScriptMint",
+            "value": "IntellSchool",
             "is_public": true
         },
         {
             "name": "meta_author",
-            "value": "ScriptMint",
+            "value": "IntellSchool",
             "is_public": true
         },
         {
             "name": "meta_description",
-            "value": "Application by ScriptMint",
+            "value": "Smart Educational ERP Solution",
             "is_public": true
         },
         {
             "name": "meta_keywords",
-            "value": "scriptmint",
+            "value": "intellschool, erp, school management",
             "is_public": true
         }
     ],
@@ -438,11 +438,11 @@
         },
         {
             "name": "from_name",
-            "value": "ScriptMint"
+            "value": "IntellSchool"
         },
         {
             "name": "from_address",
-            "value": "hello@scriptmint.com"
+            "value": "hello@intellschool.com"
         },
         {
             "name": "smtp_username",
