@@ -489,4 +489,33 @@ class TenantController extends Controller
 
         return back()->with('success', 'Domain removed.');
     }
+
+    public function destroy(Request $request, Tenant $tenant, TenantResolver $resolver): RedirectResponse
+    {
+        Gate::forUser(auth('platform')->user())->authorize('suspendTenant', $tenant);
+
+        foreach ($tenant->domains as $domain) {
+            $resolver->forget($domain->hostname);
+        }
+
+        $displayName = $tenant->display_name;
+
+        AuditEvent::record(
+            action: 'tenant.deleted',
+            tenantUuid: $tenant->uuid,
+            context: ['display_name' => $displayName, 'slug' => $tenant->slug],
+            actorType: 'platform',
+            ip: $request->ip(),
+        );
+
+        $tenant->domains()->delete();
+        $tenant->provisioningRuns()->delete();
+        $tenant->owners()->delete();
+        $tenant->subscription()?->delete();
+        $tenant->delete();
+
+        return redirect()
+            ->route('saas.platform.tenants.index')
+            ->with('success', "Tenant '{$displayName}' deleted successfully.");
+    }
 }

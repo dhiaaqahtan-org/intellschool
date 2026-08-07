@@ -44,6 +44,7 @@ Route::name('saas.platform.')->prefix('platform')->group(function () {
         Route::post('/tenants', [TenantController::class, 'store'])->name('tenants.store');
         Route::get('/tenants/{tenant:uuid}', [TenantController::class, 'show'])->name('tenants.show');
         Route::patch('/tenants/{tenant:uuid}', [TenantController::class, 'update'])->name('tenants.update');
+        Route::delete('/tenants/{tenant:uuid}', [TenantController::class, 'destroy'])->name('tenants.destroy');
 
         // Tenant lifecycle actions.
         Route::post('/tenants/{tenant:uuid}/suspend', [TenantController::class, 'suspend'])->name('tenants.suspend');
