@@ -188,7 +188,10 @@
 
                 <div>
                     <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:0.25rem; color:#374151;">Timezone</label>
-                    <input type="text" id="edit_timezone" name="timezone" placeholder="e.g. UTC" style="width:100%; padding:0.5rem 0.75rem; border:1px solid #d1d5db; border-radius:0.375rem; box-sizing:border-box;">
+                    <select id="edit_timezone" name="timezone" style="width:100%; padding:0.5rem 0.75rem; border:1px solid #d1d5db; border-radius:0.375rem; box-sizing:border-box;">
+                        <option value="Asia/Riyadh">Asia/Riyadh (GMT+3 - Saudi Arabia)</option>
+                        <option value="Asia/Aden">Asia/Aden (GMT+3 - Yemen)</option>
+                    </select>
                 </div>
             </div>
 

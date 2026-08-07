@@ -91,15 +91,8 @@
                 <div>
                     <label for="timezone" style="display: block; font-weight: 600; color: #374151; font-size: 0.875rem; margin-bottom: 0.375rem;">Timezone</label>
                     <select id="timezone" name="timezone" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.95rem; background: #fff; box-sizing: border-box;">
-                        <option value="Asia/Riyadh" {{ old('timezone', 'Asia/Riyadh') === 'Asia/Riyadh' ? 'selected' : '' }}>Asia/Riyadh (GMT+3)</option>
-                        <option value="Asia/Dubai" {{ old('timezone') === 'Asia/Dubai' ? 'selected' : '' }}>Asia/Dubai (GMT+4)</option>
-                        <option value="Asia/Baghdad" {{ old('timezone') === 'Asia/Baghdad' ? 'selected' : '' }}>Asia/Baghdad (GMT+3)</option>
-                        <option value="Africa/Cairo" {{ old('timezone') === 'Africa/Cairo' ? 'selected' : '' }}>Africa/Cairo (GMT+2)</option>
-                        <option value="Asia/Amman" {{ old('timezone') === 'Asia/Amman' ? 'selected' : '' }}>Asia/Amman (GMT+3)</option>
-                        <option value="Asia/Karachi" {{ old('timezone') === 'Asia/Karachi' ? 'selected' : '' }}>Asia/Karachi (GMT+5)</option>
-                        <option value="UTC" {{ old('timezone') === 'UTC' ? 'selected' : '' }}>UTC</option>
-                        <option value="Europe/London" {{ old('timezone') === 'Europe/London' ? 'selected' : '' }}>Europe/London</option>
-                        <option value="America/New_York" {{ old('timezone') === 'America/New_York' ? 'selected' : '' }}>America/New_York</option>
+                        <option value="Asia/Riyadh" {{ old('timezone', 'Asia/Riyadh') === 'Asia/Riyadh' ? 'selected' : '' }}>Asia/Riyadh (GMT+3 - Saudi Arabia)</option>
+                        <option value="Asia/Aden" {{ old('timezone') === 'Asia/Aden' ? 'selected' : '' }}>Asia/Aden (GMT+3 - Yemen)</option>
                     </select>
                 </div>
 
