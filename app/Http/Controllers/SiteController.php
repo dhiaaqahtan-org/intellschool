@@ -8,7 +8,11 @@ class SiteController extends Controller
 {
     public function home(SiteService $service)
     {
-        return $service->getPage('home');
+        try {
+            return $service->getPage('home');
+        } catch (\Throwable $e) {
+            return redirect('/app/login');
+        }
     }
 
     public function page(string $slug, SiteService $service)
