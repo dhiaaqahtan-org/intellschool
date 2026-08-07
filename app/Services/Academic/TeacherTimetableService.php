@@ -34,6 +34,10 @@ class TeacherTimetableService
                 ->auth()
                 ->first();
 
+            if (! $employee) {
+                abort(398, trans('global.could_not_find', ['attribute' => trans('employee.employee')]));
+            }
+
             $employees = Employee::query()
                 ->summary()
                 ->filterAccessible()
@@ -200,16 +204,16 @@ class TeacherTimetableService
                 $batch = $batches->where('id', $timetableAllocation->batch_id)->first();
 
                 $sessions[] = [
-                    'name' => $classTimingSession->name,
-                    'id' => $classTimingSession->id,
-                    'start_time' => $classTimingSession->start_time,
-                    'end_time' => $classTimingSession->end_time,
+                    'name' => $classTimingSession?->name,
+                    'id' => $classTimingSession?->id,
+                    'start_time' => $classTimingSession?->start_time,
+                    'end_time' => $classTimingSession?->end_time,
                     'subject' => [
                         'name' => $subject?->name,
                         'code' => $subject?->code,
                     ],
                     'room' => $room?->full_name,
-                    'batch' => $batch?->course->name.' '.$batch?->name,
+                    'batch' => $batch ? ($batch->course?->name.' '.$batch->name) : null,
                 ];
             }
 

@@ -1,10 +1,10 @@
 InstiKit Premium - Most Comprehensive School ERP Solution
 Release Date    : 13 July 2018
-Author          : ScriptMint
-Author Email    : hello@scriptmint.com
-Skype           : ScriptMint
-Website         : https://scriptmint.com
-Support         : http://scriptmint.com
+Author          : Tamjeed
+Author Email    : hello@tamjeed.com
+Skype           : Tamjeed
+Website         : https://tamjeed.com
+Support         : http://tamjeed.com
 Product Website : https://instikit.com
 Demo            : https://demo.instikit.com
 
@@ -14,7 +14,7 @@ The license term allows the licensee (buyer) to use the script as:
 
 ## Regular License
 
-ScriptMint offers the following license terms to use the script:
+Tamjeed offers the following license terms to use the script:
 
 * Non-exclusive, non-transferable, lifetime license for personal use.
 * Permits hosting a single instance of the script on your server.
@@ -23,7 +23,7 @@ ScriptMint offers the following license terms to use the script:
 
 ## Extended License
 
-ScriptMint offers the following license terms to use the script:
+Tamjeed offers the following license terms to use the script:
 
 * Non-exclusive, non-transferable, lifetime license for commercial use.
 * Permits hosting multiple instances of the script on your server.
@@ -56,11 +56,11 @@ root to `public`; never expose the project root directly.
 
 ### Support
 
-For any kind of support please raise ticket at http://scriptmint.com/helpdesk/articles
+For any kind of support please raise ticket at http://tamjeed.com/helpdesk/articles
 
 ### Security
 
-For any kind of support/suggestion/bug or security report please send email to hello@scriptmint.com
+For any kind of support/suggestion/bug or security report please send email to hello@tamjeed.com
 
 ### Version Log
 
