@@ -159,7 +159,18 @@
 
                 <div>
                     <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:0.25rem; color:#374151;">Region</label>
-                    <input type="text" id="edit_region" name="region" placeholder="e.g. us-east-1" style="width:100%; padding:0.5rem 0.75rem; border:1px solid #d1d5db; border-radius:0.375rem; box-sizing:border-box;">
+                    <select id="edit_region" name="region" style="width:100%; padding:0.5rem 0.75rem; border:1px solid #d1d5db; border-radius:0.375rem; box-sizing:border-box;">
+                        <option value="">Select region...</option>
+                        <option value="me">Middle East</option>
+                        <option value="gcc">GCC</option>
+                        <option value="sa">Saudi Arabia</option>
+                        <option value="ye">Yemen</option>
+                        <option value="ae">UAE</option>
+                        <option value="eg">Egypt</option>
+                        <option value="pk">Pakistan</option>
+                        <option value="eu">Europe</option>
+                        <option value="na">North America</option>
+                    </select>
                 </div>
 
                 <div>
