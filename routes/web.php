@@ -94,6 +94,12 @@ Route::get('/app/site/{removedModule}/{vue?}', function () {
     ->whereIn('removedModule', ['menus', 'blocks'])
     ->where('vue', '[\/\w\.-]*');
 
+Route::get('/app/config/{managedConfig}/{vue?}', function () {
+    abort(404);
+})
+    ->whereIn('managedConfig', ['module', 'system', 'mail', 'sms', 'chat', 'feature'])
+    ->where('vue', '[\/\w\.-]*');
+
 Route::get('/app/{vue?}', function () {
     return view('app');
 })->where('vue', '[\/\w\.-]*')->name('app.dashboard');

@@ -39,9 +39,33 @@
                         <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-3H4zM14 7h6V4h-6z'/></svg></span>
                         Dashboard
                     </a>
-                    <a class='platform-nav-link' href='{{ route('saas.platform.tenants.index') }}' @if(request()->routeIs('saas.platform.tenants.*')) aria-current='page' @endif>
+                    <a class='platform-nav-link' href='{{ route('saas.platform.tenants.index') }}' @if(request()->routeIs('saas.platform.tenants.*') && !request()->routeIs('saas.platform.tenants.modules.*')) aria-current='page' @endif>
                         <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 20V8l8-4 8 4v12M8 20v-5h8v5M8 10h.01M12 10h.01M16 10h.01'/></svg></span>
                         Tenants
+                    </a>
+                    <a class='platform-nav-link' href='{{ route('saas.platform.modules.index') }}' @if(request()->routeIs('saas.platform.modules.*') || request()->routeIs('saas.platform.tenants.modules.*')) aria-current='page' @endif>
+                        <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 6h16M4 12h16M4 18h16'/></svg></span>
+                        Modules
+                    </a>
+                    <a class='platform-nav-link' href='{{ route('saas.platform.system-config.index') }}' @if(request()->routeIs('saas.platform.system-config.*') || request()->routeIs('saas.platform.tenants.system-config.*')) aria-current='page' @endif>
+                        <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z'/></svg></span>
+                        System Config
+                    </a>
+                    <a class='platform-nav-link' href='{{ route('saas.platform.mail-config.index') }}' @if(request()->routeIs('saas.platform.mail-config.*') || request()->routeIs('saas.platform.tenants.mail-config.*')) aria-current='page' @endif>
+                        <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'/></svg></span>
+                        Mail Config
+                    </a>
+                    <a class='platform-nav-link' href='{{ route('saas.platform.sms-config.index') }}' @if(request()->routeIs('saas.platform.sms-config.*') || request()->routeIs('saas.platform.tenants.sms-config.*')) aria-current='page' @endif>
+                        <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'/></svg></span>
+                        SMS Config
+                    </a>
+                    <a class='platform-nav-link' href='{{ route('saas.platform.chat-config.index') }}' @if(request()->routeIs('saas.platform.chat-config.*') || request()->routeIs('saas.platform.tenants.chat-config.*')) aria-current='page' @endif>
+                        <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z'/></svg></span>
+                        Chat Config
+                    </a>
+                    <a class='platform-nav-link' href='{{ route('saas.platform.feature-config.index') }}' @if(request()->routeIs('saas.platform.feature-config.*') || request()->routeIs('saas.platform.tenants.feature-config.*')) aria-current='page' @endif>
+                        <span class='platform-nav-icon' aria-hidden='true'><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z'/></svg></span>
+                        Feature Config
                     </a>
                 </section>
 

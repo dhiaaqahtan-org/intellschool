@@ -5,7 +5,13 @@ use Modules\Saas\Http\Controllers\Platform\AuditController;
 use Modules\Saas\Http\Controllers\Platform\AuthController;
 use Modules\Saas\Http\Controllers\Platform\DashboardController;
 use Modules\Saas\Http\Controllers\Platform\EntitlementController;
+use Modules\Saas\Http\Controllers\Platform\ChatConfigController;
+use Modules\Saas\Http\Controllers\Platform\FeatureConfigController;
+use Modules\Saas\Http\Controllers\Platform\MailConfigController;
+use Modules\Saas\Http\Controllers\Platform\ModuleController;
 use Modules\Saas\Http\Controllers\Platform\PlanController;
+use Modules\Saas\Http\Controllers\Platform\SMSConfigController;
+use Modules\Saas\Http\Controllers\Platform\SystemConfigController;
 use Modules\Saas\Http\Controllers\Platform\SubscriptionController;
 use Modules\Saas\Http\Controllers\Platform\SupportSessionController;
 use Modules\Saas\Http\Controllers\Platform\TenantController;
@@ -59,6 +65,84 @@ Route::name('saas.platform.')->prefix('platform')->group(function () {
         Route::post('/tenants/{tenant:uuid}/domains/{domain}/verify', [TenantController::class, 'verifyDomain'])->name('tenants.domains.verify');
         Route::post('/tenants/{tenant:uuid}/domains/{domain}/primary', [TenantController::class, 'setPrimaryDomain'])->name('tenants.domains.primary');
         Route::delete('/tenants/{tenant:uuid}/domains/{domain}', [TenantController::class, 'removeDomain'])->name('tenants.domains.destroy');
+
+        // Tenant module management.
+        Route::get('/tenants/{tenant:uuid}/modules', [ModuleController::class, 'showTenantModules'])
+            ->name('tenants.modules.index');
+        Route::post('/tenants/{tenant:uuid}/modules', [ModuleController::class, 'updateTenantModules'])
+            ->name('tenants.modules.update');
+
+        // Global and bulk module management.
+        Route::get('/modules', [ModuleController::class, 'index'])
+            ->name('modules.index');
+        Route::post('/modules/bulk', [ModuleController::class, 'bulkUpdateModules'])
+            ->name('modules.bulk');
+
+        // Tenant system configuration.
+        Route::get('/tenants/{tenant:uuid}/system-config', [SystemConfigController::class, 'showTenantSystemConfig'])
+            ->name('tenants.system-config.index');
+        Route::post('/tenants/{tenant:uuid}/system-config', [SystemConfigController::class, 'updateTenantSystemConfig'])
+            ->name('tenants.system-config.update');
+
+        // Global and bulk system configuration.
+        Route::get('/system-config', [SystemConfigController::class, 'index'])
+            ->name('system-config.index');
+        Route::post('/system-config/bulk', [SystemConfigController::class, 'bulkUpdateSystemConfig'])
+            ->name('system-config.bulk');
+
+        // Tenant mail configuration.
+        Route::get('/tenants/{tenant:uuid}/mail-config', [MailConfigController::class, 'showTenantMailConfig'])
+            ->name('tenants.mail-config.index');
+        Route::post('/tenants/{tenant:uuid}/mail-config', [MailConfigController::class, 'updateTenantMailConfig'])
+            ->name('tenants.mail-config.update');
+        Route::post('/tenants/{tenant:uuid}/mail-config/test', [MailConfigController::class, 'testTenantMailConfig'])
+            ->name('tenants.mail-config.test');
+
+        // Global and bulk mail configuration.
+        Route::get('/mail-config', [MailConfigController::class, 'index'])
+            ->name('mail-config.index');
+        Route::post('/mail-config/bulk', [MailConfigController::class, 'bulkUpdateMailConfig'])
+            ->name('mail-config.bulk');
+
+        // Tenant SMS configuration.
+        Route::get('/tenants/{tenant:uuid}/sms-config', [SMSConfigController::class, 'showTenantSMSConfig'])
+            ->name('tenants.sms-config.index');
+        Route::post('/tenants/{tenant:uuid}/sms-config', [SMSConfigController::class, 'updateTenantSMSConfig'])
+            ->name('tenants.sms-config.update');
+        Route::post('/tenants/{tenant:uuid}/sms-config/test', [SMSConfigController::class, 'testTenantSMSConfig'])
+            ->name('tenants.sms-config.test');
+
+        // Global and bulk SMS configuration.
+        Route::get('/sms-config', [SMSConfigController::class, 'index'])
+            ->name('sms-config.index');
+        Route::post('/sms-config/bulk', [SMSConfigController::class, 'bulkUpdateSMSConfig'])
+            ->name('sms-config.bulk');
+
+        // Tenant Chat & Pusher configuration.
+        Route::get('/tenants/{tenant:uuid}/chat-config', [ChatConfigController::class, 'showTenantChatConfig'])
+            ->name('tenants.chat-config.index');
+        Route::post('/tenants/{tenant:uuid}/chat-config', [ChatConfigController::class, 'updateTenantChatConfig'])
+            ->name('tenants.chat-config.update');
+        Route::post('/tenants/{tenant:uuid}/chat-config/test', [ChatConfigController::class, 'testTenantChatConfig'])
+            ->name('tenants.chat-config.test');
+
+        // Global and bulk Chat configuration.
+        Route::get('/chat-config', [ChatConfigController::class, 'index'])
+            ->name('chat-config.index');
+        Route::post('/chat-config/bulk', [ChatConfigController::class, 'bulkUpdateChatConfig'])
+            ->name('chat-config.bulk');
+
+        // Tenant Feature configuration.
+        Route::get('/tenants/{tenant:uuid}/feature-config', [FeatureConfigController::class, 'showTenantFeatureConfig'])
+            ->name('tenants.feature-config.index');
+        Route::post('/tenants/{tenant:uuid}/feature-config', [FeatureConfigController::class, 'updateTenantFeatureConfig'])
+            ->name('tenants.feature-config.update');
+
+        // Global and bulk Feature configuration.
+        Route::get('/feature-config', [FeatureConfigController::class, 'index'])
+            ->name('feature-config.index');
+        Route::post('/feature-config/bulk', [FeatureConfigController::class, 'bulkUpdateFeatureConfig'])
+            ->name('feature-config.bulk');
 
         // Per-tenant entitlement overrides (plan §8). Sit above plan features.
         Route::post('/tenants/{tenant:uuid}/entitlements', [EntitlementController::class, 'store'])

@@ -5,6 +5,12 @@
     const retiredSitePaths = new Set([
         "/app/site/menus",
         "/app/site/blocks",
+        "/app/config/module",
+        "/app/config/system",
+        "/app/config/mail",
+        "/app/config/sms",
+        "/app/config/chat",
+        "/app/config/feature",
     ]);
     const svgNamespace = "http://www.w3.org/2000/svg";
     let currentShell = null;
@@ -109,7 +115,7 @@
     };
 
     const removeRetiredSiteLinks = () => {
-        document.querySelectorAll('a[href^="/app/site/"]').forEach((link) => {
+        document.querySelectorAll('a[href^="/app/site/"], a[href^="/app/config/"]').forEach((link) => {
             let path;
 
             try {

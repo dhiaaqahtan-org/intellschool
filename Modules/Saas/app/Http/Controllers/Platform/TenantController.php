@@ -14,6 +14,7 @@ use Modules\Saas\Events\TenantStatusChanged;
 use Modules\Saas\Http\Requests\Api\PlatformTenantIndexRequest;
 use Modules\Saas\Jobs\ProvisionTenantJob;
 use Modules\Saas\Models\Landlord\AuditEvent;
+use Modules\Saas\Models\Landlord\Plan;
 use Modules\Saas\Models\Landlord\Tenant;
 use Modules\Saas\Models\Landlord\TenantDomain;
 use Modules\Saas\Services\DomainVerifier;

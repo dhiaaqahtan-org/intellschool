@@ -9,7 +9,7 @@
         <div class="school-footer__brand">
             <a class="school-brand" href="{{ route('site.home') }}">
                 <img src="{{ config('config.assets.logo') }}" alt="" width="180" height="58">
-                <span>{{ $school }}</span>
+                <span>{{ $localize($school) }}</span>
             </a>
             <p>{{ $description }}</p>
             <div class="school-footer__social">
@@ -67,7 +67,7 @@
     </div>
 
     <div class="school-shell school-footer__bottom">
-        <span>&copy; {{ now()->year }} {{ $school }}. {{ __('website.all_rights_reserved') }}.</span>
+        <span>&copy; {{ now()->year }} {{ $localize($school) }}. {{ __('website.all_rights_reserved') }}.</span>
         <a href="#main-content">{{ $localize('العودة إلى الأعلى || Back to top') }} <i class="fa-solid fa-arrow-up" aria-hidden="true"></i></a>
     </div>
 </footer>

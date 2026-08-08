@@ -43,9 +43,9 @@
 
 <header id="navbar" class="school-header">
     <div class="school-shell school-header__inner">
-        <a class="school-brand" href="{{ route('site.home') }}" aria-label="{{ $school }}">
+        <a class="school-brand" href="{{ route('site.home') }}" aria-label="{{ $localize($school) }}">
             <img src="{{ config('config.assets.logo') }}" alt="" width="190" height="64">
-            <span>{{ $school }}</span>
+            <span>{{ $localize($school) }}</span>
         </a>
 
         <nav class="school-nav" aria-label="{{ $localize('التنقل الرئيسي || Main navigation') }}">
@@ -94,7 +94,7 @@
     <div class="school-mobile-menu__head">
         <a class="school-brand" href="{{ route('site.home') }}">
             <img src="{{ config('config.assets.icon') }}" alt="" width="56" height="56">
-            <span>{{ $school }}</span>
+            <span>{{ $localize($school) }}</span>
         </a>
         <button id="closeMobileMenu" type="button" aria-label="{{ __('website.close_menu') }}">
             <i class="fa-solid fa-xmark" aria-hidden="true"></i>

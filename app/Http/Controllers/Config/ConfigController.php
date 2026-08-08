@@ -44,7 +44,7 @@ class ConfigController extends Controller
      */
     public function modulePreRequisite(Request $request, ConfigService $service)
     {
-        return response()->ok($service->getModulePreRequisite($request));
+        abort(404);
     }
 
     /**
@@ -62,6 +62,11 @@ class ConfigController extends Controller
     {
         $this->authorize('store', Config::class);
 
+        $type = $request->query('type');
+        if (in_array($type, ['system', 'mail', 'sms', 'module', 'chat', 'feature'])) {
+            abort(404);
+        }
+
         return response()->ok($action->execute($request));
     }
 
@@ -70,6 +75,11 @@ class ConfigController extends Controller
      */
     public function store(Request $request, StoreConfig $action)
     {
+        $type = $request->input('type');
+        if (in_array($type, ['system', 'mail', 'sms', 'module', 'chat', 'feature'])) {
+            abort(404);
+        }
+
         $this->authorize('store', Config::class);
 
         $action->execute($request->all());
@@ -79,11 +89,7 @@ class ConfigController extends Controller
 
     public function storeModule(Request $request, StoreModule $action)
     {
-        $this->authorize('store', Config::class);
-
-        $action->execute($request->all());
-
-        return response()->success(['message' => trans('global.stored', ['attribute' => trans('config.module.module')])]);
+        abort(404);
     }
 
     /**
@@ -115,9 +121,7 @@ class ConfigController extends Controller
      */
     public function testMailConnection(Request $request, TestMailConnection $action)
     {
-        $action->execute($request);
-
-        return response()->success(['message' => trans('config.mail.test_mail_sent')]);
+        abort(404);
     }
 
     /**
@@ -125,13 +129,7 @@ class ConfigController extends Controller
      */
     public function testSMS(Request $request, TestSMS $action)
     {
-        if (empty(config('config.sms.driver'))) {
-            throw ValidationException::withMessages(['message' => trans('config.sms.not_supported_sms_driver')]);
-        }
-
-        $action->execute($request);
-
-        return response()->success(['message' => trans('config.sms.test_sms_sent')]);
+        abort(404);
     }
 
     /**
@@ -149,9 +147,7 @@ class ConfigController extends Controller
      */
     public function testPusherConnection(Request $request, TestPusherConnection $action)
     {
-        $action->execute($request);
-
-        return response()->success(['message' => trans('config.notification.test_pusher_notification_sent')]);
+        abort(404);
     }
 
     /**

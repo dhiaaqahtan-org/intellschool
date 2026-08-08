@@ -40,7 +40,7 @@ class SchoolWebsiteSeeder extends Seeder
                 'robots' => true,
                 'is_public' => true,
                 'slug' => 'home',
-                'meta_title' => 'مدرسة هورايزون الدولية || Horizon International School',
+                'meta_title' => 'مدرسة تمجيد || Tamjeed School',
                 'meta_description' => 'تعليم متوازن ينمّي المعرفة والشخصية والإبداع والثقة العالمية. || A balanced education that develops knowledge, character, creativity and global confidence.',
                 'meta_keywords' => 'مدرسة دولية، تعليم، تسجيل الطلاب || international school, education, student admissions',
             ]),

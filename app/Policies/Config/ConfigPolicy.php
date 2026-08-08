@@ -40,6 +40,10 @@ class ConfigPolicy
     {
         $type = request('type');
 
+        if (in_array($type, ['system', 'mail', 'sms', 'module', 'chat', 'feature'])) {
+            return false;
+        }
+
         if (in_array($type, ConfigType::TYPES)) {
             return $user->can('config:store');
         }

@@ -18,6 +18,12 @@
         </p>
     </div>
     <div class="page-actions">
+        <a class="btn btn-secondary" href="{{ route('saas.platform.tenants.modules.index', $tenant) }}">Configure Modules</a>
+        <a class="btn btn-secondary" href="{{ route('saas.platform.tenants.system-config.index', $tenant) }}">System Config</a>
+        <a class="btn btn-secondary" href="{{ route('saas.platform.tenants.mail-config.index', $tenant) }}">Mail Config</a>
+        <a class="btn btn-secondary" href="{{ route('saas.platform.tenants.sms-config.index', $tenant) }}">SMS Config</a>
+        <a class="btn btn-secondary" href="{{ route('saas.platform.tenants.chat-config.index', $tenant) }}">Chat Config</a>
+        <a class="btn btn-secondary" href="{{ route('saas.platform.tenants.feature-config.index', $tenant) }}">Feature Config</a>
         @if($canManageLifecycle)
             <a class="btn" href="#lifecycle">Manage lifecycle</a>
         @endif

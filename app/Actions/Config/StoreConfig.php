@@ -14,6 +14,10 @@ class StoreConfig
     {
         $type = Arr::get($params, 'type');
 
+        if (in_array($type, ['system', 'mail', 'sms', 'module', 'chat', 'feature'])) {
+            throw ValidationException::withMessages(['message' => "The '{$type}' configuration is managed by the SaaS Platform Administrator and cannot be modified here."]);
+        }
+
         if (! in_array($type, ConfigType::TYPES) && ! in_array($type, ConfigType::MODULE_TYPES)) {
             throw ValidationException::withMessages(['message' => __('general.errors.invalid_action')]);
         }
